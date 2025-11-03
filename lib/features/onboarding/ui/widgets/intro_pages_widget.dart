@@ -52,18 +52,20 @@ class _IntroPagesWidgetState extends ConsumerState<IntroPagesWidget> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
+                          const Text(
                             'authentick',
-                            style: AppTheme.title18.copyWith(
+                            style: TextStyle(
+                              fontFamily: 'Outfit',
+                              fontSize: 19,
+                              fontWeight: FontWeight.w600,
                               color: AppColors.mono100,
-                              fontWeight: FontWeight.bold,
                             ),
                           ),
                           const SizedBox(width: 4),
                           const Icon(
-                            Icons.check_circle,
-                            color: AppColors.blueberry100,
-                            size: 22,
+                            Icons.check,
+                            color: AppColors.mono100,
+                            size: 20,
                           ),
                         ],
                       ),
@@ -95,7 +97,7 @@ class _IntroPagesWidgetState extends ConsumerState<IntroPagesWidget> {
                 children: const [
                   IntroPage(
                     title: 'See Unfiltered Moments',
-                    subtitle: 'Capture it. Don\'t curate it. Only share moments captured live through the app. No uploads. No edits.',
+                    subtitle: 'Capture it. Don\'t curate it. Only share moments captured live through the app. \nNo uploads. No edits.',
                     imagePath: 'assets/images/onboarding_moments.png',
                   ),
                   IntroPage(
@@ -125,7 +127,7 @@ class _IntroPagesWidgetState extends ConsumerState<IntroPagesWidget> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: state.introPageIndex == index
-                        ? AppColors.blueberry100
+                        ? Colors.black
                         : AppColors.mono40,
                   ),
                 ),
@@ -143,7 +145,7 @@ class _IntroPagesWidgetState extends ConsumerState<IntroPagesWidget> {
                     ? ElevatedButton(
                         onPressed: viewModel.nextIntroPage,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF6D28D9),
+                          backgroundColor: const Color(0xFF4300FF),
                           foregroundColor: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
@@ -152,7 +154,11 @@ class _IntroPagesWidgetState extends ConsumerState<IntroPagesWidget> {
                         ),
                         child: const Text(
                           'Try it out',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       )
                     : OutlinedButton(
@@ -163,9 +169,9 @@ class _IntroPagesWidgetState extends ConsumerState<IntroPagesWidget> {
                           );
                         },
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF6D28D9),
+                          foregroundColor: const Color(0xFF4300FF),
                           side: const BorderSide(
-                            color: Color(0xFF6D28D9),
+                            color: Color(0xFF4300FF),
                             width: 1.5,
                           ),
                           shape: RoundedRectangleBorder(
@@ -174,7 +180,11 @@ class _IntroPagesWidgetState extends ConsumerState<IntroPagesWidget> {
                         ),
                         child: const Text(
                           'Continue',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
               ),
