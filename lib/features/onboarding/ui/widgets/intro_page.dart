@@ -100,7 +100,9 @@ class IntroPage extends StatelessWidget {
                     fontFamily: 'Outfit',
                     fontSize: 25,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.mono100,
+                    color: Color(0xFF1C1C28),
+                    height: 1.0,
+                    letterSpacing: -0.64, // -2% of 32px
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -112,8 +114,9 @@ class IntroPage extends StatelessWidget {
                       fontFamily: 'Outfit',
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.mono80,
-                      height: 1.5,
+                      color: Color(0xFF1C1C28),
+                      height: 1.0,
+                      letterSpacing: -0.25, // -2% of 20px
                     ),
                     children: _buildSubtitleSpans(subtitle),
                   ),

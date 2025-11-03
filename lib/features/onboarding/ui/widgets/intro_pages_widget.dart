@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_theme.dart';
@@ -56,16 +57,17 @@ class _IntroPagesWidgetState extends ConsumerState<IntroPagesWidget> {
                             'authentick',
                             style: TextStyle(
                               fontFamily: 'Outfit',
-                              fontSize: 19,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.mono100,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF1C1C28),
+                              letterSpacing: -0.44, // -2% of 22px
                             ),
                           ),
-                          const SizedBox(width: 4),
-                          const Icon(
-                            Icons.check,
-                            color: AppColors.mono100,
-                            size: 20,
+                          const SizedBox(width: 6),
+                          SvgPicture.asset(
+                            'assets/images/CheckFat.svg',
+                            width: 22,
+                            height: 22,
                           ),
                         ],
                       ),
