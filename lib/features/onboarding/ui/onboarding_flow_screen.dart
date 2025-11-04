@@ -11,6 +11,7 @@ import '../model/onboarding_state.dart';
 import '../view_model/onboarding_view_model.dart';
 import 'widgets/intro_pages_widget.dart';
 import 'widgets/invite_code_screen.dart';
+import 'widgets/birthday_screen.dart';
 import 'widgets/username_screen.dart';
 import 'widgets/google_connect_screen.dart';
 
@@ -86,6 +87,8 @@ class OnboardingFlowScreen extends ConsumerWidget {
         return const IntroPagesWidget();
       case OnboardingStep.inviteCode:
         return const InviteCodeScreen();
+      case OnboardingStep.birthday:
+        return const BirthdayScreen();
       case OnboardingStep.username:
         return const UsernameScreen();
       case OnboardingStep.googleAuth:
