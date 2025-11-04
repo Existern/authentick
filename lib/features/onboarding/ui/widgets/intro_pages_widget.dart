@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -36,59 +37,102 @@ class _IntroPagesWidgetState extends ConsumerState<IntroPagesWidget> {
     
     const totalPages = 3;
 
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    // Calculate ellipse position based on current page
+    final currentPage = state.introPageIndex;
+    final progress = currentPage / (totalPages - 1);
+
+    // Top ellipse moves from left to right
+    final topEllipseLeft = -100 + (screenWidth + 200 - 200) * progress;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F7FF),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-              child: SizedBox(
-                height: 40,
-                child: Stack(
-                  children: [
-                    // Centered Logo
-                    Align(
-                      alignment: Alignment.center,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text(
-                            'authentick',
-                            style: TextStyle(
-                              fontFamily: 'Outfit',
-                              fontSize: 22,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF1C1C28),
-                              letterSpacing: -0.44, // -2% of 22px
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          SvgPicture.asset(
-                            'assets/images/CheckFat.svg',
-                            width: 22,
-                            height: 22,
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Skip Button aligned to the right
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: viewModel.skipIntro,
-                        child: Text(
-                          'Skip',
-                          style: AppTheme.label14.copyWith(
-                            color: AppColors.mono80,
-                          ),
-                        ),
-                      ),
-                    ),
+      body: Stack(
+        children: [
+          // Top Ellipse
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            top: 80,
+            left: topEllipseLeft,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFFE4CAFF).withOpacity(0.85),
+                    const Color(0xFFE4CAFF).withOpacity(0.65),
+                    const Color(0xFFE4CAFF).withOpacity(0.35),
+                    const Color(0xFFE4CAFF).withOpacity(0.0),
                   ],
+                  stops: const [0.0, 0.4, 0.7, 1.0],
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFE4CAFF).withOpacity(0.5),
+                    blurRadius: 80,
+                    spreadRadius: 20,
+                  ),
+                ],
               ),
             ),
+          ),
+
+          // Main Content
+          SafeArea(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                  child: SizedBox(
+                    height: 40,
+                    child: Stack(
+                      children: [
+                        // Centered Logo
+                        Align(
+                          alignment: Alignment.center,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text(
+                                'authentick',
+                                style: TextStyle(
+                                  fontFamily: 'Outfit',
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF1C1C28),
+                                  letterSpacing: -0.44, // -2% of 22px
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              SvgPicture.asset(
+                                'assets/images/CheckFat.svg',
+                                width: 22,
+                                height: 22,
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Skip Button aligned to the right
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: viewModel.skipIntro,
+                            child: Text(
+                              'Skip',
+                              style: AppTheme.label14.copyWith(
+                                color: AppColors.mono80,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
             
             Expanded(
               child: PageView(
@@ -191,10 +235,12 @@ class _IntroPagesWidgetState extends ConsumerState<IntroPagesWidget> {
                       ),
               ),
             ),
-            
-            const SizedBox(height: 24),
-          ],
-        ),
+
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
