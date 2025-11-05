@@ -31,4 +31,5 @@ class Constants {
   static const String hasCompletedOnboardingKey =
       'has_completed_onboarding_key';
   static const String lastDayShowPremiumKey = 'last_day_show_premium_key';
+  static const String authTokenKey = 'auth_token_key';
 }

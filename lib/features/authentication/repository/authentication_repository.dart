@@ -10,16 +10,76 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '/constants/constants.dart';
 import '/constants/languages.dart';
 import '/environment/env.dart';
+import '/features/common/remote/api_client.dart';
+import '../model/auth_request.dart';
+import '../model/auth_response.dart';
 
 part 'authentication_repository.g.dart';
 
 @riverpod
 AuthenticationRepository authenticationRepository(Ref ref) {
-  return AuthenticationRepository();
+  final apiClient = ref.watch(apiClientProvider);
+  return AuthenticationRepository(apiClient);
 }
 
 class AuthenticationRepository {
-  const AuthenticationRepository();
+  final ApiClient _apiClient;
+
+  const AuthenticationRepository(this._apiClient);
+
+  // Authenticate user with the backend API
+  Future<AuthResponse> authenticate({
+    String? googleToken,
+    String? bearerToken,
+    String? username,
+    String? firstName,
+    String? lastName,
+    String? phoneNumber,
+    String? dateOfBirth,
+    String? gender,
+    String? location,
+    String? bio,
+    String? inviteCode,
+  }) async {
+    try {
+      final request = AuthRequest(
+        googleToken: googleToken,
+        username: username,
+        firstName: firstName,
+        lastName: lastName,
+        phoneNumber: phoneNumber,
+        dateOfBirth: dateOfBirth,
+        gender: gender,
+        location: location,
+        bio: bio,
+        inviteCode: inviteCode,
+      );
+
+      final response = await _apiClient.postWithAuth<Map<String, dynamic>>(
+        '/api/v1/auth/authenticate',
+        data: request.toJson(),
+        bearerToken: bearerToken,
+      );
+
+      final authResponse = AuthResponse.fromJson(response);
+
+      // If authentication is successful, save the token
+      if (authResponse.success == true && authResponse.data?.token != null) {
+        await saveToken(authResponse.data!.token!);
+        await setIsLogin(true);
+      }
+
+      return authResponse;
+    } catch (error, stackTrace) {
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository.authenticate] Error: $error',
+      );
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository.authenticate] StackTrace: $stackTrace',
+      );
+      rethrow;
+    }
+  }
 
   Future<void> signInWithMagicLink(String email) async {
     // TODO: Implement with your own backend
@@ -42,7 +102,7 @@ class AuthenticationRepository {
     };
   }
 
-  Future<Map<String, dynamic>> signInWithGoogle() async {
+  Future<AuthResponse> signInWithGoogle() async {
     try {
       final googleSignIn = GoogleSignIn.instance;
 
@@ -62,17 +122,13 @@ class AuthenticationRepository {
         throw Exception('id_token_not_found'.tr());
       }
 
-      // TODO: Send the ID token to your own backend for verification
-      // For now, return a mock response
-      return {
-        'user': {
-          'id': googleUser.id,
-          'email': googleUser.email,
-          'name': googleUser.displayName,
-          'avatar_url': googleUser.photoUrl,
-          'created_at': DateTime.now().toIso8601String(),
-        },
-      };
+      // Send the Google ID token to your backend for verification
+      final authResponse = await authenticate(
+        googleToken: idToken,
+        username: googleUser.email.split('@')[0], // Default username from email
+      );
+
+      return authResponse;
     } catch (error, stackTrace) {
       debugPrint(
         '${Constants.tag} [AuthenticationRepository.signInWithGoogle] Error: $error',
@@ -80,7 +136,7 @@ class AuthenticationRepository {
       debugPrint(
         '${Constants.tag} [AuthenticationRepository.signInWithGoogle] StackTrace: $stackTrace',
       );
-      throw Exception('$error');
+      rethrow;
     }
   }
 
@@ -152,5 +208,21 @@ class AuthenticationRepository {
   Future<void> setHasCompletedOnboarding(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(Constants.hasCompletedOnboardingKey, value);
+  }
+
+  // Token management
+  Future<void> saveToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(Constants.authTokenKey, token);
+  }
+
+  Future<String?> getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(Constants.authTokenKey);
+  }
+
+  Future<void> clearToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(Constants.authTokenKey);
   }
 }

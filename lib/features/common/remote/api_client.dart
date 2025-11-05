@@ -13,7 +13,8 @@ ApiClient apiClient(Ref ref) {
 }
 
 class ApiClient {
-  static const String _baseUrl = 'https://example.com/api';
+  // TODO: Replace with your actual API base URL
+  static const String _baseUrl = 'http://3.220.103.255:8080';
   static const int _timeout = 30000; // 30 seconds
 
   late final Dio _dio;
@@ -71,6 +72,36 @@ class ApiClient {
         data: data,
         queryParameters: queryParameters,
         options: options,
+      );
+      return response.data as T;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // Add Authorization header to the request
+  Future<T> postWithAuth<T>(
+    String path, {
+    dynamic data,
+    String? bearerToken,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    try {
+      final headers = <String, dynamic>{
+        if (bearerToken != null) 'Authorization': 'Bearer $bearerToken',
+      };
+
+      final mergedOptions = options?.copyWith(
+            headers: {...?options.headers, ...headers},
+          ) ??
+          Options(headers: headers);
+
+      final response = await _dio.post<T>(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: mergedOptions,
       );
       return response.data as T;
     } on DioException catch (e) {

@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '/constants/constants.dart';
 import '/extensions/string_extension.dart';
 import '/features/profile/ui/view_model/profile_view_model.dart';
+import '../../model/auth_response.dart';
 import '../../repository/authentication_repository.dart';
 import '../../ui/state/authentication_state.dart';
 
@@ -85,12 +86,19 @@ class AuthenticationViewModel extends _$AuthenticationViewModel {
       return;
     }
 
-    final Map<String, dynamic>? authResponse = result.value;
+    final AuthResponse? authResponse = result.value;
     debugPrint(
       '${Constants.tag} [AuthenticationViewModel.handleResult] authResponse: $authResponse',
     );
     if (authResponse == null) {
       state = AsyncError('unexpected_error_occurred'.tr(), StackTrace.current);
+      return;
+    }
+
+    // Check if authentication was successful
+    if (authResponse.success != true || authResponse.data == null) {
+      final errorMessage = authResponse.error?.message ?? 'unexpected_error_occurred'.tr();
+      state = AsyncError(errorMessage, StackTrace.current);
       return;
     }
 
@@ -101,10 +109,12 @@ class AuthenticationViewModel extends _$AuthenticationViewModel {
       ref.read(authenticationRepositoryProvider).setIsExistAccount(true);
     }
 
-    final userData = authResponse['user'] as Map<String, dynamic>?;
-    String? name = userData?['name'];
-    String? avatar = userData?['avatar_url'];
-    String? email = userData?['email'];
+    final user = authResponse.data!.user;
+    String? name = user?.firstName != null && user?.lastName != null
+        ? '${user!.firstName} ${user.lastName}'
+        : user?.username;
+    String? avatar = user?.profileImage;
+    String? email = user?.email;
 
     ref.read(authenticationRepositoryProvider).setIsLogin(true);
     ref
@@ -117,7 +127,10 @@ class AuthenticationViewModel extends _$AuthenticationViewModel {
 
     state = AsyncData(
       AuthenticationState(
-        authResponse: authResponse,
+        authResponse: {
+          'user': user?.toJson(),
+          'token': authResponse.data!.token,
+        },
         isRegisterSuccessfully: !isExistAccount,
         isSignInSuccessfully: true,
       ),
