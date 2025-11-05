@@ -13,7 +13,6 @@ import 'widgets/intro_pages_widget.dart';
 import 'widgets/invite_code_screen.dart';
 import 'widgets/birthday_screen.dart';
 import 'widgets/username_screen.dart';
-import 'widgets/google_connect_screen.dart';
 
 class OnboardingFlowScreen extends ConsumerWidget {
   const OnboardingFlowScreen({super.key});
@@ -57,19 +56,11 @@ class OnboardingFlowScreen extends ConsumerWidget {
     // Handle completion (for users who skip Google sign-in)
     ref.listen<OnboardingState>(onboardingViewModelProvider, (previous, next) {
       if (next.currentStep == OnboardingStep.completed) {
-        // Check if user is already authenticated
-        final authState = ref.read(authenticationViewModelProvider);
-        if (authState is AsyncData &&
-            authState.value?.isSignInSuccessfully == true) {
-          // Already handled by auth listener above
-          return;
-        }
-
-        // Mark completed and go to register screen for email/password auth
+        // Navigate to main screen immediately
         ref
             .read(authenticationRepositoryProvider)
             .setHasCompletedOnboarding(true);
-        context.pushReplacement(Routes.register);
+        context.go(Routes.main);
       }
     });
 
@@ -91,10 +82,13 @@ class OnboardingFlowScreen extends ConsumerWidget {
         return const BirthdayScreen();
       case OnboardingStep.username:
         return const UsernameScreen();
-      case OnboardingStep.googleAuth:
-        return const GoogleConnectScreen();
       case OnboardingStep.completed:
-        return const SizedBox.shrink();
+        // Show loading indicator while navigating
+        return const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
     }
   }
 }

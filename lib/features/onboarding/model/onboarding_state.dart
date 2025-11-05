@@ -3,7 +3,6 @@ enum OnboardingStep {
   inviteCode,
   birthday,
   username,
-  googleAuth,
   completed,
 }
 

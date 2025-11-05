@@ -87,7 +87,7 @@ class OnboardingViewModel extends _$OnboardingViewModel {
       return;
     }
 
-    state = currentState.copyWith(currentStep: OnboardingStep.googleAuth);
+    state = currentState.copyWith(currentStep: OnboardingStep.completed);
   }
 
   void completeOnboarding() {
@@ -106,9 +106,6 @@ class OnboardingViewModel extends _$OnboardingViewModel {
         break;
       case OnboardingStep.username:
         state = currentState.copyWith(currentStep: OnboardingStep.birthday);
-        break;
-      case OnboardingStep.googleAuth:
-        state = currentState.copyWith(currentStep: OnboardingStep.username);
         break;
       default:
         break;
