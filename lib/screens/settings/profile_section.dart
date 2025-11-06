@@ -17,7 +17,7 @@ class ProfileSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      
+
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
       ),
@@ -35,9 +35,9 @@ class ProfileSection extends StatelessWidget {
             controller: handleController,
             enabled: isEditable,
           ),
-         
+
           ],
-        
+
       ),
     );
   }
@@ -65,7 +65,7 @@ class ProfileSection extends StatelessWidget {
                 vertical: 8,
               ),
               filled: !enabled,
-              
+
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),

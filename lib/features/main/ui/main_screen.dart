@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hugeicons/hugeicons.dart';
-import 'package:ming_cute_icons/ming_cute_icons.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 
 import '../../../extensions/build_context_extension.dart';
-import '../../../features/hero_list/ui/hero_list_screen.dart';
-import '../../../features/profile/ui/profile_screen.dart';
+import '../../../screens/home/postpage.dart';
+import '../../../screens/location/locationpage.dart';
+import '../../../screens/post/postpage.dart';
+import '../../../screens/friends/friendpage.dart';
+import '../../../screens/profile/myprofile.dart';
 import '../../../theme/app_colors.dart';
-import '../../hero_list/ui/view_model/hero_count_provider.dart';
-import '../../hero_list/ui/view_model/hero_list_view_model.dart';
 
 const List<Widget> _screens = [
-  HeroListScreen(),
-  HeroListScreen(),
-  ProfileScreen(),
+  MyHome(),
+  Locationpage(),
+  Postpage(),
+  Friendpage(),
+  MyProfile(),
 ];
 
 class MainScreen extends ConsumerStatefulWidget {
@@ -43,42 +44,27 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     BuildContext context,
     Color selectedColor,
     Color unselectedColor,
-    int count,
   ) {
     return [
       PersistentBottomNavBarItem(
-        icon: Icon(MingCuteIcons.mgc_lightning_fill, color: selectedColor),
-        inactiveIcon:
-            Icon(MingCuteIcons.mgc_lightning_line, color: unselectedColor),
+        icon: Icon(Icons.home, color: selectedColor),
+        inactiveIcon: Icon(Icons.home_outlined, color: unselectedColor),
       ),
       PersistentBottomNavBarItem(
-        icon: HugeIcon(
-          icon: HugeIcons.strokeRoundedAdd01,
-          color: AppColors.mono0,
-          size: 20,
-        ),
-        inactiveIcon: HugeIcon(
-          icon: HugeIcons.strokeRoundedAdd01,
-          color: AppColors.mono0,
-          size: 20,
-        ),
-        activeColorPrimary: selectedColor,
-        inactiveColorPrimary: unselectedColor,
-        onPressed: (_) async {
-          final randomHero = sampleHeroes[count % sampleHeroes.length];
-          await ref.read(heroListViewModelProvider.notifier).addHero(
-                name: randomHero.name,
-                description: randomHero.description,
-                imageUrl: randomHero.imageUrl,
-                power: randomHero.power,
-              );
-          ref.read(heroCountProvider.notifier).increment();
-        },
+        icon: Icon(Icons.location_on, color: selectedColor),
+        inactiveIcon: Icon(Icons.location_on_outlined, color: unselectedColor),
       ),
       PersistentBottomNavBarItem(
-        icon: Icon(MingCuteIcons.mgc_user_3_fill, color: selectedColor),
-        inactiveIcon:
-            Icon(MingCuteIcons.mgc_user_3_line, color: unselectedColor),
+        icon: Icon(Icons.add_circle, color: selectedColor),
+        inactiveIcon: Icon(Icons.add_circle_outline, color: unselectedColor),
+      ),
+      PersistentBottomNavBarItem(
+        icon: Icon(Icons.people, color: selectedColor),
+        inactiveIcon: Icon(Icons.people_outline, color: unselectedColor),
+      ),
+      PersistentBottomNavBarItem(
+        icon: Icon(Icons.person, color: selectedColor),
+        inactiveIcon: Icon(Icons.person_outline, color: unselectedColor),
       ),
     ];
   }
@@ -89,7 +75,6 @@ class _MainScreenState extends ConsumerState<MainScreen> {
         context.isDarkMode ? AppColors.blueberry100 : AppColors.blueberry100;
     final unselectedColor =
         context.isDarkMode ? AppColors.mono40 : AppColors.mono60;
-    final count = ref.watch(heroCountProvider);
     return Scaffold(
       body: PersistentTabView(
         context,
@@ -99,7 +84,6 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           context,
           selectedColor,
           unselectedColor,
-          count,
         ),
         confineToSafeArea: true,
         backgroundColor: context.secondaryWidgetColor,
