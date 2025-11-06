@@ -4,7 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../features/authentication/ui/otp_screen.dart';
 import '../features/authentication/ui/sign_in_screen.dart';
 import '../features/authentication/ui/register_screen.dart';
-import '../features/main/ui/main_screen.dart';
+// import '../features/main/ui/main_screen.dart';
+import '../screens/bottomnav/bottomnav.dart';
 import '../features/onboarding/ui/onboarding_screen.dart';
 import '../features/onboarding/ui/onboarding_flow_screen.dart';
 import '../features/onboarding/ui/splash_screen.dart';
@@ -101,7 +102,7 @@ final GoRouter router = GoRouter(
     ),
     GoRoute(
       path: Routes.main,
-      pageBuilder: (context, state) => state.slidePage(const MainScreen()),
+      pageBuilder: (context, state) => state.slidePage(const BottomNavScreen()),
     ),
     GoRoute(
       path: Routes.accountInformation,
