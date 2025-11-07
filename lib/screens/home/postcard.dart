@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class PostCard extends StatelessWidget {
   final String username;
@@ -32,7 +33,7 @@ class PostCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
                   Column(
-                    crossAxisAlignment: CrossAxisAlignment.start, 
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         username,
@@ -50,8 +51,12 @@ class PostCard extends StatelessWidget {
                 ],
               ),
 
-             
-              const Icon(Icons.more_vert),
+
+              SvgPicture.asset(
+                'assets/images/3dot.svg',
+                width: 24,
+                height: 24,
+              ),
             ],
           ),
         ),
@@ -68,14 +73,20 @@ class PostCard extends StatelessWidget {
         ),
 
         Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
-              Icon(Icons.favorite_border),
-              
-              Icon(Icons.send),
-              
+            children: [
+              SvgPicture.asset(
+                'assets/images/star.svg',
+                width: 24,
+                height: 24,
+              ),
+              SvgPicture.asset(
+                'assets/images/share.svg',
+                width: 24,
+                height: 24,
+              ),
             ],
           ),
         ),
