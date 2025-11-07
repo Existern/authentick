@@ -41,7 +41,7 @@ class OnboardingState {
     String? username,
     AccountType? selectedAccountType,
     bool? isLoading,
-    String? error,
+    Object? error = _undefined,
   }) {
     return OnboardingState(
       currentStep: currentStep ?? this.currentStep,
@@ -51,7 +51,10 @@ class OnboardingState {
       username: username ?? this.username,
       selectedAccountType: selectedAccountType ?? this.selectedAccountType,
       isLoading: isLoading ?? this.isLoading,
-      error: error ?? this.error,
+      error: error == _undefined ? this.error : error as String?,
     );
   }
 }
+
+// Sentinel value to distinguish between "not provided" and "explicitly set to null"
+const Object _undefined = Object();

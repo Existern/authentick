@@ -1,6 +1,10 @@
 // Environment variables for the app
 // Note: In production, these should be loaded from a .env file using envied package
 class Env {
+  // API Configuration
+  static const String apiBaseUrl = 'http://3.220.103.255:8080';
+  static const String apiVersion = '/api/v1';
+
   // Google Sign-In Configuration
   static const String googleClientId =
       '234604531809-1vmkuskqcdl5hgk177m5fs2bkfj6kd0d.apps.googleusercontent.com';

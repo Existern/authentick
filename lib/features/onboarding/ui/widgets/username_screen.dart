@@ -268,7 +268,7 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
                     width: double.infinity,
                     height: 54,
                     child: ElevatedButton(
-                      onPressed: state.username.isNotEmpty
+                      onPressed: state.username.isNotEmpty && !state.isLoading
                           ? _validateAndSubmit
                           : null,
                       style: ElevatedButton.styleFrom(
@@ -281,13 +281,22 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
                           borderRadius: BorderRadius.circular(14.0),
                         ),
                       ),
-                      child: const Text(
-                        'Continue',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      child: state.isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              'Continue',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ),
                   ),
 
