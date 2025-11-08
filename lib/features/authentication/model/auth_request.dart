@@ -9,7 +9,7 @@ class AuthRequest {
   final String? lastName;
   final String? location;
   final String? phoneNumber;
-  final String username;
+  final String? username;
 
   AuthRequest({
     this.bio,
@@ -21,21 +21,24 @@ class AuthRequest {
     this.lastName,
     this.location,
     this.phoneNumber,
-    required this.username,
+    this.username,
   });
 
   Map<String, dynamic> toJson() {
-    return {
-      'username': username,
-      'date_of_birth': dateOfBirth ?? '01011990',
-      'invite_code': inviteCode ?? 'DEFAULT_CODE',
-      'first_name': firstName ?? 'User', // Dummy default value
-      'last_name': lastName ?? 'Account', // Dummy default value
-      'bio': bio ?? 'New user', // Dummy default value
-      'gender': gender ?? 'prefer_not_to_say', // Dummy default value
-      'location': location ?? 'Unknown', // Dummy default value
-      'phone_number': phoneNumber ?? '+1234567890', // Dummy default value
-      'google_token': googleToken ?? '',
-    };
+    final Map<String, dynamic> data = {};
+
+    // Only include fields that are provided
+    if (username != null) data['username'] = username;
+    if (dateOfBirth != null) data['date_of_birth'] = dateOfBirth;
+    if (inviteCode != null) data['invite_code'] = inviteCode;
+    if (firstName != null) data['first_name'] = firstName;
+    if (lastName != null) data['last_name'] = lastName;
+    if (bio != null) data['bio'] = bio;
+    if (gender != null) data['gender'] = gender;
+    if (location != null) data['location'] = location;
+    if (phoneNumber != null) data['phone_number'] = phoneNumber;
+    if (googleToken != null) data['google_token'] = googleToken;
+
+    return data;
   }
 }

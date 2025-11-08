@@ -21,15 +21,11 @@ class AuthService {
   /// POST /auth/authenticate
   Future<AuthResponse> authenticate(AuthRequest request) async {
     try {
-      // TODO: Commented out for development - uncomment when backend is ready
-      // final response = await _apiClient.post<Map<String, dynamic>>(
-      //   '/auth/authenticate',
-      //   data: request.toJson(),
-      // );
-      // return AuthResponse.fromJson(response);
-
-      // Temporary mock response for development
-      throw Exception('API call commented out for development');
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        '/auth/authenticate',
+        data: request.toJson(),
+      );
+      return AuthResponse.fromJson(response);
     } catch (e) {
       rethrow;
     }

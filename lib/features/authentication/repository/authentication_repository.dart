@@ -30,7 +30,7 @@ class AuthenticationRepository {
   /// Authenticate user with username and optional fields
   /// Calls the /auth/authenticate endpoint
   Future<AuthResponse> authenticate({
-    required String username,
+    String? username,
     String? dateOfBirth,
     String? inviteCode,
     String? firstName,
@@ -47,9 +47,13 @@ class AuthenticationRepository {
       if (finalGoogleToken == null) {
         finalGoogleToken = await getGoogleIdToken();
         if (finalGoogleToken != null) {
-          debugPrint('${Constants.tag} [AuthenticationRepository] 🔑 Found saved Google ID token: ${finalGoogleToken.substring(0, 20)}...');
+          debugPrint(
+            '${Constants.tag} [AuthenticationRepository] 🔑 Found saved Google ID token: ${finalGoogleToken.substring(0, 20)}...',
+          );
         } else {
-          debugPrint('${Constants.tag} [AuthenticationRepository] ⚠️ No Google ID token found in storage');
+          debugPrint(
+            '${Constants.tag} [AuthenticationRepository] ⚠️ No Google ID token found in storage',
+          );
         }
       }
 
@@ -66,38 +70,60 @@ class AuthenticationRepository {
         googleToken: finalGoogleToken,
       );
 
-      debugPrint('${Constants.tag} [AuthenticationRepository] 🔄 Calling API service...');
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository] 🔄 Calling API service...',
+      );
       final response = await _authService.authenticate(request);
 
-      debugPrint('${Constants.tag} [AuthenticationRepository] 📦 Response received');
-      debugPrint('${Constants.tag} [AuthenticationRepository] Success: ${response.success}');
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository] 📦 Response received',
+      );
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository] Success: ${response.success}',
+      );
 
       // Check if authentication was successful
       if (!response.success) {
-        debugPrint('${Constants.tag} [AuthenticationRepository] ❌ API returned success=false');
+        debugPrint(
+          '${Constants.tag} [AuthenticationRepository] ❌ API returned success=false',
+        );
         throw Exception('Authentication failed: API returned success=false');
       }
 
-      debugPrint('${Constants.tag} [AuthenticationRepository] 💾 Saving auth token...');
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository] 💾 Saving auth token...',
+      );
       // Store authentication token
       await _saveAuthToken(response.data.token);
 
-      debugPrint('${Constants.tag} [AuthenticationRepository] 💾 Saving user data...');
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository] 💾 Saving user data...',
+      );
       // Store user data
       await _saveUserData(response.data.user);
 
-      debugPrint('${Constants.tag} [AuthenticationRepository] ✅ Marking user as logged in...');
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository] ✅ Marking user as logged in...',
+      );
       // Mark as logged in
       await setIsLogin(true);
       await setIsExistAccount(true);
 
-      debugPrint('${Constants.tag} [AuthenticationRepository] ✅ Authentication complete! User: ${response.data.user.username}');
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository] ✅ Authentication complete! User: ${response.data.user.username}',
+      );
 
       return response;
     } catch (error, stackTrace) {
-      debugPrint('${Constants.tag} [AuthenticationRepository] ❌❌❌ EXCEPTION CAUGHT ❌❌❌');
-      debugPrint('${Constants.tag} [AuthenticationRepository] Error Type: ${error.runtimeType}');
-      debugPrint('${Constants.tag} [AuthenticationRepository] Error Details: $error');
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository] ❌❌❌ EXCEPTION CAUGHT ❌❌❌',
+      );
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository] Error Type: ${error.runtimeType}',
+      );
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository] Error Details: $error',
+      );
       debugPrint('${Constants.tag} [AuthenticationRepository] Stack Trace:');
       debugPrint('$stackTrace');
       rethrow;
@@ -207,15 +233,67 @@ class AuthenticationRepository {
         '${Constants.tag} [AuthenticationRepository.signInWithGoogle] Google ID token saved: ${idToken.substring(0, 20)}...',
       );
 
-      // TODO: Send the ID token to your own backend for verification
-      // For now, return a mock response
+      // Extract first name and last name from display name
+      final displayName = googleUser.displayName ?? '';
+      final nameParts = displayName.split(' ');
+      final firstName = nameParts.isNotEmpty ? nameParts.first : '';
+      final lastName = nameParts.length > 1
+          ? nameParts.sublist(1).join(' ')
+          : '';
+
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository.signInWithGoogle] 🚀 Calling authenticate API...',
+      );
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository.signInWithGoogle] First Name: $firstName',
+      );
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository.signInWithGoogle] Last Name: $lastName',
+      );
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository.signInWithGoogle] Google Token: ${idToken.substring(0, 20)}...',
+      );
+
+      // Call the authenticate API with first_name, last_name, and google_token
+      final authResponse = await authenticate(
+        firstName: firstName,
+        lastName: lastName,
+        googleToken: idToken,
+      );
+
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository.signInWithGoogle] ✅ API Response received!',
+      );
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository.signInWithGoogle] Success: ${authResponse.success}',
+      );
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository.signInWithGoogle] Token: ${authResponse.data.token}',
+      );
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository.signInWithGoogle] User JSON: ${authResponse.data.user.toJson()}',
+      );
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository.signInWithGoogle] User ID: ${authResponse.data.user.id}',
+      );
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository.signInWithGoogle] Username: ${authResponse.data.user.username}',
+      );
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository.signInWithGoogle] Email: ${authResponse.data.user.email}',
+      );
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository.signInWithGoogle] Request ID: ${authResponse.meta.requestId}',
+      );
+
+      // Return the response in the expected format
       return {
         'user': {
-          'id': googleUser.id,
-          'email': googleUser.email,
+          'id': authResponse.data.user.id,
+          'email': authResponse.data.user.email,
           'name': googleUser.displayName,
           'avatar_url': googleUser.photoUrl,
-          'created_at': DateTime.now().toIso8601String(),
+          'created_at': authResponse.data.user.createdAt,
         },
       };
     } catch (error, stackTrace) {
