@@ -3,6 +3,7 @@ enum OnboardingStep {
   inviteCode,
   birthday,
   username,
+  profilePicture,
   completed,
 }
 
@@ -18,6 +19,7 @@ class OnboardingState {
   final String inviteCode;
   final String birthday;
   final String username;
+  final String? profilePicturePath;
   final AccountType? selectedAccountType;
   final bool isLoading;
   final String? error;
@@ -28,6 +30,7 @@ class OnboardingState {
     this.inviteCode = '',
     this.birthday = '',
     this.username = '',
+    this.profilePicturePath,
     this.selectedAccountType,
     this.isLoading = false,
     this.error,
@@ -39,6 +42,7 @@ class OnboardingState {
     String? inviteCode,
     String? birthday,
     String? username,
+    Object? profilePicturePath = _undefined,
     AccountType? selectedAccountType,
     bool? isLoading,
     Object? error = _undefined,
@@ -49,6 +53,9 @@ class OnboardingState {
       inviteCode: inviteCode ?? this.inviteCode,
       birthday: birthday ?? this.birthday,
       username: username ?? this.username,
+      profilePicturePath: profilePicturePath == _undefined
+          ? this.profilePicturePath
+          : profilePicturePath as String?,
       selectedAccountType: selectedAccountType ?? this.selectedAccountType,
       isLoading: isLoading ?? this.isLoading,
       error: error == _undefined ? this.error : error as String?,

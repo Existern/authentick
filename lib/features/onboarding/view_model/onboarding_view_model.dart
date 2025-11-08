@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../constants/constants.dart';
-import '../../authentication/repository/authentication_repository.dart';
+// import '../../authentication/repository/authentication_repository.dart'; // Commented out for development
 import '../model/onboarding_state.dart';
 
 part 'onboarding_view_model.g.dart';
@@ -94,55 +94,79 @@ class OnboardingViewModel extends _$OnboardingViewModel {
     // Set loading state
     state = currentState.copyWith(isLoading: true, error: null);
 
-    try {
-      // Call the authentication API
-      final authRepository = ref.read(authenticationRepositoryProvider);
+    // TODO: Commented out for development - uncomment when backend is ready
+    // try {
+    //   // Call the authentication API
+    //   final authRepository = ref.read(authenticationRepositoryProvider);
 
-      debugPrint('${Constants.tag} ========================================');
-      debugPrint('${Constants.tag} [OnboardingViewModel] 🚀 Starting Authentication...');
-      debugPrint('${Constants.tag} Username: ${currentState.username}');
-      debugPrint('${Constants.tag} Birthday: ${currentState.birthday.isEmpty ? "NOT PROVIDED" : currentState.birthday}');
-      debugPrint('${Constants.tag} InviteCode: ${currentState.inviteCode.isEmpty ? "NOT PROVIDED" : currentState.inviteCode}');
-      debugPrint('${Constants.tag} ========================================');
+    //   debugPrint('${Constants.tag} ========================================');
+    //   debugPrint('${Constants.tag} [OnboardingViewModel] 🚀 Starting Authentication...');
+    //   debugPrint('${Constants.tag} Username: ${currentState.username}');
+    //   debugPrint('${Constants.tag} Birthday: ${currentState.birthday.isEmpty ? "NOT PROVIDED" : currentState.birthday}');
+    //   debugPrint('${Constants.tag} InviteCode: ${currentState.inviteCode.isEmpty ? "NOT PROVIDED" : currentState.inviteCode}');
+    //   debugPrint('${Constants.tag} ========================================');
 
-      final response = await authRepository.authenticate(
-        username: currentState.username,
-        dateOfBirth: currentState.birthday.isEmpty ? null : currentState.birthday,
-        inviteCode: currentState.inviteCode.isEmpty ? null : currentState.inviteCode,
-      );
+    //   final response = await authRepository.authenticate(
+    //     username: currentState.username,
+    //     dateOfBirth: currentState.birthday.isEmpty ? null : currentState.birthday,
+    //     inviteCode: currentState.inviteCode.isEmpty ? null : currentState.inviteCode,
+    //   );
 
-      debugPrint('${Constants.tag} ========================================');
-      debugPrint('${Constants.tag} [OnboardingViewModel] ✅ Authentication successful!');
-      debugPrint('${Constants.tag} User ID: ${response.data.user.id}');
-      debugPrint('${Constants.tag} Username: ${response.data.user.username}');
-      debugPrint('${Constants.tag} Token received: ${response.data.token.substring(0, 20)}...');
-      debugPrint('${Constants.tag} ========================================');
+    //   debugPrint('${Constants.tag} ========================================');
+    //   debugPrint('${Constants.tag} [OnboardingViewModel] ✅ Authentication successful!');
+    //   debugPrint('${Constants.tag} User ID: ${response.data.user.id}');
+    //   debugPrint('${Constants.tag} Username: ${response.data.user.username}');
+    //   debugPrint('${Constants.tag} Token received: ${response.data.token.substring(0, 20)}...');
+    //   debugPrint('${Constants.tag} ========================================');
 
-      // Navigate to completed step
-      state = currentState.copyWith(
-        currentStep: OnboardingStep.completed,
-        isLoading: false,
-      );
-    } catch (error, stackTrace) {
-      debugPrint('${Constants.tag} ========================================');
-      debugPrint('${Constants.tag} [OnboardingViewModel] ❌ Authentication FAILED!');
-      debugPrint('${Constants.tag} Error Type: ${error.runtimeType}');
-      debugPrint('${Constants.tag} Error Message: $error');
-      debugPrint('${Constants.tag} Stack Trace:');
-      debugPrint('$stackTrace');
-      debugPrint('${Constants.tag} ========================================');
+    //   // Navigate to profile picture step
+    //   state = currentState.copyWith(
+    //     currentStep: OnboardingStep.profilePicture,
+    //     isLoading: false,
+    //   );
+    // } catch (error, stackTrace) {
+    //   debugPrint('${Constants.tag} ========================================');
+    //   debugPrint('${Constants.tag} [OnboardingViewModel] ❌ Authentication FAILED!');
+    //   debugPrint('${Constants.tag} Error Type: ${error.runtimeType}');
+    //   debugPrint('${Constants.tag} Error Message: $error');
+    //   debugPrint('${Constants.tag} Stack Trace:');
+    //   debugPrint('$stackTrace');
+    //   debugPrint('${Constants.tag} ========================================');
 
-      // Show error message
-      state = currentState.copyWith(
-        isLoading: false,
-        error: 'Failed to authenticate. Please try again.',
-      );
-    }
+    //   // Show error message
+    //   state = currentState.copyWith(
+    //     isLoading: false,
+    //     error: 'Failed to authenticate. Please try again.',
+    //   );
+    // }
+
+    // Temporary: Skip API call and go directly to profile picture
+    debugPrint('${Constants.tag} [OnboardingViewModel] ⚠️ Skipping API call (development mode)');
+    await Future.delayed(const Duration(milliseconds: 500)); // Simulate network delay
+
+    state = currentState.copyWith(
+      currentStep: OnboardingStep.profilePicture,
+      isLoading: false,
+    );
   }
 
   void completeOnboarding() {
     final currentState = state;
     state = currentState.copyWith(currentStep: OnboardingStep.completed);
+  }
+
+  void snapProfilePicture() {
+    // TODO: Implement camera/image picker
+    // For now, just skip to completed
+    state = state.copyWith(currentStep: OnboardingStep.completed);
+  }
+
+  void skipProfilePicture() {
+    state = state.copyWith(currentStep: OnboardingStep.completed);
+  }
+
+  void updateProfilePicture(String? path) {
+    state = state.copyWith(profilePicturePath: path);
   }
 
   void goBack() {
@@ -156,6 +180,9 @@ class OnboardingViewModel extends _$OnboardingViewModel {
         break;
       case OnboardingStep.username:
         state = currentState.copyWith(currentStep: OnboardingStep.birthday);
+        break;
+      case OnboardingStep.profilePicture:
+        state = currentState.copyWith(currentStep: OnboardingStep.username);
         break;
       default:
         break;
