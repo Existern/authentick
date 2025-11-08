@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:flutter_mvvm_riverpod/screens/settings/settingspage.dart';
 
 class MyProfile extends StatelessWidget {
   const MyProfile({super.key});
@@ -38,7 +39,17 @@ class MyProfile extends StatelessWidget {
                     height: 30,
                     fit: BoxFit.cover,
                   ),
-                  const Icon(Icons.settings_outlined, size: 28),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SettingsPage(),
+                        ),
+                      );
+                    },
+                    child: const Icon(Icons.settings_outlined, size: 28),
+                  ),
                 ],
               ),
             ),

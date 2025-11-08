@@ -13,13 +13,13 @@ class BorderedListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      
+
       decoration: BoxDecoration(
-        
+
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: Colors.black,
-          width: 1, 
+          width: 1,
         ),
       ),
       child: ListTile(

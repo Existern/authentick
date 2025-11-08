@@ -1,8 +1,8 @@
 enum OnboardingStep {
   intro,
   inviteCode,
+  birthday,
   username,
-  googleAuth,
   completed,
 }
 
@@ -16,6 +16,7 @@ class OnboardingState {
   final OnboardingStep currentStep;
   final int introPageIndex;
   final String inviteCode;
+  final String birthday;
   final String username;
   final AccountType? selectedAccountType;
   final bool isLoading;
@@ -25,6 +26,7 @@ class OnboardingState {
     this.currentStep = OnboardingStep.intro,
     this.introPageIndex = 0,
     this.inviteCode = '',
+    this.birthday = '',
     this.username = '',
     this.selectedAccountType,
     this.isLoading = false,
@@ -35,6 +37,7 @@ class OnboardingState {
     OnboardingStep? currentStep,
     int? introPageIndex,
     String? inviteCode,
+    String? birthday,
     String? username,
     AccountType? selectedAccountType,
     bool? isLoading,
@@ -44,6 +47,7 @@ class OnboardingState {
       currentStep: currentStep ?? this.currentStep,
       introPageIndex: introPageIndex ?? this.introPageIndex,
       inviteCode: inviteCode ?? this.inviteCode,
+      birthday: birthday ?? this.birthday,
       username: username ?? this.username,
       selectedAccountType: selectedAccountType ?? this.selectedAccountType,
       isLoading: isLoading ?? this.isLoading,

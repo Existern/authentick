@@ -49,11 +49,31 @@ class OnboardingViewModel extends _$OnboardingViewModel {
       return;
     }
 
-    state = currentState.copyWith(currentStep: OnboardingStep.username);
+    state = currentState.copyWith(currentStep: OnboardingStep.birthday);
   }
 
   void skipInviteCode() {
-    state = state.copyWith(currentStep: OnboardingStep.username);
+    state = state.copyWith(currentStep: OnboardingStep.birthday);
+  }
+
+  void updateBirthday(String birthday) {
+    state = state.copyWith(birthday: birthday, error: null);
+  }
+
+  void submitBirthday() {
+    final currentState = state;
+    if (currentState.birthday.isEmpty) {
+      state = currentState.copyWith(error: 'Please enter your birthday');
+      return;
+    }
+
+    // Basic validation for DD MM YYYY format (8 digits)
+    if (currentState.birthday.length < 8) {
+      state = currentState.copyWith(error: 'Please enter a valid date');
+      return;
+    }
+
+    state = currentState.copyWith(currentStep: OnboardingStep.username);
   }
 
   void updateUsername(String username) {
@@ -67,7 +87,7 @@ class OnboardingViewModel extends _$OnboardingViewModel {
       return;
     }
 
-    state = currentState.copyWith(currentStep: OnboardingStep.googleAuth);
+    state = currentState.copyWith(currentStep: OnboardingStep.completed);
   }
 
   void completeOnboarding() {
@@ -81,11 +101,11 @@ class OnboardingViewModel extends _$OnboardingViewModel {
       case OnboardingStep.inviteCode:
         state = currentState.copyWith(currentStep: OnboardingStep.intro);
         break;
-      case OnboardingStep.username:
+      case OnboardingStep.birthday:
         state = currentState.copyWith(currentStep: OnboardingStep.inviteCode);
         break;
-      case OnboardingStep.googleAuth:
-        state = currentState.copyWith(currentStep: OnboardingStep.username);
+      case OnboardingStep.username:
+        state = currentState.copyWith(currentStep: OnboardingStep.birthday);
         break;
       default:
         break;

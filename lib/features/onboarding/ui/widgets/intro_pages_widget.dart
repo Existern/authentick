@@ -1,5 +1,7 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_theme.dart';
@@ -35,56 +37,102 @@ class _IntroPagesWidgetState extends ConsumerState<IntroPagesWidget> {
     
     const totalPages = 3;
 
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    // Calculate ellipse position based on current page
+    final currentPage = state.introPageIndex;
+    final progress = currentPage / (totalPages - 1);
+
+    // Top ellipse moves from left to right
+    final topEllipseLeft = -100 + (screenWidth + 200 - 200) * progress;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F7FF),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-              child: SizedBox(
-                height: 40,
-                child: Stack(
-                  children: [
-                    // Centered Logo
-                    Align(
-                      alignment: Alignment.center,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'authentick',
-                            style: AppTheme.title18.copyWith(
-                              color: AppColors.mono100,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          const Icon(
-                            Icons.check_circle,
-                            color: AppColors.blueberry100,
-                            size: 22,
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Skip Button aligned to the right
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: viewModel.skipIntro,
-                        child: Text(
-                          'Skip',
-                          style: AppTheme.label14.copyWith(
-                            color: AppColors.mono80,
-                          ),
-                        ),
-                      ),
-                    ),
+      body: Stack(
+        children: [
+          // Top Ellipse
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            top: 80,
+            left: topEllipseLeft,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFFE4CAFF).withOpacity(0.85),
+                    const Color(0xFFE4CAFF).withOpacity(0.65),
+                    const Color(0xFFE4CAFF).withOpacity(0.35),
+                    const Color(0xFFE4CAFF).withOpacity(0.0),
                   ],
+                  stops: const [0.0, 0.4, 0.7, 1.0],
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFE4CAFF).withOpacity(0.5),
+                    blurRadius: 80,
+                    spreadRadius: 20,
+                  ),
+                ],
               ),
             ),
+          ),
+
+          // Main Content
+          SafeArea(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                  child: SizedBox(
+                    height: 40,
+                    child: Stack(
+                      children: [
+                        // Centered Logo
+                        Align(
+                          alignment: Alignment.center,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text(
+                                'authentick',
+                                style: TextStyle(
+                                  fontFamily: 'Outfit',
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF1C1C28),
+                                  letterSpacing: -0.44, // -2% of 22px
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              SvgPicture.asset(
+                                'assets/images/CheckFat.svg',
+                                width: 22,
+                                height: 22,
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Skip Button aligned to the right
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: viewModel.skipIntro,
+                            child: Text(
+                              'Skip',
+                              style: AppTheme.label14.copyWith(
+                                color: AppColors.mono80,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
             
             Expanded(
               child: PageView(
@@ -95,7 +143,7 @@ class _IntroPagesWidgetState extends ConsumerState<IntroPagesWidget> {
                 children: const [
                   IntroPage(
                     title: 'See Unfiltered Moments',
-                    subtitle: 'Capture it. Don\'t curate it. Only share moments captured live through the app. No uploads. No edits.',
+                    subtitle: 'Capture it. Don\'t curate it. Only share moments captured live through the app. \nNo uploads. No edits.',
                     imagePath: 'assets/images/onboarding_moments.png',
                   ),
                   IntroPage(
@@ -125,7 +173,7 @@ class _IntroPagesWidgetState extends ConsumerState<IntroPagesWidget> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: state.introPageIndex == index
-                        ? AppColors.blueberry100
+                        ? Colors.black
                         : AppColors.mono40,
                   ),
                 ),
@@ -143,7 +191,7 @@ class _IntroPagesWidgetState extends ConsumerState<IntroPagesWidget> {
                     ? ElevatedButton(
                         onPressed: viewModel.nextIntroPage,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF6D28D9),
+                          backgroundColor: const Color(0xFF4300FF),
                           foregroundColor: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
@@ -152,7 +200,11 @@ class _IntroPagesWidgetState extends ConsumerState<IntroPagesWidget> {
                         ),
                         child: const Text(
                           'Try it out',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       )
                     : OutlinedButton(
@@ -163,9 +215,9 @@ class _IntroPagesWidgetState extends ConsumerState<IntroPagesWidget> {
                           );
                         },
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF6D28D9),
+                          foregroundColor: const Color(0xFF4300FF),
                           side: const BorderSide(
-                            color: Color(0xFF6D28D9),
+                            color: Color(0xFF4300FF),
                             width: 1.5,
                           ),
                           shape: RoundedRectangleBorder(
@@ -174,15 +226,21 @@ class _IntroPagesWidgetState extends ConsumerState<IntroPagesWidget> {
                         ),
                         child: const Text(
                           'Continue',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
               ),
             ),
-            
-            const SizedBox(height: 24),
-          ],
-        ),
+
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
