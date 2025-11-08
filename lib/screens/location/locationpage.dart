@@ -38,7 +38,7 @@ class Locationpage extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    '...Coming soon...',
+                    '⌛ Coming soon...',
                     style: TextStyle(
                       fontSize: 28, // adjust for screen size
                       fontWeight: FontWeight.bold,

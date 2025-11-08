@@ -40,11 +40,9 @@ class _BottomNavScreenState extends State<BottomNavScreen> {
         alignment: Alignment.bottomCenter,
         clipBehavior: Clip.none,
         children: [
-         
           Container(
-            height: 70,
             decoration: const BoxDecoration(
-              color: Colors.white, 
+              color: Colors.white,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(20),
                 topRight: Radius.circular(20),
@@ -57,33 +55,38 @@ class _BottomNavScreenState extends State<BottomNavScreen> {
                 ),
               ],
             ),
-            child: BottomNavigationBar(
-              currentIndex: currentIndex,
-              type: BottomNavigationBarType.fixed,
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              showSelectedLabels: false,
-              showUnselectedLabels: false,
-              selectedItemColor: const Color(0xFF3620B3),
-              unselectedItemColor: Colors.grey,
-              onTap: (index) {
-                setState(() {
-                  currentIndex = index;
-                });
-              },
-              items: const [
-                BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
-                BottomNavigationBarItem(icon: Icon(Icons.location_on), label: ''),
-                BottomNavigationBarItem(icon: SizedBox.shrink(), label: ''), 
-                BottomNavigationBarItem(icon: Icon(Icons.people), label: ''),
-                BottomNavigationBarItem(icon: Icon(Icons.person), label: ''),
-              ],
+            child: ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+              child: BottomNavigationBar(
+                currentIndex: currentIndex,
+                type: BottomNavigationBarType.fixed,
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                showSelectedLabels: false,
+                showUnselectedLabels: false,
+                selectedItemColor: const Color(0xFF3620B3),
+                unselectedItemColor: Colors.grey,
+                onTap: (index) {
+                  setState(() {
+                    currentIndex = index;
+                  });
+                },
+                items: const [
+                  BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
+                  BottomNavigationBarItem(icon: Icon(Icons.location_on), label: ''),
+                  BottomNavigationBarItem(icon: SizedBox.shrink(), label: ''),
+                  BottomNavigationBarItem(icon: Icon(Icons.people), label: ''),
+                  BottomNavigationBarItem(icon: Icon(Icons.person), label: ''),
+                ],
+              ),
             ),
           ),
 
-          
           Positioned(
-            top: -25, 
+            top: -25,
             child: GestureDetector(
               onTap: () {
                 setState(() {
