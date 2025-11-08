@@ -96,11 +96,7 @@ class OnboardingFlowScreen extends ConsumerWidget {
         return const FriendsListScreen();
       case OnboardingStep.completed:
         // Show loading indicator while navigating
-        return const Scaffold(
-          body: Center(
-            child: CircularProgressIndicator(),
-          ),
-        );
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
   }
 }

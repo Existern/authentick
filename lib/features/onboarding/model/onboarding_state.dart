@@ -10,11 +10,7 @@ enum OnboardingStep {
   completed,
 }
 
-enum AccountType {
-  personal,
-  business,
-  creator,
-}
+enum AccountType { personal, business, creator }
 
 class OnboardingState {
   final OnboardingStep currentStep;
@@ -65,7 +61,8 @@ class OnboardingState {
       selectedAccountType: selectedAccountType ?? this.selectedAccountType,
       isLoading: isLoading ?? this.isLoading,
       error: error == _undefined ? this.error : error as String?,
-      hasContactsPermission: hasContactsPermission ?? this.hasContactsPermission,
+      hasContactsPermission:
+          hasContactsPermission ?? this.hasContactsPermission,
     );
   }
 }

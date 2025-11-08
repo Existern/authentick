@@ -144,7 +144,10 @@ class FriendsListScreen extends ConsumerWidget {
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFE91E63),
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.white, width: 2),
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 2,
+                                  ),
                                 ),
                                 child: const Center(
                                   child: Text(
@@ -276,7 +279,11 @@ class FriendsListScreen extends ConsumerWidget {
 
             // Invite friends button
             Padding(
-              padding: const EdgeInsets.only(left: 32.0, right: 32.0, bottom: 32.0),
+              padding: const EdgeInsets.only(
+                left: 32.0,
+                right: 32.0,
+                bottom: 32.0,
+              ),
               child: SizedBox(
                 width: double.infinity,
                 height: 56,

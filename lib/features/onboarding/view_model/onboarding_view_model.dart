@@ -142,8 +142,12 @@ class OnboardingViewModel extends _$OnboardingViewModel {
     // }
 
     // Temporary: Skip API call and go directly to profile picture
-    debugPrint('${Constants.tag} [OnboardingViewModel] ⚠️ Skipping API call (development mode)');
-    await Future.delayed(const Duration(milliseconds: 500)); // Simulate network delay
+    debugPrint(
+      '${Constants.tag} [OnboardingViewModel] ⚠️ Skipping API call (development mode)',
+    );
+    await Future.delayed(
+      const Duration(milliseconds: 500),
+    ); // Simulate network delay
 
     state = currentState.copyWith(
       currentStep: OnboardingStep.profilePicture,
@@ -172,11 +176,12 @@ class OnboardingViewModel extends _$OnboardingViewModel {
   Future<void> allowContactsPermission() async {
     // Set loading state
     state = state.copyWith(isLoading: true);
-    
+
     try {
       // Request contacts permission from the system
-      final granted = await ContactsPermissionService.requestContactsPermission();
-      
+      final granted =
+          await ContactsPermissionService.requestContactsPermission();
+
       if (granted) {
         // Permission granted, show friends list
         state = state.copyWith(
@@ -193,7 +198,9 @@ class OnboardingViewModel extends _$OnboardingViewModel {
         );
       }
     } catch (error) {
-      debugPrint('${Constants.tag} [OnboardingViewModel] Error requesting contacts permission: $error');
+      debugPrint(
+        '${Constants.tag} [OnboardingViewModel] Error requesting contacts permission: $error',
+      );
       // On error, complete onboarding
       state = state.copyWith(
         currentStep: OnboardingStep.completed,
@@ -241,13 +248,19 @@ class OnboardingViewModel extends _$OnboardingViewModel {
         state = currentState.copyWith(currentStep: OnboardingStep.username);
         break;
       case OnboardingStep.connectFriends:
-        state = currentState.copyWith(currentStep: OnboardingStep.profilePicture);
+        state = currentState.copyWith(
+          currentStep: OnboardingStep.profilePicture,
+        );
         break;
       case OnboardingStep.contactsPermission:
-        state = currentState.copyWith(currentStep: OnboardingStep.connectFriends);
+        state = currentState.copyWith(
+          currentStep: OnboardingStep.connectFriends,
+        );
         break;
       case OnboardingStep.friendsList:
-        state = currentState.copyWith(currentStep: OnboardingStep.contactsPermission);
+        state = currentState.copyWith(
+          currentStep: OnboardingStep.contactsPermission,
+        );
         break;
       default:
         break;

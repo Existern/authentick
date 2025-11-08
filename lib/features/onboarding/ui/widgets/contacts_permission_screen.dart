@@ -10,7 +10,7 @@ class ContactsPermissionScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(onboardingViewModelProvider);
-    
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -100,22 +100,27 @@ class ContactsPermissionScreen extends ConsumerWidget {
                           text: 'contacts',
                           style: TextStyle(fontWeight: FontWeight.w600),
                         ),
-                        TextSpan(text: ' to help you connect with your friends on Authentick.'),
+                        TextSpan(
+                          text:
+                              ' to help you connect with your friends on Authentick.',
+                        ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 24),
-                  
+
                   // Allow button
                   SizedBox(
                     width: double.infinity,
                     height: 48,
                     child: ElevatedButton(
-                      onPressed: state.isLoading ? null : () {
-                        ref
-                            .read(onboardingViewModelProvider.notifier)
-                            .allowContactsPermission();
-                      },
+                      onPressed: state.isLoading
+                          ? null
+                          : () {
+                              ref
+                                  .read(onboardingViewModelProvider.notifier)
+                                  .allowContactsPermission();
+                            },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF3620B3),
                         shape: RoundedRectangleBorder(
@@ -123,38 +128,40 @@ class ContactsPermissionScreen extends ConsumerWidget {
                         ),
                         elevation: 0,
                       ),
-                      child: state.isLoading 
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
+                      child: state.isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              'Allow',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
                             ),
-                          )
-                        : const Text(
-                            'Allow',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 12),
-                  
+
                   // Don't Allow button
                   SizedBox(
                     width: double.infinity,
                     height: 48,
                     child: TextButton(
-                      onPressed: state.isLoading ? null : () {
-                        ref
-                            .read(onboardingViewModelProvider.notifier)
-                            .skipContactsPermission();
-                      },
+                      onPressed: state.isLoading
+                          ? null
+                          : () {
+                              ref
+                                  .read(onboardingViewModelProvider.notifier)
+                                  .skipContactsPermission();
+                            },
                       style: TextButton.styleFrom(
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -183,16 +190,21 @@ class ContactsPermissionScreen extends ConsumerWidget {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: state.isLoading ? null : () {
-                    ref
-                        .read(onboardingViewModelProvider.notifier)
-                        .skipContactsPermission();
-                  },
+                  onPressed: state.isLoading
+                      ? null
+                      : () {
+                          ref
+                              .read(onboardingViewModelProvider.notifier)
+                              .skipContactsPermission();
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.transparent,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
-                      side: const BorderSide(color: Color(0xFF3620B3), width: 2),
+                      side: const BorderSide(
+                        color: Color(0xFF3620B3),
+                        width: 2,
+                      ),
                     ),
                     elevation: 0,
                   ),
