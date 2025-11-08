@@ -4,6 +4,7 @@ enum OnboardingStep {
   birthday,
   username,
   profilePicture,
+  connectFriends,
   completed,
 }
 

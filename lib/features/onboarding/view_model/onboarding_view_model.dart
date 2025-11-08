@@ -156,12 +156,20 @@ class OnboardingViewModel extends _$OnboardingViewModel {
   }
 
   void snapProfilePicture() {
-    // TODO: Implement camera/image picker
-    // For now, just skip to completed
-    state = state.copyWith(currentStep: OnboardingStep.completed);
+    state = state.copyWith(currentStep: OnboardingStep.connectFriends);
   }
 
   void skipProfilePicture() {
+    state = state.copyWith(currentStep: OnboardingStep.connectFriends);
+  }
+
+  void findFriends() {
+    // TODO: Implement friend finding functionality
+    // For now, just complete onboarding
+    state = state.copyWith(currentStep: OnboardingStep.completed);
+  }
+
+  void skipConnectFriends() {
     state = state.copyWith(currentStep: OnboardingStep.completed);
   }
 
@@ -183,6 +191,9 @@ class OnboardingViewModel extends _$OnboardingViewModel {
         break;
       case OnboardingStep.profilePicture:
         state = currentState.copyWith(currentStep: OnboardingStep.username);
+        break;
+      case OnboardingStep.connectFriends:
+        state = currentState.copyWith(currentStep: OnboardingStep.profilePicture);
         break;
       default:
         break;

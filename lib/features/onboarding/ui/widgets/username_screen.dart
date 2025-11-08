@@ -62,20 +62,27 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
 
   Future<void> _validateAndSubmit() async {
     final username = _usernameController.text;
-    final result = await validateUsername(username);
+    // TODO: Commented out for development - uncomment when backend is ready
+    // final result = await validateUsername(username);
 
-    if (result['success']) {
-      // Clear error and proceed
-      setState(() {
-        _errorMessage = null;
-      });
-      ref.read(onboardingViewModelProvider.notifier).submitUsername();
-    } else {
-      // Show error
-      setState(() {
-        _errorMessage = result['message'];
-      });
-    }
+    // if (result['success']) {
+    //   // Clear error and proceed
+    //   setState(() {
+    //     _errorMessage = null;
+    //   });
+    //   ref.read(onboardingViewModelProvider.notifier).submitUsername();
+    // } else {
+    //   // Show error
+    //   setState(() {
+    //     _errorMessage = result['message'];
+    //   });
+    // }
+
+    // Temporary: Skip validation and proceed directly
+    setState(() {
+      _errorMessage = null;
+    });
+    ref.read(onboardingViewModelProvider.notifier).submitUsername();
   }
 
   @override

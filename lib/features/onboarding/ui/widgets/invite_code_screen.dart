@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../../extensions/build_context_extension.dart';
 import '../../../../theme/app_colors.dart';
@@ -188,28 +189,15 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
               ),
               child: Column(
                 children: [
-                  // Header: Centered logo with check icon
+                  // Header: Centered SVG logo
                   SizedBox(
                     height: 40,
                     child: Align(
                       alignment: Alignment.center,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'authentick',
-                            style: AppTheme.title18.copyWith(
-                              color: AppColors.mono100,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          const Icon(
-                            Icons.check_circle,
-                            color: AppColors.blueberry100,
-                            size: 22,
-                          ),
-                        ],
+                      child: SvgPicture.asset(
+                        'assets/images/authentick_logo.svg',
+                        width: 30,
+                        height: 30,
                       ),
                     ),
                   ),
