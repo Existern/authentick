@@ -15,6 +15,8 @@ import 'widgets/birthday_screen.dart';
 import 'widgets/username_screen.dart';
 import 'widgets/profile_picture_screen.dart';
 import 'widgets/connect_friends_screen.dart';
+import 'widgets/contacts_permission_screen.dart';
+import 'widgets/friends_list_screen.dart';
 
 class OnboardingFlowScreen extends ConsumerWidget {
   const OnboardingFlowScreen({super.key});
@@ -88,6 +90,10 @@ class OnboardingFlowScreen extends ConsumerWidget {
         return const ProfilePictureScreen();
       case OnboardingStep.connectFriends:
         return const ConnectFriendsScreen();
+      case OnboardingStep.contactsPermission:
+        return const ContactsPermissionScreen();
+      case OnboardingStep.friendsList:
+        return const FriendsListScreen();
       case OnboardingStep.completed:
         // Show loading indicator while navigating
         return const Scaffold(

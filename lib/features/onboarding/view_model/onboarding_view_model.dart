@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../constants/constants.dart';
 // import '../../authentication/repository/authentication_repository.dart'; // Commented out for development
 import '../model/onboarding_state.dart';
+import '../service/contacts_permission_service.dart';
 
 part 'onboarding_view_model.g.dart';
 
@@ -164,8 +165,55 @@ class OnboardingViewModel extends _$OnboardingViewModel {
   }
 
   void findFriends() {
-    // TODO: Implement friend finding functionality
-    // For now, just complete onboarding
+    // Navigate to contacts permission screen first
+    state = state.copyWith(currentStep: OnboardingStep.contactsPermission);
+  }
+
+  Future<void> allowContactsPermission() async {
+    // Set loading state
+    state = state.copyWith(isLoading: true);
+    
+    try {
+      // Request contacts permission from the system
+      final granted = await ContactsPermissionService.requestContactsPermission();
+      
+      if (granted) {
+        // Permission granted, show friends list
+        state = state.copyWith(
+          currentStep: OnboardingStep.friendsList,
+          hasContactsPermission: true,
+          isLoading: false,
+        );
+      } else {
+        // Permission denied, complete onboarding
+        state = state.copyWith(
+          currentStep: OnboardingStep.completed,
+          hasContactsPermission: false,
+          isLoading: false,
+        );
+      }
+    } catch (error) {
+      debugPrint('${Constants.tag} [OnboardingViewModel] Error requesting contacts permission: $error');
+      // On error, complete onboarding
+      state = state.copyWith(
+        currentStep: OnboardingStep.completed,
+        hasContactsPermission: false,
+        isLoading: false,
+        error: 'Failed to request permission',
+      );
+    }
+  }
+
+  void skipContactsPermission() {
+    // User declined contacts permission, complete onboarding
+    state = state.copyWith(
+      currentStep: OnboardingStep.completed,
+      hasContactsPermission: false,
+    );
+  }
+
+  void completeFriendsFlow() {
+    // Complete the friends flow and onboarding
     state = state.copyWith(currentStep: OnboardingStep.completed);
   }
 
@@ -194,6 +242,12 @@ class OnboardingViewModel extends _$OnboardingViewModel {
         break;
       case OnboardingStep.connectFriends:
         state = currentState.copyWith(currentStep: OnboardingStep.profilePicture);
+        break;
+      case OnboardingStep.contactsPermission:
+        state = currentState.copyWith(currentStep: OnboardingStep.connectFriends);
+        break;
+      case OnboardingStep.friendsList:
+        state = currentState.copyWith(currentStep: OnboardingStep.contactsPermission);
         break;
       default:
         break;

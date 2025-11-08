@@ -5,6 +5,8 @@ enum OnboardingStep {
   username,
   profilePicture,
   connectFriends,
+  contactsPermission,
+  friendsList,
   completed,
 }
 
@@ -24,6 +26,7 @@ class OnboardingState {
   final AccountType? selectedAccountType;
   final bool isLoading;
   final String? error;
+  final bool hasContactsPermission;
 
   const OnboardingState({
     this.currentStep = OnboardingStep.intro,
@@ -35,6 +38,7 @@ class OnboardingState {
     this.selectedAccountType,
     this.isLoading = false,
     this.error,
+    this.hasContactsPermission = false,
   });
 
   OnboardingState copyWith({
@@ -47,6 +51,7 @@ class OnboardingState {
     AccountType? selectedAccountType,
     bool? isLoading,
     Object? error = _undefined,
+    bool? hasContactsPermission,
   }) {
     return OnboardingState(
       currentStep: currentStep ?? this.currentStep,
@@ -60,6 +65,7 @@ class OnboardingState {
       selectedAccountType: selectedAccountType ?? this.selectedAccountType,
       isLoading: isLoading ?? this.isLoading,
       error: error == _undefined ? this.error : error as String?,
+      hasContactsPermission: hasContactsPermission ?? this.hasContactsPermission,
     );
   }
 }
