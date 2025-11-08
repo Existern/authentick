@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
-class PostCard extends StatelessWidget {
+class PostCard extends StatefulWidget {
   final String username;
   final String profileImage;
   final String postImage;
@@ -11,6 +12,13 @@ class PostCard extends StatelessWidget {
     required this.profileImage,
     required this.postImage,
   });
+
+  @override
+  State<PostCard> createState() => _PostCardState();
+}
+
+class _PostCardState extends State<PostCard> {
+  bool isLiked = false;
 
   @override
   Widget build(BuildContext context) {
@@ -26,16 +34,23 @@ class PostCard extends StatelessWidget {
             
               Row(
                 children: [
-                  CircleAvatar(
-                    radius: 22,
-                    backgroundImage: NetworkImage(profileImage),
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      image: DecorationImage(
+                        image: NetworkImage(widget.profileImage),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Column(
-                    crossAxisAlignment: CrossAxisAlignment.start, 
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        username,
+                        widget.username,
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
@@ -50,8 +65,12 @@ class PostCard extends StatelessWidget {
                 ],
               ),
 
-             
-              const Icon(Icons.more_vert),
+
+              SvgPicture.asset(
+                'assets/images/3dot.svg',
+                width: 24,
+                height: 24,
+              ),
             ],
           ),
         ),
@@ -60,7 +79,7 @@ class PostCard extends StatelessWidget {
         ClipRRect(
           borderRadius: BorderRadius.circular(0),
           child: Image.network(
-            postImage,
+            widget.postImage,
             width: double.infinity,
             height: 300,
             fit: BoxFit.cover,
@@ -68,14 +87,29 @@ class PostCard extends StatelessWidget {
         ),
 
         Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
-              Icon(Icons.favorite_border),
-              
-              Icon(Icons.send),
-              
+            children: [
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    isLiked = !isLiked;
+                  });
+                },
+                child: SvgPicture.asset(
+                  isLiked
+                      ? 'assets/images/liked_star.svg'
+                      : 'assets/images/star.svg',
+                  width: 24,
+                  height: 24,
+                ),
+              ),
+              SvgPicture.asset(
+                'assets/images/share.svg',
+                width: 24,
+                height: 24,
+              ),
             ],
           ),
         ),

@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
-//import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import 'constants/constants.dart';
 import 'environment/env.dart';
@@ -44,9 +43,6 @@ void main() async {
   //   FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
   //   return true;
   // };
-
-  /// Mobile ads
-  // MobileAds.instance.initialize();
 
   /// RevenueCat
   // await initPlatformState();
