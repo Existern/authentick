@@ -1,5 +1,6 @@
 // Environment variables for the app
-// Note: In production, these should be loaded from a .env file using envied package
+// These are hardcoded for development. For production, consider using the envied package
+// to generate this file from environment variables at build time.
 class Env {
   // Google Sign-In Configuration
   static const String googleClientId =
