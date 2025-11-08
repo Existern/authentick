@@ -7,6 +7,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../extensions/build_context_extension.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../profile/repository/profile_repository.dart';
 import '../../view_model/onboarding_view_model.dart';
 
 class UsernameScreen extends ConsumerStatefulWidget {
@@ -19,22 +20,7 @@ class UsernameScreen extends ConsumerStatefulWidget {
 class _UsernameScreenState extends ConsumerState<UsernameScreen> {
   final TextEditingController _usernameController = TextEditingController();
   String? _errorMessage;
-
-  // Static function to simulate API call for username validation
-  static Future<Map<String, dynamic>> validateUsername(String username) async {
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    // Test usernames that are already taken
-    final takenUsernames = ['adithkvn', 'testuser', 'admin'];
-
-    if (takenUsernames.contains(username.toLowerCase())) {
-      return {'success': false, 'message': 'Username is already taken'};
-    }
-
-    // All other usernames are available
-    return {'success': true, 'message': 'Username is available'};
-  }
+  bool _isUpdating = false;
 
   @override
   void initState() {
@@ -62,10 +48,35 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
 
   Future<void> _validateAndSubmit() async {
     final username = _usernameController.text;
+    if (username.isEmpty) return;
+
     setState(() {
+      _isUpdating = true;
       _errorMessage = null;
     });
-    ref.read(onboardingViewModelProvider.notifier).submitUsername();
+
+    try {
+      final repository = ref.read(profileRepositoryProvider);
+      await repository.updateProfile(username: username);
+
+      if (!mounted) return;
+
+      setState(() {
+        _errorMessage = null;
+        _isUpdating = false;
+      });
+
+      // Continue to next step
+      ref.read(onboardingViewModelProvider.notifier).submitUsername();
+    } catch (error) {
+      if (!mounted) return;
+
+      // Show error
+      setState(() {
+        _errorMessage = 'Username is already taken';
+        _isUpdating = false;
+      });
+    }
   }
 
   @override
@@ -258,7 +269,7 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
                     width: double.infinity,
                     height: 54,
                     child: ElevatedButton(
-                      onPressed: state.username.isNotEmpty && !state.isLoading
+                      onPressed: state.username.isNotEmpty && !_isUpdating
                           ? _validateAndSubmit
                           : null,
                       style: ElevatedButton.styleFrom(
@@ -271,7 +282,7 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
                           borderRadius: BorderRadius.circular(14.0),
                         ),
                       ),
-                      child: state.isLoading
+                      child: _isUpdating
                           ? const SizedBox(
                               height: 20,
                               width: 20,
