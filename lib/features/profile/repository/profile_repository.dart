@@ -6,6 +6,9 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../constants/constants.dart';
+import '../model/confirm_upload_request.dart';
+import '../model/presigned_upload_request.dart';
+import '../model/presigned_upload_response.dart';
 import '../model/profile.dart';
 import '../model/profile_update_request.dart';
 import '../model/profile_update_response.dart';
@@ -173,6 +176,84 @@ class ProfileRepository {
       debugPrint(
         '${Constants.tag} [ProfileRepository] Error setting premium flag: $error',
       );
+    }
+  }
+
+  /// Upload profile picture using presigned URL flow
+  /// 1. Get presigned URL
+  /// 2. Upload image to S3
+  /// 3. Confirm upload
+  Future<String> uploadProfilePicture(
+    String filePath,
+    String contentType,
+  ) async {
+    try {
+      debugPrint(
+        '${Constants.tag} [ProfileRepository] 🔄 Starting profile picture upload...',
+      );
+
+      // Step 1: Get presigned URL
+      final presignedRequest = PresignedUploadRequest(
+        contentType: contentType,
+        imageType: 'profile',
+      );
+
+      final presignedResponse =
+          await _profileService.getPresignedUploadUrl(presignedRequest);
+
+      debugPrint(
+        '${Constants.tag} [ProfileRepository] ✅ Got presigned URL',
+      );
+      debugPrint(
+        '${Constants.tag} [ProfileRepository] Image URL: ${presignedResponse.data.imageUrl}',
+      );
+
+      // Step 2: Upload to S3 using presigned URL
+      if (presignedResponse.data.presignedUrl == null) {
+        throw Exception('Presigned URL is null');
+      }
+
+      await _profileService.uploadImageToPresignedUrl(
+        presignedResponse.data.presignedUrl!,
+        filePath,
+        contentType,
+      );
+
+      debugPrint(
+        '${Constants.tag} [ProfileRepository] ✅ Image uploaded to S3',
+      );
+
+      // Step 3: Confirm upload
+      final confirmRequest = ConfirmUploadRequest(
+        imageUrl: presignedResponse.data.imageUrl,
+      );
+
+      final confirmResponse = await _profileService.confirmUpload(
+        confirmRequest,
+        'profile',
+      );
+
+      debugPrint(
+        '${Constants.tag} [ProfileRepository] ✅ Upload confirmed',
+      );
+      debugPrint(
+        '${Constants.tag} [ProfileRepository] Final Image URL: ${confirmResponse.data.imageUrl}',
+      );
+
+      return confirmResponse.data.imageUrl;
+    } catch (error, stackTrace) {
+      debugPrint(
+        '${Constants.tag} [ProfileRepository] ❌ UPLOAD FAILED ❌',
+      );
+      debugPrint(
+        '${Constants.tag} [ProfileRepository] Error Type: ${error.runtimeType}',
+      );
+      debugPrint(
+        '${Constants.tag} [ProfileRepository] Error Details: $error',
+      );
+      debugPrint('${Constants.tag} [ProfileRepository] Stack Trace:');
+      debugPrint('$stackTrace');
+      rethrow;
     }
   }
 }

@@ -1,6 +1,10 @@
+import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../common/remote/api_client.dart';
+import '../model/confirm_upload_request.dart';
+import '../model/presigned_upload_request.dart';
+import '../model/presigned_upload_response.dart';
 import '../model/profile_update_request.dart';
 import '../model/profile_update_response.dart';
 
@@ -28,6 +32,63 @@ class ProfileService {
         data: request.toJson(),
       );
       return ProfileUpdateResponse.fromJson(response);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Get presigned upload URL for image
+  /// POST /users/presigned-upload-url
+  Future<PresignedUploadResponse> getPresignedUploadUrl(
+    PresignedUploadRequest request,
+  ) async {
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        '/users/presigned-upload-url',
+        data: request.toJson(),
+      );
+      return PresignedUploadResponse.fromJson(response);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Upload image to presigned URL
+  /// Uses Dio directly to upload to S3
+  Future<void> uploadImageToPresignedUrl(
+    String presignedUrl,
+    String filePath,
+    String contentType,
+  ) async {
+    try {
+      final dio = Dio();
+      await dio.put(
+        presignedUrl,
+        data: await MultipartFile.fromFile(filePath),
+        options: Options(
+          headers: {
+            'Content-Type': contentType,
+          },
+        ),
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Confirm image upload
+  /// POST /users/confirm-upload
+  Future<PresignedUploadResponse> confirmUpload(
+    ConfirmUploadRequest request,
+    String imageType,
+  ) async {
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        '/users/confirm-upload',
+        data: request.toJson(),
+        queryParameters: {'type': imageType},
+      );
+      return PresignedUploadResponse.fromJson(response);
     } catch (e) {
       rethrow;
     }

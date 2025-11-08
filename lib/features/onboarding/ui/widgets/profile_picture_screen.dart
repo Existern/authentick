@@ -3,12 +3,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../profile/repository/profile_repository.dart';
 import '../../view_model/onboarding_view_model.dart';
 
-class ProfilePictureScreen extends ConsumerWidget {
+class ProfilePictureScreen extends ConsumerStatefulWidget {
   const ProfilePictureScreen({super.key});
 
-  Future<void> _openCamera(BuildContext context, WidgetRef ref) async {
+  @override
+  ConsumerState<ProfilePictureScreen> createState() =>
+      _ProfilePictureScreenState();
+}
+
+class _ProfilePictureScreenState extends ConsumerState<ProfilePictureScreen> {
+  bool _isUploading = false;
+
+  Future<void> _openCamera(BuildContext context) async {
     final ImagePicker picker = ImagePicker();
 
     try {
@@ -19,15 +28,50 @@ class ProfilePictureScreen extends ConsumerWidget {
       );
 
       if (photo != null) {
-        // Update the profile picture path in state
-        ref
-            .read(onboardingViewModelProvider.notifier)
-            .updateProfilePicture(photo.path);
+        setState(() {
+          _isUploading = true;
+        });
 
-        // Complete the onboarding flow
-        ref
-            .read(onboardingViewModelProvider.notifier)
-            .snapProfilePicture();
+        try {
+          // Upload the image using presigned URL flow
+          final repository = ref.read(profileRepositoryProvider);
+          final imageUrl = await repository.uploadProfilePicture(
+            photo.path,
+            'image/jpeg', // Content type for camera images
+          );
+
+          if (!mounted) return;
+
+          // Update the profile picture URL in state
+          ref
+              .read(onboardingViewModelProvider.notifier)
+              .updateProfilePicture(imageUrl);
+
+          setState(() {
+            _isUploading = false;
+          });
+
+          // Complete the onboarding flow
+          ref
+              .read(onboardingViewModelProvider.notifier)
+              .snapProfilePicture();
+        } catch (e) {
+          if (!mounted) return;
+
+          setState(() {
+            _isUploading = false;
+          });
+
+          // Show upload error
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Failed to upload image: $e'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
       }
     } catch (e) {
       // Handle camera errors (permissions, etc.)
@@ -43,7 +87,7 @@ class ProfilePictureScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
@@ -144,22 +188,32 @@ class ProfilePictureScreen extends ConsumerWidget {
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton(
-                      onPressed: () => _openCamera(context, ref),
+                      onPressed: _isUploading ? null : () => _openCamera(context),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF3620B3),
+                        disabledBackgroundColor: const Color(0xFF3620B3).withValues(alpha: 0.5),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                         elevation: 0,
                       ),
-                      child: const Text(
-                        'Snap now',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
+                      child: _isUploading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              'Snap now',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
                     ),
                   ),
                 ),
