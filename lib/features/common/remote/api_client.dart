@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../constants/constants.dart';
 import '../../../environment/env.dart';
@@ -38,6 +39,7 @@ class ApiClient {
 
   void _setupInterceptors() {
     _dio.interceptors.addAll([
+      _AuthInterceptor(),
       _LoggingInterceptor(),
       _ErrorInterceptor(),
     ]);
@@ -130,6 +132,40 @@ class ApiClient {
       default:
         return UnknownException();
     }
+  }
+}
+
+class _AuthInterceptor extends Interceptor {
+  @override
+  void onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) {
+    // Get the auth token from SharedPreferences asynchronously
+    SharedPreferences.getInstance().then((prefs) {
+      final token = prefs.getString(Constants.authTokenKey);
+
+      if (token != null && token.isNotEmpty) {
+        // Add Authorization header with Bearer token
+        options.headers['Authorization'] = 'Bearer $token';
+        debugPrint(
+          '${Constants.tag} [AuthInterceptor] 🔑 Added Authorization header',
+        );
+      } else {
+        debugPrint(
+          '${Constants.tag} [AuthInterceptor] ⚠️ No auth token found',
+        );
+      }
+
+      // Continue with the request
+      handler.next(options);
+    }).catchError((error) {
+      debugPrint(
+        '${Constants.tag} [AuthInterceptor] ❌ Error getting token: $error',
+      );
+      // Continue even if there's an error getting the token
+      handler.next(options);
+    });
   }
 }
 
