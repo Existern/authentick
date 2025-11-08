@@ -8,6 +8,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../extensions/build_context_extension.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../profile/repository/profile_repository.dart';
 import '../../view_model/onboarding_view_model.dart';
 
 // Custom formatter for birthday: DD MM YYYY format
@@ -51,6 +52,8 @@ class BirthdayScreen extends ConsumerStatefulWidget {
 
 class _BirthdayScreenState extends ConsumerState<BirthdayScreen> {
   final TextEditingController _birthdayController = TextEditingController();
+  String? _errorMessage;
+  bool _isUpdating = false;
 
   @override
   void initState() {
@@ -69,6 +72,57 @@ class _BirthdayScreenState extends ConsumerState<BirthdayScreen> {
     // Store the raw birthday without spaces
     final rawBirthday = _birthdayController.text.replaceAll(' ', '');
     ref.read(onboardingViewModelProvider.notifier).updateBirthday(rawBirthday);
+
+    // Clear error message when user types
+    if (_errorMessage != null) {
+      setState(() {
+        _errorMessage = null;
+      });
+    }
+  }
+
+  /// Convert DDMMYYYY to YYYY-MM-DD format
+  String _convertToApiFormat(String ddmmyyyy) {
+    final day = ddmmyyyy.substring(0, 2);
+    final month = ddmmyyyy.substring(2, 4);
+    final year = ddmmyyyy.substring(4, 8);
+    return '$year-$month-$day';
+  }
+
+  Future<void> _submitBirthday() async {
+    final rawBirthday = _birthdayController.text.replaceAll(' ', '');
+    if (rawBirthday.length != 8) return;
+
+    setState(() {
+      _isUpdating = true;
+      _errorMessage = null;
+    });
+
+    try {
+      // Convert DDMMYYYY to YYYY-MM-DD
+      final apiDateFormat = _convertToApiFormat(rawBirthday);
+
+      final repository = ref.read(profileRepositoryProvider);
+      await repository.updateProfile(dateOfBirth: apiDateFormat);
+
+      if (!mounted) return;
+
+      setState(() {
+        _errorMessage = null;
+        _isUpdating = false;
+      });
+
+      // Continue to next step
+      ref.read(onboardingViewModelProvider.notifier).submitBirthday();
+    } catch (error) {
+      if (!mounted) return;
+
+      // Show error
+      setState(() {
+        _errorMessage = 'Date of birth is not valid';
+        _isUpdating = false;
+      });
+    }
   }
 
   @override
@@ -216,6 +270,25 @@ class _BirthdayScreenState extends ConsumerState<BirthdayScreen> {
                     keyboardType: TextInputType.number,
                   ),
 
+                  // Error message
+                  if (_errorMessage != null) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.cancel, color: Colors.red, size: 16),
+                        const SizedBox(width: 4),
+                        Text(
+                          _errorMessage!,
+                          style: AppTheme.body14.copyWith(
+                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+
                   const Spacer(),
 
                   // Continue button
@@ -223,8 +296,8 @@ class _BirthdayScreenState extends ConsumerState<BirthdayScreen> {
                     width: double.infinity,
                     height: 54,
                     child: ElevatedButton(
-                      onPressed: state.birthday.length == 8
-                          ? viewModel.submitBirthday
+                      onPressed: state.birthday.length == 8 && !_isUpdating
+                          ? _submitBirthday
                           : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF4300FF),
@@ -236,13 +309,22 @@ class _BirthdayScreenState extends ConsumerState<BirthdayScreen> {
                           borderRadius: BorderRadius.circular(14.0),
                         ),
                       ),
-                      child: const Text(
-                        'Continue',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      child: _isUpdating
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              'Continue',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ),
                   ),
 
