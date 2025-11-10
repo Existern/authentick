@@ -85,6 +85,10 @@ class OnboardingViewModel extends _$OnboardingViewModel {
     state = state.copyWith(username: username, error: null);
   }
 
+  void updateFirstName(String firstName) {
+    state = state.copyWith(firstName: firstName);
+  }
+
   Future<void> submitUsername() async {
     final currentState = state;
     if (currentState.username.isEmpty) {
@@ -161,10 +165,20 @@ class OnboardingViewModel extends _$OnboardingViewModel {
   }
 
   void snapProfilePicture() {
-    state = state.copyWith(currentStep: OnboardingStep.connectFriends);
+    state = state.copyWith(currentStep: OnboardingStep.welcomeFirstMoment);
   }
 
   void skipProfilePicture() {
+    state = state.copyWith(currentStep: OnboardingStep.welcomeFirstMoment);
+  }
+
+  void captureFirstMoment() {
+    // This will trigger the post upload flow
+    // For now, we'll complete onboarding after this screen
+    state = state.copyWith(currentStep: OnboardingStep.connectFriends);
+  }
+
+  void skipFirstMoment() {
     state = state.copyWith(currentStep: OnboardingStep.connectFriends);
   }
 
@@ -247,9 +261,14 @@ class OnboardingViewModel extends _$OnboardingViewModel {
       case OnboardingStep.profilePicture:
         state = currentState.copyWith(currentStep: OnboardingStep.username);
         break;
-      case OnboardingStep.connectFriends:
+      case OnboardingStep.welcomeFirstMoment:
         state = currentState.copyWith(
           currentStep: OnboardingStep.profilePicture,
+        );
+        break;
+      case OnboardingStep.connectFriends:
+        state = currentState.copyWith(
+          currentStep: OnboardingStep.welcomeFirstMoment,
         );
         break;
       case OnboardingStep.contactsPermission:

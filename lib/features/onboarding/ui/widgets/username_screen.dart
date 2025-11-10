@@ -57,9 +57,15 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
 
     try {
       final repository = ref.read(profileRepositoryProvider);
-      await repository.updateProfile(username: username);
+      final response = await repository.updateProfile(username: username);
 
       if (!mounted) return;
+
+      // Save firstName from API response
+      if (response.data.firstName != null) {
+        ref.read(onboardingViewModelProvider.notifier)
+            .updateFirstName(response.data.firstName!);
+      }
 
       setState(() {
         _errorMessage = null;

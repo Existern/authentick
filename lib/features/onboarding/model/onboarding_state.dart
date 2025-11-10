@@ -4,6 +4,7 @@ enum OnboardingStep {
   birthday,
   username,
   profilePicture,
+  welcomeFirstMoment,
   connectFriends,
   contactsPermission,
   friendsList,
@@ -18,6 +19,7 @@ class OnboardingState {
   final String inviteCode;
   final String birthday;
   final String username;
+  final String? firstName;
   final String? profilePicturePath;
   final AccountType? selectedAccountType;
   final bool isLoading;
@@ -30,6 +32,7 @@ class OnboardingState {
     this.inviteCode = '',
     this.birthday = '',
     this.username = '',
+    this.firstName,
     this.profilePicturePath,
     this.selectedAccountType,
     this.isLoading = false,
@@ -43,6 +46,7 @@ class OnboardingState {
     String? inviteCode,
     String? birthday,
     String? username,
+    Object? firstName = _undefined,
     Object? profilePicturePath = _undefined,
     AccountType? selectedAccountType,
     bool? isLoading,
@@ -55,6 +59,7 @@ class OnboardingState {
       inviteCode: inviteCode ?? this.inviteCode,
       birthday: birthday ?? this.birthday,
       username: username ?? this.username,
+      firstName: firstName == _undefined ? this.firstName : firstName as String?,
       profilePicturePath: profilePicturePath == _undefined
           ? this.profilePicturePath
           : profilePicturePath as String?,

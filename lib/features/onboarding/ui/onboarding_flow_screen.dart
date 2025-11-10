@@ -14,6 +14,7 @@ import 'widgets/invite_code_screen.dart';
 import 'widgets/birthday_screen.dart';
 import 'widgets/username_screen.dart';
 import 'widgets/profile_picture_screen.dart';
+import 'widgets/welcome_first_moment_screen.dart';
 import 'widgets/connect_friends_screen.dart';
 import 'widgets/contacts_permission_screen.dart';
 import 'widgets/friends_list_screen.dart';
@@ -88,6 +89,8 @@ class OnboardingFlowScreen extends ConsumerWidget {
         return const UsernameScreen();
       case OnboardingStep.profilePicture:
         return const ProfilePictureScreen();
+      case OnboardingStep.welcomeFirstMoment:
+        return const WelcomeFirstMomentScreen();
       case OnboardingStep.connectFriends:
         return const ConnectFriendsScreen();
       case OnboardingStep.contactsPermission:
