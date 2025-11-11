@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../common/remote/api_client.dart';
 import '../model/create_post_request.dart';
 import '../model/create_post_response.dart';
+import '../model/feed_response.dart';
 import '../model/file_presigned_url_request.dart';
 import '../model/file_presigned_url_response.dart';
 
@@ -46,6 +47,32 @@ class PostService {
         data: request.toJson(),
       );
       return CreatePostResponse.fromJson(response);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Get personalized feed
+  /// GET /posts/feed
+  /// Parameters:
+  /// - filter: Feed filter type (friends, following, everyone) - defaults to 'everyone'
+  /// - page: Page number - defaults to 1
+  /// - limit: Items per page - defaults to 20
+  Future<FeedResponse> getFeed({
+    String filter = 'everyone',
+    int page = 1,
+    int limit = 20,
+  }) async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/posts/feed',
+        queryParameters: {
+          'filter': filter,
+          'page': page,
+          'limit': limit,
+        },
+      );
+      return FeedResponse.fromJson(response);
     } catch (e) {
       rethrow;
     }
