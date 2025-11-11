@@ -7,6 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:exif/exif.dart';
 
+import '../repository/post_repository.dart';
 import 'widgets/location_picker_dialog.dart';
 import 'widgets/privacy_selector.dart';
 
@@ -33,6 +34,8 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   XFile? _selectedImage;
   bool _isLoading = false;
   String? _location;
+  double? _latitude;
+  double? _longitude;
   PostPrivacy _privacy = PostPrivacy.friends;
 
   @override
@@ -88,11 +91,15 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
 
         setState(() {
           _location = locationName;
+          _latitude = position.latitude;
+          _longitude = position.longitude;
         });
       }
     } catch (e) {
       setState(() {
         _location = null;
+        _latitude = null;
+        _longitude = null;
       });
     }
   }
@@ -204,21 +211,64 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
       _isLoading = true;
     });
 
-    // TODO: Implement post upload logic here
-    // For now, just simulate a delay
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      final repository = ref.read(postRepositoryProvider);
 
-    if (!mounted) return;
+      // Determine content type from file extension
+      final filePath = _selectedImage!.path;
+      final extension = filePath.split('.').last.toLowerCase();
+      String contentType = 'image/jpeg';
+      if (extension == 'png') {
+        contentType = 'image/png';
+      } else if (extension == 'jpg' || extension == 'jpeg') {
+        contentType = 'image/jpeg';
+      }
 
-    setState(() {
-      _isLoading = false;
-    });
+      await repository.createPost(
+        imagePath: filePath,
+        contentType: contentType,
+        caption: _captionController.text.trim().isEmpty
+            ? null
+            : _captionController.text.trim(),
+        privacy: _privacy,
+        location: _location,
+        latitude: _latitude,
+        longitude: _longitude,
+      );
 
-    // Complete the flow
-    if (widget.onComplete != null) {
-      widget.onComplete!();
-    } else {
-      Navigator.of(context).pop();
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Post created successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      // Complete the flow
+      if (widget.onComplete != null) {
+        widget.onComplete!();
+      } else {
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to create post: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
