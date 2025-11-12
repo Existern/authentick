@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 
 class ProfileSection extends StatelessWidget {
-  final TextEditingController nameController;
-  final TextEditingController handleController;
+  final TextEditingController firstNameController;
+  final TextEditingController lastNameController;
+  final TextEditingController usernameController;
   final bool isEditable;
   final VoidCallback onSave;
 
   const ProfileSection({
     super.key,
-    required this.nameController,
-    required this.handleController,
+    required this.firstNameController,
+    required this.lastNameController,
+    required this.usernameController,
     required this.isEditable,
     required this.onSave,
   });
@@ -17,7 +19,6 @@ class ProfileSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
       ),
@@ -25,19 +26,24 @@ class ProfileSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildTextField(
-            label: 'Name',
-            controller: nameController,
+            label: 'First Name',
+            controller: firstNameController,
             enabled: isEditable,
           ),
           const SizedBox(height: 16),
           _buildTextField(
-            label: 'Handle',
-            controller: handleController,
+            label: 'Last Name',
+            controller: lastNameController,
             enabled: isEditable,
           ),
-
-          ],
-
+          const SizedBox(height: 16),
+          _buildTextField(
+            label: 'Username',
+            controller: usernameController,
+            enabled: isEditable,
+            prefix: '@',
+          ),
+        ],
       ),
     );
   }
@@ -46,6 +52,7 @@ class ProfileSection extends StatelessWidget {
     required String label,
     required TextEditingController controller,
     required bool enabled,
+    String? prefix,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -60,12 +67,16 @@ class ProfileSection extends StatelessWidget {
             enabled: enabled,
             style: const TextStyle(fontSize: 16),
             decoration: InputDecoration(
+              prefixText: prefix,
+              prefixStyle: TextStyle(
+                fontSize: 16,
+                color: enabled ? Colors.black : Colors.black54,
+              ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 12,
                 vertical: 8,
               ),
               filled: !enabled,
-
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
