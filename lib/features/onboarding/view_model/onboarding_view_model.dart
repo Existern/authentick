@@ -121,7 +121,7 @@ class OnboardingViewModel extends _$OnboardingViewModel {
     //   debugPrint('${Constants.tag} [OnboardingViewModel] ✅ Authentication successful!');
     //   debugPrint('${Constants.tag} User ID: ${response.data.user.id}');
     //   debugPrint('${Constants.tag} Username: ${response.data.user.username}');
-    //   debugPrint('${Constants.tag} Token received: ${response.data.token.substring(0, 20)}...');
+    //   debugPrint('${Constants.tag} Token received: ${response.data.tokens.accessToken.substring(0, 20)}...');
     //   debugPrint('${Constants.tag} ========================================');
 
     //   // Navigate to profile picture step

@@ -94,7 +94,7 @@ class AuthenticationRepository {
         '${Constants.tag} [AuthenticationRepository] 💾 Saving auth token...',
       );
       // Store authentication token
-      await _saveAuthToken(response.data.token);
+      await _saveAuthToken(response.data.tokens.accessToken);
 
       debugPrint(
         '${Constants.tag} [AuthenticationRepository] 💾 Saving user data...',
@@ -268,7 +268,7 @@ class AuthenticationRepository {
         '${Constants.tag} [AuthenticationRepository.signInWithGoogle] Success: ${authResponse.success}',
       );
       debugPrint(
-        '${Constants.tag} [AuthenticationRepository.signInWithGoogle] Token: ${authResponse.data.token}',
+        '${Constants.tag} [AuthenticationRepository.signInWithGoogle] Access Token: ${authResponse.data.tokens.accessToken}',
       );
       debugPrint(
         '${Constants.tag} [AuthenticationRepository.signInWithGoogle] User JSON: ${authResponse.data.user.toJson()}',
@@ -283,7 +283,7 @@ class AuthenticationRepository {
         '${Constants.tag} [AuthenticationRepository.signInWithGoogle] Email: ${authResponse.data.user.email}',
       );
       debugPrint(
-        '${Constants.tag} [AuthenticationRepository.signInWithGoogle] Request ID: ${authResponse.meta.requestId}',
+        '${Constants.tag} [AuthenticationRepository.signInWithGoogle] Request ID: ${authResponse.meta?.requestId ?? "N/A"}',
       );
 
       // Return the response in the expected format
