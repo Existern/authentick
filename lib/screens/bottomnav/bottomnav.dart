@@ -19,21 +19,19 @@ class BottomNavScreen extends StatefulWidget {
 class _BottomNavScreenState extends State<BottomNavScreen> {
   int currentIndex = 0;
 
-  final List<Widget> pages = [
-    const MyHome(),
-    const Locationpage(),
-    const Postpage(),
-    const Friendpage(),
-    const MyProfile(),
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
       body: IndexedStack(
         index: currentIndex,
-        children: pages,
+        children: const [
+          MyHome(key: ValueKey('home')),
+          Locationpage(key: ValueKey('location')),
+          Postpage(key: ValueKey('post')),
+          Friendpage(key: ValueKey('friends')),
+          MyProfile(key: ValueKey('profile')),
+        ],
       ),
 
       bottomNavigationBar: Stack(
