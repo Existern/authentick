@@ -103,6 +103,12 @@ class AuthenticationRepository {
       await _saveUserData(response.data.user);
 
       debugPrint(
+        '${Constants.tag} [AuthenticationRepository] 🗑️ Clearing old profile caches...',
+      );
+      // Clear old profile caches to force reload with new data
+      await _clearProfileCaches();
+
+      debugPrint(
         '${Constants.tag} [AuthenticationRepository] ✅ Marking user as logged in...',
       );
       // Mark as logged in
@@ -171,6 +177,14 @@ class AuthenticationRepository {
     if (user.profileImage != null) {
       await prefs.setString('profile_image_key', user.profileImage!);
     }
+  }
+
+  Future<void> _clearProfileCaches() async {
+    final prefs = await SharedPreferences.getInstance();
+    // Clear profile repository cache
+    await prefs.remove('profile');
+    // Clear user profile repository cache
+    await prefs.remove('user_profile_cache');
   }
 
   Future<User?> getUserData() async {
