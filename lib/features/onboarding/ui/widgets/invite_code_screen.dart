@@ -8,7 +8,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../extensions/build_context_extension.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_theme.dart';
-import '../../../invite_code/repository/invite_code_repository.dart';
+import '../../../profile/repository/profile_repository.dart';
 import '../../view_model/onboarding_view_model.dart';
 
 // Custom formatter for invite code: XXXX-XXXX format
@@ -90,12 +90,12 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
     });
 
     try {
-      final repository = ref.read(inviteCodeRepositoryProvider);
-      final response = await repository.validateInviteCode(code);
+      final repository = ref.read(profileRepositoryProvider);
+      final response = await repository.updateProfile(invitedByCode: code);
 
       if (!mounted) return;
 
-      if (response.success && response.data?.valid == true) {
+      if (response.success) {
         // Clear error and proceed
         setState(() {
           _errorMessage = null;
@@ -113,7 +113,7 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
       if (!mounted) return;
       // Show error
       setState(() {
-        _errorMessage = 'Failed to validate invite code. Please try again.';
+        _errorMessage = 'Invite code is invalid';
         _isValidating = false;
       });
     }

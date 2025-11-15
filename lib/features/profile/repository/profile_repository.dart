@@ -41,6 +41,7 @@ class ProfileRepository {
     String? phoneNumber,
     String? profileImage,
     String? coverImage,
+    String? invitedByCode,
   }) async {
     try {
       debugPrint(
@@ -64,6 +65,7 @@ class ProfileRepository {
         phoneNumber: phoneNumber,
         profileImage: profileImage,
         coverImage: coverImage,
+        invitedByCode: invitedByCode,
       );
 
       final response = await _profileService.updateProfile(request);

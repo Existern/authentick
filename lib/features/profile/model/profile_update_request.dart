@@ -10,6 +10,7 @@ class ProfileUpdateRequest {
   final String? phoneNumber;
   final String? profileImage;
   final String? coverImage;
+  final String? invitedByCode;
 
   ProfileUpdateRequest({
     this.username,
@@ -22,6 +23,7 @@ class ProfileUpdateRequest {
     this.phoneNumber,
     this.profileImage,
     this.coverImage,
+    this.invitedByCode,
   });
 
   Map<String, dynamic> toJson() {
@@ -38,6 +40,7 @@ class ProfileUpdateRequest {
     if (phoneNumber != null) data['phone_number'] = phoneNumber;
     if (profileImage != null) data['profile_image'] = profileImage;
     if (coverImage != null) data['cover_image'] = coverImage;
+    if (invitedByCode != null) data['invited_by_code'] = invitedByCode;
 
     return data;
   }
