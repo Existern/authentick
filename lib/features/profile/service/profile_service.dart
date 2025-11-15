@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -55,6 +57,7 @@ class ProfileService {
 
   /// Upload image to presigned URL
   /// Uses Dio directly to upload to S3
+  /// Sends raw binary data (not multipart) to match S3 presigned URL expectations
   Future<void> uploadImageToPresignedUrl(
     String presignedUrl,
     String filePath,
@@ -62,9 +65,13 @@ class ProfileService {
   ) async {
     try {
       final dio = Dio();
+      // Read file as bytes and send as binary data (like Postman's Binary option)
+      final file = File(filePath);
+      final fileBytes = await file.readAsBytes();
+
       await dio.put(
         presignedUrl,
-        data: await MultipartFile.fromFile(filePath),
+        data: fileBytes, // Send raw bytes, NOT MultipartFile
         options: Options(
           headers: {
             'Content-Type': contentType,

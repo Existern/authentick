@@ -27,18 +27,9 @@ class AuthenticationRepository {
 
   const AuthenticationRepository(this._authService);
 
-  /// Authenticate user with username and optional fields
+  /// Authenticate user with Google token
   /// Calls the /auth/authenticate endpoint
   Future<AuthResponse> authenticate({
-    String? username,
-    String? dateOfBirth,
-    String? inviteCode,
-    String? firstName,
-    String? lastName,
-    String? bio,
-    String? gender,
-    String? location,
-    String? phoneNumber,
     String? googleToken,
   }) async {
     try {
@@ -58,15 +49,6 @@ class AuthenticationRepository {
       }
 
       final request = AuthRequest(
-        username: username,
-        dateOfBirth: dateOfBirth,
-        inviteCode: inviteCode,
-        firstName: firstName,
-        lastName: lastName,
-        bio: bio,
-        gender: gender,
-        location: location,
-        phoneNumber: phoneNumber,
         googleToken: finalGoogleToken,
       );
 
@@ -247,31 +229,15 @@ class AuthenticationRepository {
         '${Constants.tag} [AuthenticationRepository.signInWithGoogle] Google ID token saved: ${idToken.substring(0, 20)}...',
       );
 
-      // Extract first name and last name from display name
-      final displayName = googleUser.displayName ?? '';
-      final nameParts = displayName.split(' ');
-      final firstName = nameParts.isNotEmpty ? nameParts.first : '';
-      final lastName = nameParts.length > 1
-          ? nameParts.sublist(1).join(' ')
-          : '';
-
       debugPrint(
         '${Constants.tag} [AuthenticationRepository.signInWithGoogle] 🚀 Calling authenticate API...',
-      );
-      debugPrint(
-        '${Constants.tag} [AuthenticationRepository.signInWithGoogle] First Name: $firstName',
-      );
-      debugPrint(
-        '${Constants.tag} [AuthenticationRepository.signInWithGoogle] Last Name: $lastName',
       );
       debugPrint(
         '${Constants.tag} [AuthenticationRepository.signInWithGoogle] Google Token: ${idToken.substring(0, 20)}...',
       );
 
-      // Call the authenticate API with first_name, last_name, and google_token
+      // Call the authenticate API with google_token
       final authResponse = await authenticate(
-        firstName: firstName,
-        lastName: lastName,
         googleToken: idToken,
       );
 
