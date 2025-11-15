@@ -7,7 +7,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../constants/constants.dart';
 import '../model/create_post_request.dart';
 import '../model/create_post_response.dart';
-import '../model/file_presigned_url_request.dart';
+import '../model/presigned_media_urls_request.dart';
 import '../service/post_service.dart';
 import '../service/post_upload_service.dart';
 import '../ui/widgets/privacy_selector.dart';
@@ -59,22 +59,28 @@ class PostRepository {
         '${Constants.tag} [PostRepository] 📷 Image: $filename ($width x $height, ${fileSize} bytes)',
       );
 
-      // Step 1: Get presigned URL
-      final presignedRequest = FilePresignedUrlRequest(
-        contentType: contentType,
-        filename: filename,
+      // Step 1: Get presigned URL using new endpoint
+      final presignedRequest = PresignedMediaUrlsRequest(
+        files: [
+          MediaFileInfo(
+            contentType: contentType,
+            filename: filename,
+          ),
+        ],
       );
 
       final presignedResponse =
-          await _postService.getPresignedUrl(presignedRequest);
+          await _postService.getPresignedMediaUrls(presignedRequest);
 
       debugPrint(
         '${Constants.tag} [PostRepository] ✅ Got presigned URL',
       );
 
+      final mediaUrlInfo = presignedResponse.data.mediaUrls.first;
+
       // Step 2: Upload to S3 using presigned URL (AWS signed URL)
       await _uploadService.uploadToPresignedUrl(
-        presignedResponse.data.uploadUrl,
+        mediaUrlInfo.presignedUrl,
         imagePath,
       );
 
@@ -87,7 +93,7 @@ class PostRepository {
 
       final mediaItem = MediaItem(
         mediaType: 'image',
-        mediaUrl: presignedResponse.data.uploadUrl.split('?').first, // Remove query params
+        mediaUrl: mediaUrlInfo.publicUrl, // Use public URL from response
         mimeType: contentType,
         order: 0,
         fileSize: fileSize,

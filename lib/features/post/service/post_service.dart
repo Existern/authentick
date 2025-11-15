@@ -4,8 +4,8 @@ import '../../common/remote/api_client.dart';
 import '../model/create_post_request.dart';
 import '../model/create_post_response.dart';
 import '../model/feed_response.dart';
-import '../model/file_presigned_url_request.dart';
-import '../model/file_presigned_url_response.dart';
+import '../model/presigned_media_urls_request.dart';
+import '../model/presigned_media_urls_response.dart';
 
 part 'post_service.g.dart';
 
@@ -20,17 +20,17 @@ class PostService {
 
   PostService(this._apiClient);
 
-  /// Get presigned URL for file upload
-  /// POST /files/presigned-url
-  Future<FilePresignedUrlResponse> getPresignedUrl(
-    FilePresignedUrlRequest request,
+  /// Get presigned URLs for post media upload
+  /// POST /posts/presigned-media-urls
+  Future<PresignedMediaUrlsResponse> getPresignedMediaUrls(
+    PresignedMediaUrlsRequest request,
   ) async {
     try {
       final response = await _apiClient.post<Map<String, dynamic>>(
-        '/files/presigned-url',
+        '/posts/presigned-media-urls',
         data: request.toJson(),
       );
-      return FilePresignedUrlResponse.fromJson(response);
+      return PresignedMediaUrlsResponse.fromJson(response);
     } catch (e) {
       rethrow;
     }
