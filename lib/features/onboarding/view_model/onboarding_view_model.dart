@@ -4,7 +4,9 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../constants/constants.dart';
 // import '../../authentication/repository/authentication_repository.dart'; // Commented out for development
 import '../model/onboarding_state.dart';
+import '../model/skip_onboarding_request.dart';
 import '../service/contacts_permission_service.dart';
+import '../service/onboarding_service.dart';
 
 part 'onboarding_view_model.g.dart';
 
@@ -168,7 +170,18 @@ class OnboardingViewModel extends _$OnboardingViewModel {
     state = state.copyWith(currentStep: OnboardingStep.connectFriends);
   }
 
-  void skipProfilePicture() {
+  Future<void> skipProfilePicture() async {
+    try {
+      final service = ref.read(onboardingServiceProvider);
+      await service.skipOnboardingStep(
+        SkipOnboardingRequest(step: 'profile_picture'),
+      );
+    } catch (e) {
+      debugPrint(
+        '${Constants.tag} [OnboardingViewModel] Error skipping profile picture: $e',
+      );
+      // Continue anyway - don't block user flow
+    }
     state = state.copyWith(currentStep: OnboardingStep.connectFriends);
   }
 
@@ -181,7 +194,33 @@ class OnboardingViewModel extends _$OnboardingViewModel {
     );
   }
 
-  void skipFirstMoment() {
+  Future<void> skipFirstMoment() async {
+    final service = ref.read(onboardingServiceProvider);
+
+    // Skip capture_first_moment
+    try {
+      await service.skipOnboardingStep(
+        SkipOnboardingRequest(step: 'capture_first_moment'),
+      );
+    } catch (e) {
+      debugPrint(
+        '${Constants.tag} [OnboardingViewModel] Error skipping capture first moment: $e',
+      );
+      // Continue anyway - don't block user flow
+    }
+
+    // Also skip share_first_moment since user can't share without capturing
+    try {
+      await service.skipOnboardingStep(
+        SkipOnboardingRequest(step: 'share_first_moment'),
+      );
+    } catch (e) {
+      debugPrint(
+        '${Constants.tag} [OnboardingViewModel] Error skipping share first moment: $e',
+      );
+      // Continue anyway - don't block user flow
+    }
+
     // User skipped capturing, skip share screen too and complete onboarding
     state = state.copyWith(
       hasCapturedFirstMoment: false,
@@ -194,7 +233,18 @@ class OnboardingViewModel extends _$OnboardingViewModel {
     state = state.copyWith(currentStep: OnboardingStep.completed);
   }
 
-  void skipShareMoment() {
+  Future<void> skipShareMoment() async {
+    try {
+      final service = ref.read(onboardingServiceProvider);
+      await service.skipOnboardingStep(
+        SkipOnboardingRequest(step: 'share_first_moment'),
+      );
+    } catch (e) {
+      debugPrint(
+        '${Constants.tag} [OnboardingViewModel] Error skipping share moment: $e',
+      );
+      // Continue anyway - don't block user flow
+    }
     // Skip sharing and complete onboarding
     state = state.copyWith(currentStep: OnboardingStep.completed);
   }
@@ -255,7 +305,18 @@ class OnboardingViewModel extends _$OnboardingViewModel {
     state = state.copyWith(currentStep: OnboardingStep.welcomeFirstMoment);
   }
 
-  void skipConnectFriends() {
+  Future<void> skipConnectFriends() async {
+    try {
+      final service = ref.read(onboardingServiceProvider);
+      await service.skipOnboardingStep(
+        SkipOnboardingRequest(step: 'find_friends'),
+      );
+    } catch (e) {
+      debugPrint(
+        '${Constants.tag} [OnboardingViewModel] Error skipping find friends: $e',
+      );
+      // Continue anyway - don't block user flow
+    }
     state = state.copyWith(currentStep: OnboardingStep.welcomeFirstMoment);
   }
 
