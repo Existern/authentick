@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_mvvm_riverpod/features/authentication/repository/authentication_repository.dart';
 import 'package:flutter_mvvm_riverpod/features/user/model/update_profile_request.dart';
 import 'package:flutter_mvvm_riverpod/features/user/repository/user_profile_repository.dart';
+import 'package:flutter_mvvm_riverpod/routing/routes.dart';
 import 'package:flutter_mvvm_riverpod/screens/settings/listtile.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -83,6 +86,27 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       errorMessage = null;
     });
     _loadProfileData();
+  }
+
+  Future<void> _handleLogout() async {
+    try {
+      final authRepo = ref.read(authenticationRepositoryProvider);
+      await authRepo.signOut();
+
+      if (!mounted) return;
+
+      // Navigate to register/login screen
+      context.go(Routes.register);
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to logout: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -307,7 +331,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
               Center(
                 child: GestureDetector(
-                  onTap: () {},
+                  onTap: _handleLogout,
                   child: const Text(
                     'Logout',
                     style: TextStyle(
