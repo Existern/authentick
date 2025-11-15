@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../extensions/build_context_extension.dart';
+import '../../../../routing/routes.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../profile/repository/profile_repository.dart';
@@ -315,7 +317,9 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
                     width: double.infinity,
                     height: 54,
                     child: OutlinedButton(
-                      onPressed: viewModel.skipInviteCode,
+                      onPressed: () {
+                        context.go(Routes.waitlist);
+                      },
                       style: OutlinedButton.styleFrom(
                         foregroundColor: const Color(0xFF4300FF),
                         side: const BorderSide(
