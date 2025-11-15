@@ -55,4 +55,4 @@ final class AuthenticationRepositoryProvider
 }
 
 String _$authenticationRepositoryHash() =>
-    r'b856937e305e0cdf1a18e38094595206e2d96f65';
+    r'4d3f7d9eb0fe0e14283e2886c23e5d6be983213e';

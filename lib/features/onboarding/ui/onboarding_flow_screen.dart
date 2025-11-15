@@ -13,6 +13,12 @@ import 'widgets/intro_pages_widget.dart';
 import 'widgets/invite_code_screen.dart';
 import 'widgets/birthday_screen.dart';
 import 'widgets/username_screen.dart';
+import 'widgets/profile_picture_screen.dart';
+import 'widgets/welcome_first_moment_screen.dart';
+import 'widgets/connect_friends_screen.dart';
+import 'widgets/contacts_permission_screen.dart';
+import 'widgets/friends_list_screen.dart';
+import 'widgets/share_first_moment_screen.dart';
 
 class OnboardingFlowScreen extends ConsumerWidget {
   const OnboardingFlowScreen({super.key});
@@ -82,13 +88,21 @@ class OnboardingFlowScreen extends ConsumerWidget {
         return const BirthdayScreen();
       case OnboardingStep.username:
         return const UsernameScreen();
+      case OnboardingStep.profilePicture:
+        return const ProfilePictureScreen();
+      case OnboardingStep.welcomeFirstMoment:
+        return const WelcomeFirstMomentScreen();
+      case OnboardingStep.connectFriends:
+        return const ConnectFriendsScreen();
+      case OnboardingStep.contactsPermission:
+        return const ContactsPermissionScreen();
+      case OnboardingStep.friendsList:
+        return const FriendsListScreen();
+      case OnboardingStep.shareFirstMoment:
+        return const ShareFirstMomentScreen();
       case OnboardingStep.completed:
         // Show loading indicator while navigating
-        return const Scaffold(
-          body: Center(
-            child: CircularProgressIndicator(),
-          ),
-        );
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
   }
 }

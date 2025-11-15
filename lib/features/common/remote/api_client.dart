@@ -2,8 +2,10 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../constants/constants.dart';
+import '../../../environment/env.dart';
 
 part 'api_client.g.dart';
 
@@ -13,7 +15,7 @@ ApiClient apiClient(Ref ref) {
 }
 
 class ApiClient {
-  static const String _baseUrl = 'https://example.com/api';
+  static final String _baseUrl = '${Env.apiBaseUrl}${Env.apiVersion}';
   static const int _timeout = 30000; // 30 seconds
 
   late final Dio _dio;
@@ -37,6 +39,7 @@ class ApiClient {
 
   void _setupInterceptors() {
     _dio.interceptors.addAll([
+      _AuthInterceptor(),
       _LoggingInterceptor(),
       _ErrorInterceptor(),
     ]);
@@ -78,6 +81,44 @@ class ApiClient {
     }
   }
 
+  Future<T> put<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    try {
+      final response = await _dio.put<T>(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      );
+      return response.data as T;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<T> patch<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    try {
+      final response = await _dio.patch<T>(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      );
+      return response.data as T;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   Exception _handleError(DioException error) {
     switch (error.type) {
       case DioExceptionType.connectionTimeout:
@@ -98,9 +139,26 @@ class ApiClient {
   Exception _handleResponseError(Response? response) {
     if (response == null) return UnknownException();
 
+    // Try to extract error message from response
+    String? errorMessage;
+    try {
+      final data = response.data;
+      if (data is Map) {
+        // Check for error object in response
+        if (data['error'] != null && data['error'] is Map) {
+          final error = data['error'] as Map;
+          errorMessage = error['message'] as String? ?? error['details'] as String?;
+        } else {
+          errorMessage = data['message'] as String?;
+        }
+      }
+    } catch (e) {
+      debugPrint('${Constants.tag} [ApiClient] Error parsing error message: $e');
+    }
+
     switch (response.statusCode) {
       case 400:
-        return BadRequestException(response.data['message']);
+        return BadRequestException(errorMessage ?? 'Bad request');
       case 401:
         return UnauthorizedException();
       case 403:
@@ -115,26 +173,71 @@ class ApiClient {
   }
 }
 
+class _AuthInterceptor extends Interceptor {
+  @override
+  void onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) {
+    // Get the auth token from SharedPreferences asynchronously
+    SharedPreferences.getInstance().then((prefs) {
+      final token = prefs.getString(Constants.authTokenKey);
+
+      if (token != null && token.isNotEmpty) {
+        // Add Authorization header with Bearer token
+        options.headers['Authorization'] = 'Bearer $token';
+        debugPrint(
+          '${Constants.tag} [AuthInterceptor] 🔑 Added Authorization header',
+        );
+      } else {
+        debugPrint(
+          '${Constants.tag} [AuthInterceptor] ⚠️ No auth token found',
+        );
+      }
+
+      // Continue with the request
+      handler.next(options);
+    }).catchError((error) {
+      debugPrint(
+        '${Constants.tag} [AuthInterceptor] ❌ Error getting token: $error',
+      );
+      // Continue even if there's an error getting the token
+      handler.next(options);
+    });
+  }
+}
+
 class _LoggingInterceptor extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    debugPrint('${Constants.tag} REQUEST[${options.method}] => PATH: ${options.path}');
-    debugPrint('${Constants.tag} Headers: ${options.headers}');
-    debugPrint('${Constants.tag} Data: ${options.data}');
+    debugPrint('${Constants.tag} ┌────────────────────────────────────────────────────────');
+    debugPrint('${Constants.tag} │ 📤 REQUEST [${options.method}]');
+    debugPrint('${Constants.tag} │ URL: ${options.baseUrl}${options.path}');
+    debugPrint('${Constants.tag} │ Headers: ${options.headers}');
+    debugPrint('${Constants.tag} │ Body: ${options.data}');
+    debugPrint('${Constants.tag} └────────────────────────────────────────────────────────');
     super.onRequest(options, handler);
   }
 
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
-    debugPrint('${Constants.tag} RESPONSE[${response.statusCode}] => PATH: ${response.requestOptions.path}');
-    debugPrint('${Constants.tag} Data: ${response.data}');
+    debugPrint('${Constants.tag} ┌────────────────────────────────────────────────────────');
+    debugPrint('${Constants.tag} │ 📥 RESPONSE [${response.statusCode}]');
+    debugPrint('${Constants.tag} │ URL: ${response.requestOptions.baseUrl}${response.requestOptions.path}');
+    debugPrint('${Constants.tag} │ Data: ${response.data}');
+    debugPrint('${Constants.tag} └────────────────────────────────────────────────────────');
     super.onResponse(response, handler);
   }
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    debugPrint('${Constants.tag} ERROR[${err.response?.statusCode}] => PATH: ${err.requestOptions.path}');
-    debugPrint('${Constants.tag} Message: ${err.message}');
+    debugPrint('${Constants.tag} ┌────────────────────────────────────────────────────────');
+    debugPrint('${Constants.tag} │ ⚠️ ERROR [${err.response?.statusCode ?? "NO STATUS"}]');
+    debugPrint('${Constants.tag} │ URL: ${err.requestOptions.baseUrl}${err.requestOptions.path}');
+    debugPrint('${Constants.tag} │ Type: ${err.type}');
+    debugPrint('${Constants.tag} │ Message: ${err.message}');
+    debugPrint('${Constants.tag} │ Response Data: ${err.response?.data}');
+    debugPrint('${Constants.tag} └────────────────────────────────────────────────────────');
     super.onError(err, handler);
   }
 }

@@ -1,5 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+import '../../../constants/constants.dart';
+// import '../../authentication/repository/authentication_repository.dart'; // Commented out for development
 import '../model/onboarding_state.dart';
+import '../service/contacts_permission_service.dart';
 
 part 'onboarding_view_model.g.dart';
 
@@ -80,19 +85,194 @@ class OnboardingViewModel extends _$OnboardingViewModel {
     state = state.copyWith(username: username, error: null);
   }
 
-  void submitUsername() {
+  void updateFirstName(String firstName) {
+    state = state.copyWith(firstName: firstName);
+  }
+
+  Future<void> submitUsername() async {
     final currentState = state;
     if (currentState.username.isEmpty) {
       state = currentState.copyWith(error: 'Please enter a username');
       return;
     }
 
-    state = currentState.copyWith(currentStep: OnboardingStep.completed);
+    // Set loading state
+    state = currentState.copyWith(isLoading: true, error: null);
+
+    // TODO: Commented out for development - uncomment when backend is ready
+    // try {
+    //   // Call the authentication API
+    //   final authRepository = ref.read(authenticationRepositoryProvider);
+
+    //   debugPrint('${Constants.tag} ========================================');
+    //   debugPrint('${Constants.tag} [OnboardingViewModel] 🚀 Starting Authentication...');
+    //   debugPrint('${Constants.tag} Username: ${currentState.username}');
+    //   debugPrint('${Constants.tag} Birthday: ${currentState.birthday.isEmpty ? "NOT PROVIDED" : currentState.birthday}');
+    //   debugPrint('${Constants.tag} InviteCode: ${currentState.inviteCode.isEmpty ? "NOT PROVIDED" : currentState.inviteCode}');
+    //   debugPrint('${Constants.tag} ========================================');
+
+    //   final response = await authRepository.authenticate(
+    //     username: currentState.username,
+    //     dateOfBirth: currentState.birthday.isEmpty ? null : currentState.birthday,
+    //     inviteCode: currentState.inviteCode.isEmpty ? null : currentState.inviteCode,
+    //   );
+
+    //   debugPrint('${Constants.tag} ========================================');
+    //   debugPrint('${Constants.tag} [OnboardingViewModel] ✅ Authentication successful!');
+    //   debugPrint('${Constants.tag} User ID: ${response.data.user.id}');
+    //   debugPrint('${Constants.tag} Username: ${response.data.user.username}');
+    //   debugPrint('${Constants.tag} Token received: ${response.data.tokens.accessToken.substring(0, 20)}...');
+    //   debugPrint('${Constants.tag} ========================================');
+
+    //   // Navigate to profile picture step
+    //   state = currentState.copyWith(
+    //     currentStep: OnboardingStep.profilePicture,
+    //     isLoading: false,
+    //   );
+    // } catch (error, stackTrace) {
+    //   debugPrint('${Constants.tag} ========================================');
+    //   debugPrint('${Constants.tag} [OnboardingViewModel] ❌ Authentication FAILED!');
+    //   debugPrint('${Constants.tag} Error Type: ${error.runtimeType}');
+    //   debugPrint('${Constants.tag} Error Message: $error');
+    //   debugPrint('${Constants.tag} Stack Trace:');
+    //   debugPrint('$stackTrace');
+    //   debugPrint('${Constants.tag} ========================================');
+
+    //   // Show error message
+    //   state = currentState.copyWith(
+    //     isLoading: false,
+    //     error: 'Failed to authenticate. Please try again.',
+    //   );
+    // }
+
+    // Temporary: Skip API call and go directly to profile picture
+    debugPrint(
+      '${Constants.tag} [OnboardingViewModel] ⚠️ Skipping API call (development mode)',
+    );
+    await Future.delayed(
+      const Duration(milliseconds: 500),
+    ); // Simulate network delay
+
+    state = currentState.copyWith(
+      currentStep: OnboardingStep.profilePicture,
+      isLoading: false,
+    );
   }
 
   void completeOnboarding() {
     final currentState = state;
     state = currentState.copyWith(currentStep: OnboardingStep.completed);
+  }
+
+  void snapProfilePicture() {
+    state = state.copyWith(currentStep: OnboardingStep.connectFriends);
+  }
+
+  void skipProfilePicture() {
+    state = state.copyWith(currentStep: OnboardingStep.connectFriends);
+  }
+
+  void captureFirstMoment() {
+    // Mark that user captured their first moment
+    // Navigate to share screen
+    state = state.copyWith(
+      hasCapturedFirstMoment: true,
+      currentStep: OnboardingStep.shareFirstMoment,
+    );
+  }
+
+  void skipFirstMoment() {
+    // User skipped capturing, skip share screen too and complete onboarding
+    state = state.copyWith(
+      hasCapturedFirstMoment: false,
+      currentStep: OnboardingStep.completed,
+    );
+  }
+
+  void completeShareMoment() {
+    // Complete onboarding after sharing
+    state = state.copyWith(currentStep: OnboardingStep.completed);
+  }
+
+  void skipShareMoment() {
+    // Skip sharing and complete onboarding
+    state = state.copyWith(currentStep: OnboardingStep.completed);
+  }
+
+  void findFriends() {
+    // Navigate to contacts permission screen first
+    state = state.copyWith(currentStep: OnboardingStep.contactsPermission);
+  }
+
+  Future<void> allowContactsPermission() async {
+    // Set loading state
+    state = state.copyWith(isLoading: true);
+
+    try {
+      // Request contacts permission from the system
+      final granted =
+          await ContactsPermissionService.requestContactsPermission();
+
+      if (granted) {
+        // Permission granted, show friends list
+        state = state.copyWith(
+          currentStep: OnboardingStep.friendsList,
+          hasContactsPermission: true,
+          isLoading: false,
+        );
+      } else {
+        // Permission denied, go to welcome first moment
+        state = state.copyWith(
+          currentStep: OnboardingStep.welcomeFirstMoment,
+          hasContactsPermission: false,
+          isLoading: false,
+        );
+      }
+    } catch (error) {
+      debugPrint(
+        '${Constants.tag} [OnboardingViewModel] Error requesting contacts permission: $error',
+      );
+      // On error, go to welcome first moment
+      state = state.copyWith(
+        currentStep: OnboardingStep.welcomeFirstMoment,
+        hasContactsPermission: false,
+        isLoading: false,
+        error: 'Failed to request permission',
+      );
+    }
+  }
+
+  void skipContactsPermission() {
+    // User declined contacts permission, go to welcome first moment
+    state = state.copyWith(
+      currentStep: OnboardingStep.welcomeFirstMoment,
+      hasContactsPermission: false,
+    );
+  }
+
+  void completeFriendsFlow() {
+    // Complete the friends flow and go to welcome first moment
+    state = state.copyWith(currentStep: OnboardingStep.welcomeFirstMoment);
+  }
+
+  void skipConnectFriends() {
+    state = state.copyWith(currentStep: OnboardingStep.welcomeFirstMoment);
+  }
+
+  void updateProfilePicture(String? path) {
+    state = state.copyWith(profilePicturePath: path);
+  }
+
+  void updateFirstPostData({
+    String? mediaUrl,
+    String? location,
+    String? time,
+  }) {
+    state = state.copyWith(
+      firstPostMediaUrl: mediaUrl,
+      firstPostLocation: location,
+      firstPostTime: time,
+    );
   }
 
   void goBack() {
@@ -106,6 +286,34 @@ class OnboardingViewModel extends _$OnboardingViewModel {
         break;
       case OnboardingStep.username:
         state = currentState.copyWith(currentStep: OnboardingStep.birthday);
+        break;
+      case OnboardingStep.profilePicture:
+        state = currentState.copyWith(currentStep: OnboardingStep.username);
+        break;
+      case OnboardingStep.connectFriends:
+        state = currentState.copyWith(
+          currentStep: OnboardingStep.profilePicture,
+        );
+        break;
+      case OnboardingStep.contactsPermission:
+        state = currentState.copyWith(
+          currentStep: OnboardingStep.connectFriends,
+        );
+        break;
+      case OnboardingStep.friendsList:
+        state = currentState.copyWith(
+          currentStep: OnboardingStep.contactsPermission,
+        );
+        break;
+      case OnboardingStep.welcomeFirstMoment:
+        state = currentState.copyWith(
+          currentStep: OnboardingStep.friendsList,
+        );
+        break;
+      case OnboardingStep.shareFirstMoment:
+        state = currentState.copyWith(
+          currentStep: OnboardingStep.welcomeFirstMoment,
+        );
         break;
       default:
         break;
