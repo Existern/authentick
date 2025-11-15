@@ -251,19 +251,19 @@ class _BirthdayScreenState extends ConsumerState<BirthdayScreen> {
                     controller: _birthdayController,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
-                      fontSize: 48,
+                      fontSize: 38,
                       fontWeight: FontWeight.w900,
                       color: AppColors.mono100,
-                      letterSpacing: 4.0,
+                      letterSpacing: 2.0,
                     ),
                     decoration: const InputDecoration(
                       border: InputBorder.none,
                       hintText: 'DD MM YYYY',
                       hintStyle: TextStyle(
-                        fontSize: 48,
+                        fontSize: 38,
                         fontWeight: FontWeight.w500,
                         color: AppColors.mono40,
-                        letterSpacing: 4.0,
+                        letterSpacing: 2.0,
                       ),
                     ),
                     inputFormatters: [BirthdayFormatter()],
