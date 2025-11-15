@@ -6,10 +6,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:exif/exif.dart';
+import 'package:intl/intl.dart';
 
 import '../repository/post_repository.dart';
 import 'widgets/location_picker_dialog.dart';
 import 'widgets/privacy_selector.dart';
+import '../../onboarding/view_model/onboarding_view_model.dart';
 
 /// Screen for creating a new post
 /// This screen will be used both during onboarding and in the main app
@@ -224,7 +226,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
         contentType = 'image/jpeg';
       }
 
-      await repository.createPost(
+      final postResponse = await repository.createPost(
         imagePath: filePath,
         contentType: contentType,
         caption: _captionController.text.trim().isEmpty
@@ -237,6 +239,33 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
       );
 
       if (!mounted) return;
+
+      // If this is onboarding, store the post data for the share screen
+      if (widget.isOnboarding) {
+        final mediaUrl = postResponse.data.media.isNotEmpty
+            ? postResponse.data.media.first.mediaUrl
+            : null;
+
+        // Format the time - convert from UTC to local timezone
+        String? formattedTime;
+        try {
+          // Parse the UTC time from server
+          final createdAtUtc = DateTime.parse(postResponse.data.createdAt);
+          // Convert to local timezone
+          final createdAtLocal = createdAtUtc.toLocal();
+          // Format to "3:45 PM" format
+          formattedTime = DateFormat('h:mm a').format(createdAtLocal);
+        } catch (e) {
+          // If time parsing fails, don't show time
+          formattedTime = null;
+        }
+
+        ref.read(onboardingViewModelProvider.notifier).updateFirstPostData(
+          mediaUrl: mediaUrl,
+          location: _location,
+          time: formattedTime,
+        );
+      }
 
       setState(() {
         _isLoading = false;

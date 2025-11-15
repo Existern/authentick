@@ -165,21 +165,38 @@ class OnboardingViewModel extends _$OnboardingViewModel {
   }
 
   void snapProfilePicture() {
-    state = state.copyWith(currentStep: OnboardingStep.welcomeFirstMoment);
+    state = state.copyWith(currentStep: OnboardingStep.connectFriends);
   }
 
   void skipProfilePicture() {
-    state = state.copyWith(currentStep: OnboardingStep.welcomeFirstMoment);
+    state = state.copyWith(currentStep: OnboardingStep.connectFriends);
   }
 
   void captureFirstMoment() {
-    // This will trigger the post upload flow
-    // For now, we'll complete onboarding after this screen
-    state = state.copyWith(currentStep: OnboardingStep.connectFriends);
+    // Mark that user captured their first moment
+    // Navigate to share screen
+    state = state.copyWith(
+      hasCapturedFirstMoment: true,
+      currentStep: OnboardingStep.shareFirstMoment,
+    );
   }
 
   void skipFirstMoment() {
-    state = state.copyWith(currentStep: OnboardingStep.connectFriends);
+    // User skipped capturing, skip share screen too and complete onboarding
+    state = state.copyWith(
+      hasCapturedFirstMoment: false,
+      currentStep: OnboardingStep.completed,
+    );
+  }
+
+  void completeShareMoment() {
+    // Complete onboarding after sharing
+    state = state.copyWith(currentStep: OnboardingStep.completed);
+  }
+
+  void skipShareMoment() {
+    // Skip sharing and complete onboarding
+    state = state.copyWith(currentStep: OnboardingStep.completed);
   }
 
   void findFriends() {
@@ -204,9 +221,9 @@ class OnboardingViewModel extends _$OnboardingViewModel {
           isLoading: false,
         );
       } else {
-        // Permission denied, complete onboarding
+        // Permission denied, go to welcome first moment
         state = state.copyWith(
-          currentStep: OnboardingStep.completed,
+          currentStep: OnboardingStep.welcomeFirstMoment,
           hasContactsPermission: false,
           isLoading: false,
         );
@@ -215,9 +232,9 @@ class OnboardingViewModel extends _$OnboardingViewModel {
       debugPrint(
         '${Constants.tag} [OnboardingViewModel] Error requesting contacts permission: $error',
       );
-      // On error, complete onboarding
+      // On error, go to welcome first moment
       state = state.copyWith(
-        currentStep: OnboardingStep.completed,
+        currentStep: OnboardingStep.welcomeFirstMoment,
         hasContactsPermission: false,
         isLoading: false,
         error: 'Failed to request permission',
@@ -226,24 +243,36 @@ class OnboardingViewModel extends _$OnboardingViewModel {
   }
 
   void skipContactsPermission() {
-    // User declined contacts permission, complete onboarding
+    // User declined contacts permission, go to welcome first moment
     state = state.copyWith(
-      currentStep: OnboardingStep.completed,
+      currentStep: OnboardingStep.welcomeFirstMoment,
       hasContactsPermission: false,
     );
   }
 
   void completeFriendsFlow() {
-    // Complete the friends flow and onboarding
-    state = state.copyWith(currentStep: OnboardingStep.completed);
+    // Complete the friends flow and go to welcome first moment
+    state = state.copyWith(currentStep: OnboardingStep.welcomeFirstMoment);
   }
 
   void skipConnectFriends() {
-    state = state.copyWith(currentStep: OnboardingStep.completed);
+    state = state.copyWith(currentStep: OnboardingStep.welcomeFirstMoment);
   }
 
   void updateProfilePicture(String? path) {
     state = state.copyWith(profilePicturePath: path);
+  }
+
+  void updateFirstPostData({
+    String? mediaUrl,
+    String? location,
+    String? time,
+  }) {
+    state = state.copyWith(
+      firstPostMediaUrl: mediaUrl,
+      firstPostLocation: location,
+      firstPostTime: time,
+    );
   }
 
   void goBack() {
@@ -261,14 +290,9 @@ class OnboardingViewModel extends _$OnboardingViewModel {
       case OnboardingStep.profilePicture:
         state = currentState.copyWith(currentStep: OnboardingStep.username);
         break;
-      case OnboardingStep.welcomeFirstMoment:
-        state = currentState.copyWith(
-          currentStep: OnboardingStep.profilePicture,
-        );
-        break;
       case OnboardingStep.connectFriends:
         state = currentState.copyWith(
-          currentStep: OnboardingStep.welcomeFirstMoment,
+          currentStep: OnboardingStep.profilePicture,
         );
         break;
       case OnboardingStep.contactsPermission:
@@ -279,6 +303,16 @@ class OnboardingViewModel extends _$OnboardingViewModel {
       case OnboardingStep.friendsList:
         state = currentState.copyWith(
           currentStep: OnboardingStep.contactsPermission,
+        );
+        break;
+      case OnboardingStep.welcomeFirstMoment:
+        state = currentState.copyWith(
+          currentStep: OnboardingStep.friendsList,
+        );
+        break;
+      case OnboardingStep.shareFirstMoment:
+        state = currentState.copyWith(
+          currentStep: OnboardingStep.welcomeFirstMoment,
         );
         break;
       default:

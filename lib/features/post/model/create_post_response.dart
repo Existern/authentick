@@ -30,6 +30,7 @@ class PostData {
   final bool isLiked;
   final String createdAt;
   final String updatedAt;
+  final List<PostMediaItem> media;
 
   PostData({
     required this.id,
@@ -42,9 +43,11 @@ class PostData {
     required this.isLiked,
     required this.createdAt,
     required this.updatedAt,
+    this.media = const [],
   });
 
   factory PostData.fromJson(Map<String, dynamic> json) {
+    final mediaList = json['media'] as List<dynamic>? ?? [];
     return PostData(
       id: json['id'] as String,
       userId: json['user_id'] as String,
@@ -56,6 +59,35 @@ class PostData {
       isLiked: json['is_liked'] as bool? ?? false,
       createdAt: json['created_at'] as String,
       updatedAt: json['updated_at'] as String,
+      media: mediaList
+          .map((item) => PostMediaItem.fromJson(item as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+
+class PostMediaItem {
+  final String id;
+  final String mediaUrl;
+  final String mediaType;
+  final String mimeType;
+  final int order;
+
+  PostMediaItem({
+    required this.id,
+    required this.mediaUrl,
+    required this.mediaType,
+    required this.mimeType,
+    required this.order,
+  });
+
+  factory PostMediaItem.fromJson(Map<String, dynamic> json) {
+    return PostMediaItem(
+      id: json['id'] as String,
+      mediaUrl: json['media_url'] as String,
+      mediaType: json['media_type'] as String,
+      mimeType: json['mime_type'] as String,
+      order: json['order'] as int,
     );
   }
 }

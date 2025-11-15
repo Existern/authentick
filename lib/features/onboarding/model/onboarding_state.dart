@@ -4,10 +4,11 @@ enum OnboardingStep {
   birthday,
   username,
   profilePicture,
-  welcomeFirstMoment,
   connectFriends,
   contactsPermission,
   friendsList,
+  welcomeFirstMoment,
+  shareFirstMoment,
   completed,
 }
 
@@ -25,6 +26,10 @@ class OnboardingState {
   final bool isLoading;
   final String? error;
   final bool hasContactsPermission;
+  final bool hasCapturedFirstMoment;
+  final String? firstPostMediaUrl;
+  final String? firstPostLocation;
+  final String? firstPostTime;
 
   const OnboardingState({
     this.currentStep = OnboardingStep.intro,
@@ -38,6 +43,10 @@ class OnboardingState {
     this.isLoading = false,
     this.error,
     this.hasContactsPermission = false,
+    this.hasCapturedFirstMoment = false,
+    this.firstPostMediaUrl,
+    this.firstPostLocation,
+    this.firstPostTime,
   });
 
   OnboardingState copyWith({
@@ -52,6 +61,10 @@ class OnboardingState {
     bool? isLoading,
     Object? error = _undefined,
     bool? hasContactsPermission,
+    bool? hasCapturedFirstMoment,
+    Object? firstPostMediaUrl = _undefined,
+    Object? firstPostLocation = _undefined,
+    Object? firstPostTime = _undefined,
   }) {
     return OnboardingState(
       currentStep: currentStep ?? this.currentStep,
@@ -68,6 +81,17 @@ class OnboardingState {
       error: error == _undefined ? this.error : error as String?,
       hasContactsPermission:
           hasContactsPermission ?? this.hasContactsPermission,
+      hasCapturedFirstMoment:
+          hasCapturedFirstMoment ?? this.hasCapturedFirstMoment,
+      firstPostMediaUrl: firstPostMediaUrl == _undefined
+          ? this.firstPostMediaUrl
+          : firstPostMediaUrl as String?,
+      firstPostLocation: firstPostLocation == _undefined
+          ? this.firstPostLocation
+          : firstPostLocation as String?,
+      firstPostTime: firstPostTime == _undefined
+          ? this.firstPostTime
+          : firstPostTime as String?,
     );
   }
 }
