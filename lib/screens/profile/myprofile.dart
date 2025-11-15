@@ -119,7 +119,11 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                         ),
                       );
                     },
-                    child: const Icon(Icons.settings_outlined, size: 28),
+                    child: const Icon(
+                      Icons.settings_outlined,
+                      size: 28,
+                      color: Color(0xFF5A5A72),
+                    ),
                   ),
                 ],
               ),

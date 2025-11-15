@@ -77,12 +77,22 @@ class ProfileSection extends StatelessWidget {
                 vertical: 8,
               ),
               filled: !enabled,
+              fillColor: !enabled ? Colors.grey.shade100 : null,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade400),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade400),
               ),
               focusedBorder: OutlineInputBorder(
-                borderSide: const BorderSide(color: Color(0xFF3620B3)),
+                borderSide: const BorderSide(color: Color(0xFF3620B3), width: 2),
                 borderRadius: BorderRadius.circular(8),
+              ),
+              disabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade300),
               ),
             ),
           ),

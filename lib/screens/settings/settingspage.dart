@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mvvm_riverpod/features/user/model/update_profile_request.dart';
 import 'package:flutter_mvvm_riverpod/features/user/repository/user_profile_repository.dart';
 import 'package:flutter_mvvm_riverpod/screens/settings/listtile.dart';
-import 'package:flutter_mvvm_riverpod/screens/settings/profile_section.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
@@ -19,13 +18,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   final TextEditingController firstNameController = TextEditingController();
   final TextEditingController lastNameController = TextEditingController();
-  final TextEditingController usernameController = TextEditingController();
+  final TextEditingController handleController = TextEditingController();
 
   @override
   void dispose() {
     firstNameController.dispose();
     lastNameController.dispose();
-    usernameController.dispose();
+    handleController.dispose();
     super.dispose();
   }
 
@@ -35,7 +34,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       if (profile != null) {
         firstNameController.text = profile.firstName ?? '';
         lastNameController.text = profile.lastName ?? '';
-        usernameController.text = profile.username;
+        handleController.text = profile.username;
       }
     });
   }
@@ -47,11 +46,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     });
 
     try {
-      // Send empty strings instead of null to trigger API validation
       final request = UpdateProfileRequest(
         firstName: firstNameController.text.trim(),
         lastName: lastNameController.text.trim(),
-        username: usernameController.text.trim(),
+        username: handleController.text.trim(),
       );
 
       await ref.read(userProfileRepositoryProvider.notifier).updateProfile(request);
@@ -73,32 +71,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       if (mounted) {
         setState(() {
           isSaving = false;
-
-          // Parse error message
-          final errorStr = e.toString().toLowerCase();
-
-          // Check for specific validation errors
-          if (errorStr.contains('first') && errorStr.contains('name')) {
-            errorMessage = 'First name cannot be empty';
-          } else if (errorStr.contains('last') && errorStr.contains('name')) {
-            errorMessage = 'Last name cannot be empty';
-          } else if (errorStr.contains('username') &&
-                     (errorStr.contains('already') ||
-                      errorStr.contains('taken') ||
-                      errorStr.contains('exists'))) {
-            errorMessage = 'Username already taken';
-          } else if (errorStr.contains('username') && errorStr.contains('invalid')) {
-            errorMessage = 'Username is invalid';
-          } else if (errorStr.contains('empty') || errorStr.contains('required')) {
-            errorMessage = 'All fields are required';
-          } else {
-            // Try to extract meaningful error from the response
-            if (errorStr.contains('validation') || errorStr.contains('invalid')) {
-              errorMessage = 'Validation error: Please check your input';
-            } else {
-              errorMessage = 'Failed to update profile';
-            }
-          }
+          errorMessage = 'Failed to update profile';
         });
       }
     }
@@ -117,7 +90,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     final profileAsync = ref.watch(userProfileRepositoryProvider);
 
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Colors.white,
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: SingleChildScrollView(
@@ -148,34 +121,30 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     const Center(
                       child: Text(
                         'Settings',
-                        style: TextStyle(fontSize: 28, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
 
-              const SizedBox(height: 2),
+              const SizedBox(height: 16),
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  GestureDetector(
-                    onTap: () {
-                      if (isEditing) {
-                        _cancelEditing();
-                      }
-                    },
-                    child: Text(
-                      'Profile',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight:
-                            !isEditing ? FontWeight.bold : FontWeight.normal,
-                      ),
+                  const Text(
+                    'Profile',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
                     ),
                   ),
-
                   if (!isEditing && !isSaving)
                     GestureDetector(
                       onTap: () {
@@ -185,9 +154,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       child: const Text(
                         'Edit',
                         style: TextStyle(
-                          fontSize: 20,
+                          fontSize: 18,
                           color: Color(0xFF3620B3),
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     )
@@ -197,11 +166,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         if (!isSaving)
                           GestureDetector(
                             onTap: _cancelEditing,
-                            child: const Text(
+                            child: Text(
                               'Cancel',
                               style: TextStyle(
                                 fontSize: 18,
-                                color: Colors.grey,
+                                color: Colors.grey.shade600,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -233,7 +202,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 ],
               ),
 
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
 
               // Error message
               if (errorMessage != null)
@@ -271,20 +240,35 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   if (!isEditing &&
                       firstNameController.text.isEmpty &&
                       lastNameController.text.isEmpty &&
-                      usernameController.text.isEmpty) {
+                      handleController.text.isEmpty) {
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       firstNameController.text = profile.firstName ?? '';
                       lastNameController.text = profile.lastName ?? '';
-                      usernameController.text = profile.username;
+                      handleController.text = profile.username;
                     });
                   }
 
-                  return ProfileSection(
-                    firstNameController: firstNameController,
-                    lastNameController: lastNameController,
-                    usernameController: usernameController,
-                    isEditable: isEditing,
-                    onSave: () {},
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildTextField(
+                        label: 'First Name',
+                        controller: firstNameController,
+                        enabled: isEditing,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        label: 'Last Name',
+                        controller: lastNameController,
+                        enabled: isEditing,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        label: 'Handle',
+                        controller: handleController,
+                        enabled: isEditing,
+                      ),
+                    ],
                   );
                 },
                 loading: () => const Center(
@@ -309,13 +293,17 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               const SizedBox(height: 24),
               const Text(
                 'Trust & Privacy',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
+                ),
               ),
-              const SizedBox(height: 16),
-              BorderedListTile(title: 'Privacy Policy', onTap: () {}),
-              const SizedBox(height: 8),
-              BorderedListTile(title: 'Terms of Use', onTap: () {}),
-              const SizedBox(height: 20),
+              const SizedBox(height: 12),
+              BorderedListTile(title: 'Privacy policy', onTap: () {}),
+              const SizedBox(height: 12),
+              BorderedListTile(title: 'Terms of use', onTap: () {}),
+              const SizedBox(height: 24),
 
               Center(
                 child: GestureDetector(
@@ -334,6 +322,64 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTextField({
+    required String label,
+    required TextEditingController controller,
+    required bool enabled,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.black,
+            fontSize: 16,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 48,
+          width: double.infinity,
+          child: TextField(
+            controller: controller,
+            enabled: enabled,
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.black,
+              fontWeight: FontWeight.w400,
+            ),
+            decoration: InputDecoration(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
+              filled: true,
+              fillColor: enabled ? Colors.white : Colors.grey.shade50,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: const BorderSide(color: Color(0xFF3620B3), width: 1.5),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              disabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade200, width: 1),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
