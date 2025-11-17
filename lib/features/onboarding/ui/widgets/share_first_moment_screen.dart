@@ -311,7 +311,7 @@ class ShareFirstMomentScreen extends ConsumerWidget {
                       onPressed: () async {
                         await _sharePost(context);
                         // Complete onboarding after sharing
-                        viewModel.completeShareMoment();
+                        await viewModel.completeShareMoment();
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF3620B3),

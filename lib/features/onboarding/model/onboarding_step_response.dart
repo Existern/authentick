@@ -1,14 +1,14 @@
-class SkipOnboardingResponse {
+class OnboardingStepResponse {
   final bool success;
   final OnboardingData data;
 
-  SkipOnboardingResponse({
+  OnboardingStepResponse({
     required this.success,
     required this.data,
   });
 
-  factory SkipOnboardingResponse.fromJson(Map<String, dynamic> json) {
-    return SkipOnboardingResponse(
+  factory OnboardingStepResponse.fromJson(Map<String, dynamic> json) {
+    return OnboardingStepResponse(
       success: json['success'] as bool? ?? false,
       data: OnboardingData.fromJson(json['data'] as Map<String, dynamic>),
     );
