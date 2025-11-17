@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../constants/constants.dart';
 // import '../../authentication/repository/authentication_repository.dart'; // Commented out for development
+import '../../authentication/model/auth_response.dart' as auth;
 import '../model/onboarding_state.dart';
 import '../model/onboarding_step_request.dart';
 import '../service/contacts_permission_service.dart';
@@ -15,6 +16,159 @@ class OnboardingViewModel extends _$OnboardingViewModel {
   @override
   OnboardingState build() {
     return const OnboardingState();
+  }
+
+  /// Initialize onboarding from auth response
+  /// Filters out completed steps and starts from the first incomplete step
+  void initializeFromAuthResponse(auth.AuthResponse authResponse) {
+    final onboarding = authResponse.data.onboarding;
+
+    if (onboarding == null) {
+      // No onboarding data, start from beginning
+      debugPrint('${Constants.tag} [OnboardingViewModel] No onboarding data, starting from intro');
+      state = const OnboardingState();
+      return;
+    }
+
+    debugPrint('${Constants.tag} [OnboardingViewModel] Onboarding completed flag: ${onboarding.completed}');
+
+    // Extract completed step names from API response
+    final completedSteps = onboarding.steps
+        .where((step) => step.status == 'completed')
+        .map((step) => step.step)
+        .toSet();
+
+    debugPrint('${Constants.tag} [OnboardingViewModel] Completed steps: $completedSteps');
+
+    // Find the first step that is not completed (regardless of overall completed flag)
+    final firstIncompleteStep = _findFirstIncompleteStep(onboarding.steps);
+
+    if (firstIncompleteStep != null) {
+      // There are incomplete steps, show them
+      debugPrint('${Constants.tag} [OnboardingViewModel] Starting from step: $firstIncompleteStep');
+      state = state.copyWith(
+        currentStep: firstIncompleteStep,
+        completedSteps: completedSteps,
+      );
+    } else {
+      // All steps are completed, mark onboarding as complete
+      debugPrint('${Constants.tag} [OnboardingViewModel] All steps completed, marking as done');
+      state = state.copyWith(
+        currentStep: OnboardingStep.completed,
+        completedSteps: completedSteps,
+      );
+    }
+  }
+
+  /// Find the first step that is not completed
+  /// Steps with 'skipped', 'pending', or any other status should be shown
+  OnboardingStep? _findFirstIncompleteStep(List<auth.OnboardingStep> apiSteps) {
+    for (final apiStep in apiSteps) {
+      debugPrint('${Constants.tag} [OnboardingViewModel] Step: ${apiStep.step}, Status: ${apiStep.status}');
+
+      // Only skip completed steps - show everything else (skipped, pending, etc.)
+      if (apiStep.status == 'completed') {
+        continue;
+      }
+
+      // Map API step name to local OnboardingStep enum
+      final localStep = _mapApiStepToLocal(apiStep.step);
+      if (localStep != null) {
+        return localStep;
+      }
+    }
+
+    return null;
+  }
+
+  /// Map API step names to local OnboardingStep enum
+  OnboardingStep? _mapApiStepToLocal(String apiStepName) {
+    switch (apiStepName) {
+      case 'invite_code_verified':
+        return OnboardingStep.inviteCode;
+      case 'date_of_birth_added':
+        return OnboardingStep.birthday;
+      case 'username_set':
+        return OnboardingStep.username;
+      case 'profile_picture':
+        return OnboardingStep.profilePicture;
+      case 'find_friends':
+        return OnboardingStep.connectFriends;
+      case 'capture_first_moment':
+        return OnboardingStep.welcomeFirstMoment;
+      case 'share_first_moment':
+        return OnboardingStep.shareFirstMoment;
+      default:
+        debugPrint('${Constants.tag} [OnboardingViewModel] Unknown API step: $apiStepName');
+        return null;
+    }
+  }
+
+  /// Map local OnboardingStep enum to API step names
+  String? _mapLocalStepToApi(OnboardingStep localStep) {
+    switch (localStep) {
+      case OnboardingStep.inviteCode:
+        return 'invite_code_verified';
+      case OnboardingStep.birthday:
+        return 'date_of_birth_added';
+      case OnboardingStep.username:
+        return 'username_set';
+      case OnboardingStep.profilePicture:
+        return 'profile_picture';
+      case OnboardingStep.connectFriends:
+      case OnboardingStep.contactsPermission:
+      case OnboardingStep.friendsList:
+        return 'find_friends'; // All friend-related steps map to find_friends
+      case OnboardingStep.welcomeFirstMoment:
+        return 'capture_first_moment';
+      case OnboardingStep.shareFirstMoment:
+        return 'share_first_moment';
+      default:
+        return null;
+    }
+  }
+
+  /// Get the next step after the target step, skipping completed steps
+  OnboardingStep _getNextStep(OnboardingStep targetStep) {
+    // Define the normal flow order
+    const stepOrder = [
+      OnboardingStep.intro,
+      OnboardingStep.inviteCode,
+      OnboardingStep.birthday,
+      OnboardingStep.username,
+      OnboardingStep.profilePicture,
+      OnboardingStep.connectFriends,
+      OnboardingStep.contactsPermission,
+      OnboardingStep.friendsList,
+      OnboardingStep.welcomeFirstMoment,
+      OnboardingStep.shareFirstMoment,
+      OnboardingStep.completed,
+    ];
+
+    final currentIndex = stepOrder.indexOf(targetStep);
+    if (currentIndex == -1 || currentIndex >= stepOrder.length - 1) {
+      return OnboardingStep.completed;
+    }
+
+    // Find the next step that is not completed
+    for (var i = currentIndex + 1; i < stepOrder.length; i++) {
+      final nextStep = stepOrder[i];
+      final apiStepName = _mapLocalStepToApi(nextStep);
+
+      // If this step has no API mapping or is not completed, use it
+      if (apiStepName == null || !state.completedSteps.contains(apiStepName)) {
+        debugPrint(
+          '${Constants.tag} [OnboardingViewModel] Next step after $targetStep: $nextStep',
+        );
+        return nextStep;
+      } else {
+        debugPrint(
+          '${Constants.tag} [OnboardingViewModel] Skipping completed step: $nextStep ($apiStepName)',
+        );
+      }
+    }
+
+    return OnboardingStep.completed;
   }
 
   void nextIntroPage() {
@@ -167,7 +321,15 @@ class OnboardingViewModel extends _$OnboardingViewModel {
   }
 
   void snapProfilePicture() {
-    state = state.copyWith(currentStep: OnboardingStep.connectFriends);
+    // Mark as completed locally
+    final updatedCompletedSteps = Set<String>.from(state.completedSteps)..add('profile_picture');
+
+    // Update state with completedSteps FIRST
+    state = state.copyWith(completedSteps: updatedCompletedSteps);
+
+    // Now _getNextStep will use the updated completedSteps
+    final nextStep = _getNextStep(OnboardingStep.profilePicture);
+    state = state.copyWith(currentStep: nextStep);
   }
 
   Future<void> skipProfilePicture() async {
@@ -182,12 +344,21 @@ class OnboardingViewModel extends _$OnboardingViewModel {
       );
       // Continue anyway - don't block user flow
     }
-    state = state.copyWith(currentStep: OnboardingStep.connectFriends);
+
+    // Mark as completed locally so future navigation skips it
+    final updatedCompletedSteps = Set<String>.from(state.completedSteps)..add('profile_picture');
+
+    // Update state with completedSteps FIRST
+    state = state.copyWith(completedSteps: updatedCompletedSteps);
+
+    // Now _getNextStep will use the updated completedSteps
+    final nextStep = _getNextStep(OnboardingStep.profilePicture);
+    state = state.copyWith(currentStep: nextStep);
   }
 
   void captureFirstMoment() {
     // Mark that user captured their first moment
-    // Navigate to share screen
+    // Navigate to share screen (normal flow, not skip-completed logic)
     state = state.copyWith(
       hasCapturedFirstMoment: true,
       currentStep: OnboardingStep.shareFirstMoment,
@@ -221,11 +392,20 @@ class OnboardingViewModel extends _$OnboardingViewModel {
       // Continue anyway - don't block user flow
     }
 
-    // User skipped capturing, skip share screen too and complete onboarding
+    // Mark both as completed locally so future navigation skips them
+    final updatedCompletedSteps = Set<String>.from(state.completedSteps)
+      ..add('capture_first_moment')
+      ..add('share_first_moment');
+
+    // Update state with completedSteps FIRST
     state = state.copyWith(
+      completedSteps: updatedCompletedSteps,
       hasCapturedFirstMoment: false,
-      currentStep: OnboardingStep.completed,
     );
+
+    // Now _getNextStep will use the updated completedSteps
+    final nextStep = _getNextStep(OnboardingStep.shareFirstMoment);
+    state = state.copyWith(currentStep: nextStep);
   }
 
   Future<void> completeShareMoment() async {
@@ -241,8 +421,15 @@ class OnboardingViewModel extends _$OnboardingViewModel {
       // Continue anyway - don't block user flow
     }
 
-    // Complete onboarding after sharing
-    state = state.copyWith(currentStep: OnboardingStep.completed);
+    // Mark as completed locally
+    final updatedCompletedSteps = Set<String>.from(state.completedSteps)..add('share_first_moment');
+
+    // Update state with completedSteps FIRST
+    state = state.copyWith(completedSteps: updatedCompletedSteps);
+
+    // Now _getNextStep will use the updated completedSteps
+    final nextStep = _getNextStep(OnboardingStep.shareFirstMoment);
+    state = state.copyWith(currentStep: nextStep);
   }
 
   Future<void> skipShareMoment() async {
@@ -257,12 +444,20 @@ class OnboardingViewModel extends _$OnboardingViewModel {
       );
       // Continue anyway - don't block user flow
     }
-    // Skip sharing and complete onboarding
-    state = state.copyWith(currentStep: OnboardingStep.completed);
+
+    // Mark as completed locally so future navigation skips it
+    final updatedCompletedSteps = Set<String>.from(state.completedSteps)..add('share_first_moment');
+
+    // Update state with completedSteps FIRST
+    state = state.copyWith(completedSteps: updatedCompletedSteps);
+
+    // Now _getNextStep will use the updated completedSteps
+    final nextStep = _getNextStep(OnboardingStep.shareFirstMoment);
+    state = state.copyWith(currentStep: nextStep);
   }
 
   void findFriends() {
-    // Navigate to contacts permission screen first
+    // Navigate to contacts permission screen first (sub-flow entry, not completion)
     state = state.copyWith(currentStep: OnboardingStep.contactsPermission);
   }
 
@@ -276,16 +471,17 @@ class OnboardingViewModel extends _$OnboardingViewModel {
           await ContactsPermissionService.requestContactsPermission();
 
       if (granted) {
-        // Permission granted, show friends list
+        // Permission granted, show friends list (sub-flow continuation, not completion)
         state = state.copyWith(
           currentStep: OnboardingStep.friendsList,
           hasContactsPermission: true,
           isLoading: false,
         );
       } else {
-        // Permission denied, go to welcome first moment
+        // Permission denied, skip entire find_friends flow to next incomplete step
+        final nextStep = _getNextStep(OnboardingStep.friendsList);
         state = state.copyWith(
-          currentStep: OnboardingStep.welcomeFirstMoment,
+          currentStep: nextStep,
           hasContactsPermission: false,
           isLoading: false,
         );
@@ -294,9 +490,10 @@ class OnboardingViewModel extends _$OnboardingViewModel {
       debugPrint(
         '${Constants.tag} [OnboardingViewModel] Error requesting contacts permission: $error',
       );
-      // On error, go to welcome first moment
+      // On error, skip entire find_friends flow to next incomplete step
+      final nextStep = _getNextStep(OnboardingStep.friendsList);
       state = state.copyWith(
-        currentStep: OnboardingStep.welcomeFirstMoment,
+        currentStep: nextStep,
         hasContactsPermission: false,
         isLoading: false,
         error: 'Failed to request permission',
@@ -305,16 +502,30 @@ class OnboardingViewModel extends _$OnboardingViewModel {
   }
 
   void skipContactsPermission() {
-    // User declined contacts permission, go to welcome first moment
+    // User declined contacts permission, skip entire find_friends flow
+    final updatedCompletedSteps = Set<String>.from(state.completedSteps)..add('find_friends');
+
+    // Update state with completedSteps FIRST
     state = state.copyWith(
-      currentStep: OnboardingStep.welcomeFirstMoment,
+      completedSteps: updatedCompletedSteps,
       hasContactsPermission: false,
     );
+
+    // Now _getNextStep will use the updated completedSteps
+    final nextStep = _getNextStep(OnboardingStep.friendsList);
+    state = state.copyWith(currentStep: nextStep);
   }
 
   void completeFriendsFlow() {
-    // Complete the friends flow and go to welcome first moment
-    state = state.copyWith(currentStep: OnboardingStep.welcomeFirstMoment);
+    // Complete the friends flow and get next step
+    final updatedCompletedSteps = Set<String>.from(state.completedSteps)..add('find_friends');
+
+    // Update state with completedSteps FIRST
+    state = state.copyWith(completedSteps: updatedCompletedSteps);
+
+    // Now _getNextStep will use the updated completedSteps
+    final nextStep = _getNextStep(OnboardingStep.friendsList);
+    state = state.copyWith(currentStep: nextStep);
   }
 
   Future<void> skipConnectFriends() async {
@@ -329,7 +540,21 @@ class OnboardingViewModel extends _$OnboardingViewModel {
       );
       // Continue anyway - don't block user flow
     }
-    state = state.copyWith(currentStep: OnboardingStep.welcomeFirstMoment);
+
+    // Mark as completed locally so _getNextStep skips all friend-related screens
+    // (contactsPermission and friendsList also map to 'find_friends')
+    final updatedCompletedSteps = Set<String>.from(state.completedSteps)..add('find_friends');
+
+    debugPrint(
+      '${Constants.tag} [OnboardingViewModel] Skipped find_friends, updated completedSteps: $updatedCompletedSteps',
+    );
+
+    // IMPORTANT: Update state with completedSteps FIRST
+    state = state.copyWith(completedSteps: updatedCompletedSteps);
+
+    // Now _getNextStep will use the updated completedSteps
+    final nextStep = _getNextStep(OnboardingStep.connectFriends);
+    state = state.copyWith(currentStep: nextStep);
   }
 
   void updateProfilePicture(String? path) {

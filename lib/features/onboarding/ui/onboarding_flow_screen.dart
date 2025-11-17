@@ -20,11 +20,49 @@ import 'widgets/contacts_permission_screen.dart';
 import 'widgets/friends_list_screen.dart';
 import 'widgets/share_first_moment_screen.dart';
 
-class OnboardingFlowScreen extends ConsumerWidget {
+class OnboardingFlowScreen extends ConsumerStatefulWidget {
   const OnboardingFlowScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<OnboardingFlowScreen> createState() => _OnboardingFlowScreenState();
+}
+
+class _OnboardingFlowScreenState extends ConsumerState<OnboardingFlowScreen> {
+  bool _initialized = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // Initialize onboarding state from auth response only once
+    if (!_initialized) {
+      _initialized = true;
+      _initializeOnboarding();
+    }
+  }
+
+  Future<void> _initializeOnboarding() async {
+    debugPrint(
+      '${Constants.tag} [OnboardingFlowScreen] Initializing onboarding from auth response',
+    );
+
+    final authRepo = ref.read(authenticationRepositoryProvider);
+    final authResponse = await authRepo.getAuthResponse();
+
+    if (authResponse != null) {
+      debugPrint(
+        '${Constants.tag} [OnboardingFlowScreen] Auth response found, initializing view model',
+      );
+      ref.read(onboardingViewModelProvider.notifier).initializeFromAuthResponse(authResponse);
+    } else {
+      debugPrint(
+        '${Constants.tag} [OnboardingFlowScreen] No auth response found, starting from beginning',
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(onboardingViewModelProvider);
 
     // Listen to authentication state for Google sign-in

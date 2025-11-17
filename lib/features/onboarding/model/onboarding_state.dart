@@ -30,6 +30,7 @@ class OnboardingState {
   final String? firstPostMediaUrl;
   final String? firstPostLocation;
   final String? firstPostTime;
+  final Set<String> completedSteps; // API step names that are completed
 
   const OnboardingState({
     this.currentStep = OnboardingStep.intro,
@@ -47,6 +48,7 @@ class OnboardingState {
     this.firstPostMediaUrl,
     this.firstPostLocation,
     this.firstPostTime,
+    this.completedSteps = const {},
   });
 
   OnboardingState copyWith({
@@ -65,6 +67,7 @@ class OnboardingState {
     Object? firstPostMediaUrl = _undefined,
     Object? firstPostLocation = _undefined,
     Object? firstPostTime = _undefined,
+    Set<String>? completedSteps,
   }) {
     return OnboardingState(
       currentStep: currentStep ?? this.currentStep,
@@ -92,6 +95,7 @@ class OnboardingState {
       firstPostTime: firstPostTime == _undefined
           ? this.firstPostTime
           : firstPostTime as String?,
+      completedSteps: completedSteps ?? this.completedSteps,
     );
   }
 }

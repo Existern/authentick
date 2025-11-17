@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -85,6 +87,12 @@ class AuthenticationRepository {
       await _saveUserData(response.data.user);
 
       debugPrint(
+        '${Constants.tag} [AuthenticationRepository] 💾 Saving auth response...',
+      );
+      // Store the complete auth response including onboarding data
+      await saveAuthResponse(response);
+
+      debugPrint(
         '${Constants.tag} [AuthenticationRepository] 🗑️ Clearing old profile caches...',
       );
       // Clear old profile caches to force reload with new data
@@ -158,6 +166,38 @@ class AuthenticationRepository {
     }
     if (user.profileImage != null) {
       await prefs.setString('profile_image_key', user.profileImage!);
+    }
+  }
+
+  Future<void> saveAuthResponse(AuthResponse authResponse) async {
+    final prefs = await SharedPreferences.getInstance();
+    // Convert the entire auth response to JSON and save it
+    await prefs.setString('auth_response', jsonEncode({
+      'success': authResponse.success,
+      'data': {
+        'tokens': authResponse.data.tokens.toJson(),
+        'user': authResponse.data.user.toJson(),
+        if (authResponse.data.onboarding != null)
+          'onboarding': authResponse.data.onboarding!.toJson(),
+      },
+      if (authResponse.meta != null) 'meta': {
+        'request_id': authResponse.meta!.requestId,
+        'timestamp': authResponse.meta!.timestamp,
+      },
+    }));
+  }
+
+  Future<AuthResponse?> getAuthResponse() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonString = prefs.getString('auth_response');
+    if (jsonString == null) return null;
+
+    try {
+      final json = jsonDecode(jsonString) as Map<String, dynamic>;
+      return AuthResponse.fromJson(json);
+    } catch (e) {
+      debugPrint('${Constants.tag} [AuthenticationRepository] Error parsing auth response: $e');
+      return null;
     }
   }
 

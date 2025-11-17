@@ -60,7 +60,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     final authState = ref.watch(authenticationViewModelProvider);
 
     // Listen to authentication state for navigation
-    ref.listen(authenticationViewModelProvider, (previous, next) {
+    ref.listen(authenticationViewModelProvider, (previous, next) async {
       debugPrint('${Constants.tag} [RegisterScreen] Auth state changed: $next');
 
       if (next is AsyncData) {
@@ -70,11 +70,62 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
         );
 
         if (value?.isSignInSuccessfully == true) {
-          // User signed in successfully, navigate to onboarding flow
+          // User signed in successfully, get the auth response from storage
           debugPrint(
-            '${Constants.tag} [RegisterScreen] Navigating to onboarding flow',
+            '${Constants.tag} [RegisterScreen] Getting auth response from storage',
           );
-          context.pushReplacement(Routes.onboardingFlow);
+          final authRepo = ref.read(authenticationRepositoryProvider);
+          final authResponse = await authRepo.getAuthResponse();
+
+          if (!context.mounted) return;
+
+          if (authResponse != null) {
+            debugPrint(
+              '${Constants.tag} [RegisterScreen] Auth response loaded, checking onboarding status',
+            );
+
+            final onboarding = authResponse.data.onboarding;
+            if (onboarding != null) {
+              // Check if there are any incomplete steps
+              final hasIncompleteSteps = onboarding.steps.any(
+                (step) => step.status != 'completed',
+              );
+
+              debugPrint(
+                '${Constants.tag} [RegisterScreen] Onboarding completed flag: ${onboarding.completed}',
+              );
+              debugPrint(
+                '${Constants.tag} [RegisterScreen] Has incomplete steps: $hasIncompleteSteps',
+              );
+
+              if (hasIncompleteSteps) {
+                // There are incomplete steps, navigate to onboarding flow
+                debugPrint(
+                  '${Constants.tag} [RegisterScreen] Found incomplete steps, navigating to onboarding flow',
+                );
+                context.pushReplacement(Routes.onboardingFlow);
+              } else {
+                // All steps completed, go to main
+                debugPrint(
+                  '${Constants.tag} [RegisterScreen] All steps completed, navigating to main',
+                );
+                await authRepo.setHasCompletedOnboarding(true);
+                if (!context.mounted) return;
+                context.pushReplacement(Routes.main);
+              }
+            } else {
+              // No onboarding data, navigate to onboarding flow
+              debugPrint(
+                '${Constants.tag} [RegisterScreen] No onboarding data, navigating to onboarding flow',
+              );
+              context.pushReplacement(Routes.onboardingFlow);
+            }
+          } else {
+            debugPrint(
+              '${Constants.tag} [RegisterScreen] No auth response found, navigating to onboarding flow',
+            );
+            context.pushReplacement(Routes.onboardingFlow);
+          }
         }
       } else if (next is AsyncError) {
         debugPrint(
