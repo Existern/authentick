@@ -77,4 +77,29 @@ class PostService {
       rethrow;
     }
   }
+
+  /// Get user's posts
+  /// GET /posts/user/{userId}
+  /// Parameters:
+  /// - userId: User ID
+  /// - page: Page number - defaults to 1
+  /// - limit: Items per page - defaults to 20
+  Future<FeedResponse> getUserPosts({
+    required String userId,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/posts/user/$userId',
+        queryParameters: {
+          'page': page,
+          'limit': limit,
+        },
+      );
+      return FeedResponse.fromJson(response);
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

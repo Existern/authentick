@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mvvm_riverpod/features/profile/repository/profile_repository.dart';
 import 'package:flutter_mvvm_riverpod/features/user/model/update_profile_request.dart';
 import 'package:flutter_mvvm_riverpod/features/user/repository/user_profile_repository.dart';
+import 'package:flutter_mvvm_riverpod/features/post/repository/user_posts_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
@@ -78,19 +79,6 @@ class _MyProfileState extends ConsumerState<MyProfile> {
   @override
   Widget build(BuildContext context) {
     final profileAsync = ref.watch(userProfileRepositoryProvider);
-
-    final List<String> imageUrls = [
-      'https://images.unsplash.com/photo-1506744038136-46273834b3fb',
-      'https://images.unsplash.com/photo-1495567720989-cebdbdd97913',
-      'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c',
-      'https://images.unsplash.com/photo-1504196606672-aef5c9cefc92',
-      'https://images.unsplash.com/photo-1481349518771-20055b2a7b24',
-      'https://images.unsplash.com/photo-1501594907352-04cda38ebc29',
-      'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c',
-      'https://images.unsplash.com/photo-1504196606672-aef5c9cefc92',
-      'https://images.unsplash.com/photo-1481349518771-20055b2a7b24',
-      'https://images.unsplash.com/photo-1501594907352-04cda38ebc29',
-    ];
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -327,42 +315,136 @@ class _MyProfileState extends ConsumerState<MyProfile> {
             const SizedBox(height: 20),
 
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                child: MasonryGridView.builder(
-                  physics: const BouncingScrollPhysics(),
-                  gridDelegate: const SliverSimpleGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2, 
-                  ),
-                  mainAxisSpacing: 8,
-                  crossAxisSpacing: 8,
-                  itemCount: imageUrls.length,
-                  itemBuilder: (context, index) {
-                 
-                    final double height = (index % 3 == 0)
-                        ? 250
-                        : (index % 3 == 1)
-                            ? 180
-                            : 220;
-
-                    return ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        height: height,
-                        color: Colors.grey[200],
-                        child: Image.network(
-                          imageUrls[index],
-                          fit: BoxFit.cover,
-                          loadingBuilder: (context, child, progress) {
-                            if (progress == null) return child;
-                            return const Center(child: CircularProgressIndicator());
-                          },
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Center(child: Icon(Icons.error)),
-                        ),
-                      ),
+              child: profileAsync.when(
+                data: (profile) {
+                  if (profile == null) {
+                    return const Center(
+                      child: Text('Unable to load profile'),
                     );
-                  },
+                  }
+
+                  final userPostsAsync = ref.watch(
+                    userPostsProvider(userId: profile.id),
+                  );
+
+                  return userPostsAsync.when(
+                    data: (postsResponse) {
+                      final posts = postsResponse.data.posts;
+
+                      if (posts.isEmpty) {
+                        return const Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.photo_library_outlined, size: 64, color: Colors.grey),
+                              SizedBox(height: 16),
+                              Text(
+                                'No posts yet',
+                                style: TextStyle(fontSize: 18, color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      // Extract all media URLs from posts
+                      final mediaItems = posts
+                          .expand((post) => post.media ?? [])
+                          .where((media) => media.mediaType == 'image')
+                          .toList();
+
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                        child: MasonryGridView.builder(
+                          physics: const BouncingScrollPhysics(),
+                          gridDelegate: const SliverSimpleGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                          ),
+                          mainAxisSpacing: 8,
+                          crossAxisSpacing: 8,
+                          itemCount: mediaItems.length,
+                          itemBuilder: (context, index) {
+                            final media = mediaItems[index];
+
+                            // Calculate height based on aspect ratio if available
+                            final double height = (media.height != null && media.width != null)
+                                ? (media.height! / media.width!) * 180
+                                : ((index % 3 == 0) ? 250 : (index % 3 == 1) ? 180 : 220);
+
+                            return ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                height: height,
+                                color: Colors.grey[200],
+                                child: Image.network(
+                                  media.mediaUrl,
+                                  fit: BoxFit.cover,
+                                  loadingBuilder: (context, child, progress) {
+                                    if (progress == null) return child;
+                                    return const Center(
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Color(0xFF3620B3),
+                                      ),
+                                    );
+                                  },
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const Center(child: Icon(Icons.error, color: Colors.red)),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                    loading: () => const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF3620B3),
+                      ),
+                    ),
+                    error: (error, stack) => Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            size: 48,
+                            color: Colors.red,
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Failed to load posts',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            error.toString(),
+                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 8),
+                          ElevatedButton(
+                            onPressed: () {
+                              ref.invalidate(userPostsProvider(userId: profile.id));
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF3620B3),
+                              foregroundColor: Colors.white,
+                            ),
+                            child: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+                loading: () => const Center(
+                  child: CircularProgressIndicator(
+                    color: Color(0xFF3620B3),
+                  ),
+                ),
+                error: (error, stack) => const Center(
+                  child: Text('Unable to load profile'),
                 ),
               ),
             ),
