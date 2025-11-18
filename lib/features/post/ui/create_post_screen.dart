@@ -283,7 +283,8 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
       if (widget.onComplete != null) {
         widget.onComplete!();
       } else {
-        Navigator.of(context).pop();
+        // Return true to indicate success
+        Navigator.of(context).pop(true);
       }
     } catch (e) {
       if (!mounted) return;

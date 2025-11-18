@@ -7,16 +7,19 @@ import 'package:flutter_mvvm_riverpod/screens/location/locationpage.dart';
 import 'package:flutter_mvvm_riverpod/screens/post/postpage.dart';
 // import 'package:flutter_mvvm_riverpod/screens/post/postpage.dart';
 import 'package:flutter_mvvm_riverpod/screens/profile/myprofile.dart';
+import 'package:flutter_mvvm_riverpod/features/post/ui/create_post_screen.dart';
+import 'package:flutter_mvvm_riverpod/features/post/repository/feed_repository.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 
-class BottomNavScreen extends StatefulWidget {
+class BottomNavScreen extends ConsumerStatefulWidget {
   const BottomNavScreen({super.key});
 
   @override
-  State<BottomNavScreen> createState() => _BottomNavScreenState();
+  ConsumerState<BottomNavScreen> createState() => _BottomNavScreenState();
 }
 
-class _BottomNavScreenState extends State<BottomNavScreen> {
+class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
   int currentIndex = 0;
 
   @override
@@ -86,10 +89,25 @@ class _BottomNavScreenState extends State<BottomNavScreen> {
           Positioned(
             top: -25,
             child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  currentIndex = 2;
-                });
+              onTap: () async {
+                // Navigate to create post screen
+                final result = await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const CreatePostScreen(
+                      isOnboarding: false,
+                    ),
+                  ),
+                );
+
+                // After returning from create post, refresh feeds
+                if (result == true || mounted) {
+                  // Refresh the feed to show new posts
+                  ref.invalidate(feedProvider);
+                  // Navigate to home tab to see the new post
+                  setState(() {
+                    currentIndex = 0;
+                  });
+                }
               },
               child: Container(
                 height: 65,
