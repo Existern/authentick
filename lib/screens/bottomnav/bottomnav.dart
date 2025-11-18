@@ -9,6 +9,8 @@ import 'package:flutter_mvvm_riverpod/screens/post/postpage.dart';
 import 'package:flutter_mvvm_riverpod/screens/profile/myprofile.dart';
 import 'package:flutter_mvvm_riverpod/features/post/ui/create_post_screen.dart';
 import 'package:flutter_mvvm_riverpod/features/post/repository/feed_repository.dart';
+import 'package:flutter_mvvm_riverpod/features/post/repository/user_posts_repository.dart';
+import 'package:flutter_mvvm_riverpod/features/user/repository/user_profile_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 
@@ -100,9 +102,21 @@ class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
                 );
 
                 // After returning from create post, refresh feeds
-                if (result == true || mounted) {
+                if (result == true && mounted) {
+                  // Get current user ID to refresh their posts
+                  final currentProfile = ref.read(userProfileRepositoryProvider).value;
+
                   // Refresh the feed to show new posts
                   ref.invalidate(feedProvider);
+
+                  // Immediately trigger a refresh of user posts for profile page
+                  // This ensures the new post appears when user navigates to profile
+                  if (currentProfile != null) {
+                    // Using invalidate() to mark as needing refresh
+                    // The profile page will automatically refetch when viewing
+                    ref.invalidate(userPostsProvider(userId: currentProfile.id));
+                  }
+
                   // Navigate to home tab to see the new post
                   setState(() {
                     currentIndex = 0;

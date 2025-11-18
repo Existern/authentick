@@ -332,17 +332,35 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                       final posts = postsResponse.data.posts;
 
                       if (posts.isEmpty) {
-                        return const Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.photo_library_outlined, size: 64, color: Colors.grey),
-                              SizedBox(height: 16),
-                              Text(
-                                'No posts yet',
-                                style: TextStyle(fontSize: 18, color: Colors.grey),
+                        return RefreshIndicator(
+                          onRefresh: () async {
+                            // Refresh user posts
+                            ref.invalidate(userPostsProvider(userId: profile.id));
+                          },
+                          color: const Color(0xFF3620B3),
+                          child: SingleChildScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            child: SizedBox(
+                              height: MediaQuery.of(context).size.height * 0.5,
+                              child: const Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.photo_library_outlined, size: 64, color: Colors.grey),
+                                    SizedBox(height: 16),
+                                    Text(
+                                      'No posts yet',
+                                      style: TextStyle(fontSize: 18, color: Colors.grey),
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      'Pull down to refresh',
+                                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ],
+                            ),
                           ),
                         );
                       }
@@ -353,47 +371,56 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                           .where((media) => media.mediaType == 'image')
                           .toList();
 
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                        child: MasonryGridView.builder(
-                          physics: const BouncingScrollPhysics(),
-                          gridDelegate: const SliverSimpleGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                          ),
-                          mainAxisSpacing: 8,
-                          crossAxisSpacing: 8,
-                          itemCount: mediaItems.length,
-                          itemBuilder: (context, index) {
-                            final media = mediaItems[index];
+                      return RefreshIndicator(
+                        onRefresh: () async {
+                          // Refresh user posts
+                          ref.invalidate(userPostsProvider(userId: profile.id));
+                        },
+                        color: const Color(0xFF3620B3),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                          child: MasonryGridView.builder(
+                            physics: const AlwaysScrollableScrollPhysics(
+                              parent: BouncingScrollPhysics(),
+                            ),
+                            gridDelegate: const SliverSimpleGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                            ),
+                            mainAxisSpacing: 8,
+                            crossAxisSpacing: 8,
+                            itemCount: mediaItems.length,
+                            itemBuilder: (context, index) {
+                              final media = mediaItems[index];
 
-                            // Calculate height based on aspect ratio if available
-                            final double height = (media.height != null && media.width != null)
-                                ? (media.height! / media.width!) * 180
-                                : ((index % 3 == 0) ? 250 : (index % 3 == 1) ? 180 : 220);
+                              // Calculate height based on aspect ratio if available
+                              final double height = (media.height != null && media.width != null)
+                                  ? (media.height! / media.width!) * 180
+                                  : ((index % 3 == 0) ? 250 : (index % 3 == 1) ? 180 : 220);
 
-                            return ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Container(
-                                height: height,
-                                color: Colors.grey[200],
-                                child: Image.network(
-                                  media.mediaUrl,
-                                  fit: BoxFit.cover,
-                                  loadingBuilder: (context, child, progress) {
-                                    if (progress == null) return child;
-                                    return const Center(
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Color(0xFF3620B3),
-                                      ),
-                                    );
-                                  },
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      const Center(child: Icon(Icons.error, color: Colors.red)),
+                              return ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  height: height,
+                                  color: Colors.grey[200],
+                                  child: Image.network(
+                                    media.mediaUrl,
+                                    fit: BoxFit.cover,
+                                    loadingBuilder: (context, child, progress) {
+                                      if (progress == null) return child;
+                                      return const Center(
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Color(0xFF3620B3),
+                                        ),
+                                      );
+                                    },
+                                    errorBuilder: (context, error, stackTrace) =>
+                                        const Center(child: Icon(Icons.error, color: Colors.red)),
+                                  ),
                                 ),
-                              ),
-                            );
-                          },
+                              );
+                            },
+                          ),
                         ),
                       );
                     },
