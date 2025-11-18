@@ -4,6 +4,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../features/connections/model/connection.dart';
 import '../../features/connections/view_model/pending_connections_view_model.dart';
+import '../../features/connections/view_model/friends_view_model.dart';
+import '../../features/connections/view_model/followers_view_model.dart';
 
 class Friendpage extends ConsumerStatefulWidget {
   const Friendpage({super.key});
@@ -98,20 +100,37 @@ class _FriendpageState extends ConsumerState<Friendpage> {
     });
   }
 
-  int getTabCount(AsyncValue<List<Connection>> pendingConnectionsAsync) {
-    if (selectedTab == 'Friend requests') {
-      return pendingConnectionsAsync.maybeWhen(
-        data: (connections) => connections.length,
-        orElse: () => 0,
-      );
+  int getTabCount(
+    AsyncValue<List<Connection>> pendingConnectionsAsync,
+    AsyncValue<List<Connection>> friendsAsync,
+    AsyncValue<List<Connection>> followersAsync,
+  ) {
+    switch (selectedTab) {
+      case 'Friend requests':
+        return pendingConnectionsAsync.maybeWhen(
+          data: (connections) => connections.length,
+          orElse: () => 0,
+        );
+      case 'Friends':
+        return friendsAsync.maybeWhen(
+          data: (connections) => connections.length,
+          orElse: () => 0,
+        );
+      case 'Followers':
+        return followersAsync.maybeWhen(
+          data: (connections) => connections.length,
+          orElse: () => 0,
+        );
+      default:
+        return 0;
     }
-    // For other tabs, return 0 for now (not implemented yet)
-    return 0;
   }
 
   @override
   Widget build(BuildContext context) {
     final pendingConnectionsAsync = ref.watch(pendingConnectionsViewModelProvider);
+    final friendsAsync = ref.watch(friendsViewModelProvider);
+    final followersAsync = ref.watch(followersViewModelProvider);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -165,12 +184,12 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                   _buildTab(
                     label: 'Friend requests',
                     icon: Icons.person_add,
-                    count: getTabCount(pendingConnectionsAsync),
+                    count: getTabCount(pendingConnectionsAsync, friendsAsync, followersAsync),
                   ),
                   _buildTab(
                     label: 'Friends',
                     icon: Icons.people,
-                    count: 0,
+                    count: getTabCount(pendingConnectionsAsync, friendsAsync, followersAsync),
                   ),
                   _buildTab(
                     label: 'Following',
@@ -180,7 +199,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                   _buildTab(
                     label: 'Followers',
                     icon: Icons.group,
-                    count: 0,
+                    count: getTabCount(pendingConnectionsAsync, friendsAsync, followersAsync),
                   ),
                   _buildTab(
                     label: 'Friends of friends',
@@ -195,7 +214,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
 
             // User List
             Expanded(
-              child: _buildContent(pendingConnectionsAsync),
+              child: _buildContent(pendingConnectionsAsync, friendsAsync, followersAsync),
             ),
           ],
         ),
@@ -203,7 +222,11 @@ class _FriendpageState extends ConsumerState<Friendpage> {
     );
   }
 
-  Widget _buildContent(AsyncValue<List<Connection>> pendingConnectionsAsync) {
+  Widget _buildContent(
+    AsyncValue<List<Connection>> pendingConnectionsAsync,
+    AsyncValue<List<Connection>> friendsAsync,
+    AsyncValue<List<Connection>> followersAsync,
+  ) {
     if (selectedTab == 'Friend requests') {
       return pendingConnectionsAsync.when(
         data: (connections) {
@@ -270,6 +293,158 @@ class _FriendpageState extends ConsumerState<Friendpage> {
               TextButton(
                 onPressed: () {
                   ref.read(pendingConnectionsViewModelProvider.notifier).refresh();
+                },
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Friends tab
+    if (selectedTab == 'Friends') {
+      return friendsAsync.when(
+        data: (connections) {
+          if (connections.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.people_outline,
+                    size: 64,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No friends yet',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return RefreshIndicator(
+            onRefresh: () async {
+              await ref.read(friendsViewModelProvider.notifier).refresh();
+            },
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              itemCount: connections.length,
+              itemBuilder: (context, index) {
+                final connection = connections[index];
+                return _buildFriendCard(connection);
+              },
+            ),
+          );
+        },
+        loading: () => const Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFF3620B3),
+          ),
+        ),
+        error: (error, stack) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: 64,
+                color: Colors.red[400],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Failed to load friends',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () {
+                  ref.read(friendsViewModelProvider.notifier).refresh();
+                },
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Followers tab
+    if (selectedTab == 'Followers') {
+      return followersAsync.when(
+        data: (connections) {
+          if (connections.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.group_outlined,
+                    size: 64,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No followers yet',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return RefreshIndicator(
+            onRefresh: () async {
+              await ref.read(followersViewModelProvider.notifier).refresh();
+            },
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              itemCount: connections.length,
+              itemBuilder: (context, index) {
+                final connection = connections[index];
+                return _buildFollowerCard(connection);
+              },
+            ),
+          );
+        },
+        loading: () => const Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFF3620B3),
+          ),
+        ),
+        error: (error, stack) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: 64,
+                color: Colors.red[400],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Failed to load followers',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () {
+                  ref.read(followersViewModelProvider.notifier).refresh();
                 },
                 child: const Text('Retry'),
               ),
@@ -467,6 +642,164 @@ class _FriendpageState extends ConsumerState<Friendpage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildFriendCard(Connection connection) {
+    // Get the connected friend user
+    final friendUser = connection.connectedUser ?? connection.user;
+
+    if (friendUser == null) {
+      return const SizedBox.shrink();
+    }
+
+    final displayName = friendUser.fullName;
+    final username = '@${friendUser.username}';
+    final profileImage = friendUser.profileImage;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          // Profile Image
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: Colors.grey[300],
+              image: profileImage != null
+                  ? DecorationImage(
+                      image: NetworkImage(profileImage),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+            ),
+            child: profileImage == null
+                ? Icon(
+                    Icons.person,
+                    size: 30,
+                    color: Colors.grey[600],
+                  )
+                : null,
+          ),
+          const SizedBox(width: 12),
+
+          // Name and Username
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  displayName,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  username,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Three dot menu
+          IconButton(
+            icon: SvgPicture.asset(
+              'assets/images/3dot.svg',
+              width: 20,
+              height: 20,
+            ),
+            onPressed: () {
+              _showOptionsMenu(context, friendUser.username);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFollowerCard(Connection connection) {
+    // Get the follower user
+    final followerUser = connection.user ?? connection.connectedUser;
+
+    if (followerUser == null) {
+      return const SizedBox.shrink();
+    }
+
+    final displayName = followerUser.fullName;
+    final username = '@${followerUser.username}';
+    final profileImage = followerUser.profileImage;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          // Profile Image
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: Colors.grey[300],
+              image: profileImage != null
+                  ? DecorationImage(
+                      image: NetworkImage(profileImage),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+            ),
+            child: profileImage == null
+                ? Icon(
+                    Icons.person,
+                    size: 30,
+                    color: Colors.grey[600],
+                  )
+                : null,
+          ),
+          const SizedBox(width: 12),
+
+          // Name and Username
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  displayName,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  username,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Three dot menu
+          IconButton(
+            icon: SvgPicture.asset(
+              'assets/images/3dot.svg',
+              width: 20,
+              height: 20,
+            ),
+            onPressed: () {
+              _showOptionsMenu(context, followerUser.username);
+            },
+          ),
+        ],
+      ),
     );
   }
 

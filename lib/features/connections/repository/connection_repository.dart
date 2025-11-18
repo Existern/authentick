@@ -19,6 +19,58 @@ class ConnectionRepository {
 
   const ConnectionRepository(this._connectionService);
 
+  /// Get connections with filters
+  Future<PendingConnectionsResponse> getConnections({
+    List<String>? types,
+    List<String>? statuses,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    try {
+      debugPrint(
+        '${Constants.tag} [ConnectionRepository] 🔄 Fetching connections...',
+      );
+      debugPrint(
+        '${Constants.tag} [ConnectionRepository] Types: $types, Statuses: $statuses',
+      );
+      debugPrint(
+        '${Constants.tag} [ConnectionRepository] Page: $page, Limit: $limit',
+      );
+
+      final response = await _connectionService.getConnections(
+        types: types,
+        statuses: statuses,
+        page: page,
+        limit: limit,
+      );
+
+      debugPrint(
+        '${Constants.tag} [ConnectionRepository] ✅ Success: ${response.success}',
+      );
+      debugPrint(
+        '${Constants.tag} [ConnectionRepository] Total connections: ${response.data.totalCount}',
+      );
+      debugPrint(
+        '${Constants.tag} [ConnectionRepository] Connections in this page: ${response.data.connections.length}',
+      );
+
+      return response;
+    } catch (error, stackTrace) {
+      debugPrint(
+        '${Constants.tag} [ConnectionRepository] ❌ EXCEPTION CAUGHT ❌',
+      );
+      debugPrint(
+        '${Constants.tag} [ConnectionRepository] Error Type: ${error.runtimeType}',
+      );
+      debugPrint(
+        '${Constants.tag} [ConnectionRepository] Error Details: $error',
+      );
+      debugPrint('${Constants.tag} [ConnectionRepository] Stack Trace:');
+      debugPrint('$stackTrace');
+      rethrow;
+    }
+  }
+
   /// Get pending connection requests
   Future<PendingConnectionsResponse> getPendingConnections({
     int page = 1,
