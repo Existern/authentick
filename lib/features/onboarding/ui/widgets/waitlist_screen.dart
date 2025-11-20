@@ -1,0 +1,243 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
+import '../../../../constants/constants.dart';
+import '../../../authentication/ui/view_model/authentication_view_model.dart';
+import '../../../waitlist/model/waitlist_request.dart';
+import '../../../waitlist/service/waitlist_service.dart';
+
+class WaitlistScreen extends ConsumerStatefulWidget {
+  const WaitlistScreen({super.key});
+
+  @override
+  ConsumerState<WaitlistScreen> createState() => _WaitlistScreenState();
+}
+
+class _WaitlistScreenState extends ConsumerState<WaitlistScreen> {
+  bool _isLoading = true;
+  bool _isSubmitted = false;
+  bool _alreadyExists = false;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    // Automatically submit on screen load
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _submitToWaitlist();
+    });
+  }
+
+  Future<void> _submitToWaitlist() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      // Get email from authentication state
+      final authState = ref.read(authenticationViewModelProvider);
+
+      String? email;
+      authState.when(
+        data: (state) {
+          final authResponse = state.authResponse;
+          if (authResponse != null) {
+            final userData = authResponse['user'] as Map<String, dynamic>?;
+            email = userData?['email'] as String?;
+          }
+        },
+        loading: () => email = null,
+        error: (_, __) => email = null,
+      );
+
+      debugPrint('${Constants.tag} [WaitlistScreen] Retrieved email from auth state: $email');
+
+      if (email == null || email!.isEmpty) {
+        debugPrint('${Constants.tag} [WaitlistScreen] No email found in auth state');
+
+        if (!mounted) return;
+
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Unable to retrieve your email. Please try again.';
+        });
+        return;
+      }
+
+      debugPrint('${Constants.tag} [WaitlistScreen] Submitting email to waitlist: $email');
+
+      final service = ref.read(waitlistServiceProvider);
+      final response = await service.joinWaitlist(WaitlistRequest(email: email!));
+
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+        _isSubmitted = true;
+        _alreadyExists = response.data.alreadyExists;
+      });
+
+      debugPrint('${Constants.tag} [WaitlistScreen] Already exists: $_alreadyExists');
+    } catch (e) {
+      debugPrint('${Constants.tag} [WaitlistScreen] Error joining waitlist: $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Failed to join waitlist. Please try again.';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          // Full background image
+          Positioned.fill(
+            child: Image.asset('assets/images/waitlist.jpg', fit: BoxFit.cover),
+          ),
+
+          // White gradient overlay at bottom
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              height: MediaQuery.of(context).size.height * 0.35,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.white.withValues(alpha: 0.0),
+                    Colors.white.withValues(alpha: 0.85),
+                    Colors.white.withValues(alpha: 0.98),
+                  ],
+                  stops: const [0.0, 0.5, 1.0],
+                ),
+              ),
+            ),
+          ),
+
+          // Content
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 16.0,
+              ),
+              child: Column(
+                children: [
+                  // Header: Centered logo
+                  SizedBox(
+                    height: 40,
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: SvgPicture.asset(
+                        'assets/images/authentick_logo.svg',
+                        width: 30,
+                        height: 30,
+                      ),
+                    ),
+                  ),
+
+                  const Spacer(),
+
+                  // Bottom content
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 40),
+                    child: _buildContent(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    if (_isLoading) {
+      return const Column(
+        children: [
+          CircularProgressIndicator(color: Color(0xFF3620B3)),
+          SizedBox(height: 16),
+          Text(
+            'Joining waitlist...',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: Colors.black,
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Column(
+        children: [
+          const Icon(
+            Icons.error_outline,
+            color: Colors.red,
+            size: 48,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            _errorMessage!,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: Colors.red,
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (_isSubmitted) {
+      return Column(
+        children: [
+          // Title - different based on whether user already exists
+          Text(
+            _alreadyExists
+                ? "You're already on\nthe waitlist!"
+                : "We've placed you\non the waitlist!",
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w700,
+              color: Colors.black,
+              height: 1.2,
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Subtitle - different based on whether user already exists
+          Text(
+            _alreadyExists
+                ? 'You will be notified soon via\nteam@authentick.com for an invite.'
+                : 'Watch out for a mail from\nteam@authentick.com for an invite.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w400,
+              color: Colors.black,
+              height: 1.4,
+            ),
+          ),
+        ],
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+}

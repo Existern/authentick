@@ -45,22 +45,40 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   Future<void> _checkLoginStatus() async {
     final authRepo = ref.read(authenticationRepositoryProvider);
-    final isLoggedIn = await authRepo.isLogin();
-    final hasCompletedOnboarding = await authRepo.hasCompletedOnboarding();
 
     debugPrint(
-      '${Constants.tag} [SplashScreen._checkLoginStatus] isLoggedIn = $isLoggedIn, hasCompletedOnboarding = $hasCompletedOnboarding',
+      '${Constants.tag} [SplashScreen._checkLoginStatus] Attempting auto-login...',
     );
+
+    // Try to auto-login using stored tokens
+    final autoLoginSuccess = await authRepo.tryAutoLogin();
 
     await Future.delayed(const Duration(seconds: 1));
     if (!mounted) return;
 
-    if (isLoggedIn) {
+    if (autoLoginSuccess) {
       debugPrint(
-        '${Constants.tag} [SplashScreen] Navigating to main (user is logged in)',
+        '${Constants.tag} [SplashScreen._checkLoginStatus] Auto-login successful!',
       );
-      context.pushReplacement(Routes.main);
+
+      // Check if onboarding is completed
+      final hasCompletedOnboarding = await authRepo.hasCompletedOnboarding();
+
+      if (hasCompletedOnboarding) {
+        debugPrint(
+          '${Constants.tag} [SplashScreen] Navigating to main (user is logged in and onboarding completed)',
+        );
+        context.pushReplacement(Routes.main);
+      } else {
+        debugPrint(
+          '${Constants.tag} [SplashScreen] Navigating to onboarding flow (user is logged in but onboarding not completed)',
+        );
+        context.pushReplacement(Routes.onboardingFlow);
+      }
     } else {
+      debugPrint(
+        '${Constants.tag} [SplashScreen._checkLoginStatus] Auto-login failed or no stored tokens',
+      );
       debugPrint(
         '${Constants.tag} [SplashScreen] Navigating to register (user not logged in)',
       );

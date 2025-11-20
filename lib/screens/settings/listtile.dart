@@ -13,24 +13,26 @@ class BorderedListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-
       decoration: BoxDecoration(
-
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.black,
+          color: Colors.grey.shade300,
           width: 1,
         ),
       ),
       child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         title: Text(
           title,
-          style: const TextStyle(fontSize: 16),
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w400,
+          ),
         ),
         trailing: const Icon(
           Icons.open_in_new_rounded,
           color: Color(0xFF3620B3),
-          size: 22,
+          size: 20,
         ),
         onTap: onTap,
       ),

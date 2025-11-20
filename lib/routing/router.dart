@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../constants/constants.dart';
 import '../features/authentication/ui/otp_screen.dart';
 import '../features/authentication/ui/sign_in_screen.dart';
 import '../features/authentication/ui/register_screen.dart';
+import '../features/authentication/repository/authentication_repository.dart';
+import '../features/common/service/secure_storage_service.dart';
 // import '../features/main/ui/main_screen.dart';
 import '../screens/bottomnav/bottomnav.dart';
 import '../features/onboarding/ui/onboarding_screen.dart';
 import '../features/onboarding/ui/onboarding_flow_screen.dart';
 import '../features/onboarding/ui/splash_screen.dart';
+import '../features/onboarding/ui/widgets/waitlist_screen.dart';
 import '../features/premium/ui/premium_screen.dart';
 import '../features/profile/model/profile.dart';
 import '../features/profile/ui/account_info_screen.dart';
@@ -67,7 +72,43 @@ class SlideRouteTransition extends CustomTransitionPage<void> {
 }
 
 final GoRouter router = GoRouter(
-  initialLocation: Routes.register,
+  initialLocation: Routes.splash,
+  redirect: (context, state) async {
+    // Skip redirect for splash screen (initial loading)
+    if (state.matchedLocation == Routes.splash) {
+      return null;
+    }
+
+    // Check if user is already logged in
+    final prefs = await SharedPreferences.getInstance();
+    final isLoggedIn = prefs.getBool(Constants.isLoginKey) ?? false;
+
+    if (isLoggedIn) {
+      // Check if user has completed onboarding
+      final hasCompletedOnboarding =
+          prefs.getBool(Constants.hasCompletedOnboardingKey) ?? false;
+
+      if (!hasCompletedOnboarding &&
+          state.matchedLocation != Routes.onboardingFlow) {
+        return Routes.onboardingFlow;
+      }
+
+      // Redirect to main if trying to access auth screens while logged in
+      if (state.matchedLocation == Routes.register ||
+          state.matchedLocation == Routes.login) {
+        return Routes.main;
+      }
+    } else {
+      // Not logged in, redirect to register unless already on auth screens
+      if (state.matchedLocation != Routes.register &&
+          state.matchedLocation != Routes.login &&
+          state.matchedLocation != Routes.otp) {
+        return Routes.register;
+      }
+    }
+
+    return null;
+  },
   routes: [
     GoRoute(
       path: Routes.register,
@@ -124,6 +165,10 @@ final GoRouter router = GoRouter(
       path: Routes.premium,
       pageBuilder: (context, state) =>
           state.slidePage(const PremiumScreen(), direction: SlideDirection.up),
+    ),
+    GoRoute(
+      path: Routes.waitlist,
+      pageBuilder: (context, state) => state.slidePage(const WaitlistScreen()),
     ),
   ],
 );

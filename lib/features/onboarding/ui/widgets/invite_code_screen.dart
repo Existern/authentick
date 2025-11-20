@@ -3,10 +3,14 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../extensions/build_context_extension.dart';
+import '../../../../routing/routes.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../profile/repository/profile_repository.dart';
 import '../../view_model/onboarding_view_model.dart';
 
 // Custom formatter for invite code: XXXX-XXXX format
@@ -51,20 +55,7 @@ class InviteCodeScreen extends ConsumerStatefulWidget {
 class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
   final TextEditingController _codeController = TextEditingController();
   String? _errorMessage;
-
-  // Static function to simulate API call for invite code validation
-  static Future<Map<String, dynamic>> validateInviteCode(String code) async {
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    // Test code that will return invalid
-    if (code == 'INVALID1') {
-      return {'success': false, 'message': 'Invite code is invalid'};
-    }
-
-    // All other codes return success
-    return {'success': true, 'message': 'Code validated successfully'};
-  }
+  bool _isValidating = false;
 
   @override
   void initState() {
@@ -94,18 +85,38 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
   Future<void> _validateAndSubmit() async {
     // Get the raw code without dash
     final code = _codeController.text.replaceAll('-', '');
-    final result = await validateInviteCode(code);
 
-    if (result['success']) {
-      // Clear error and proceed
-      setState(() {
-        _errorMessage = null;
-      });
-      ref.read(onboardingViewModelProvider.notifier).submitInviteCode();
-    } else {
+    setState(() {
+      _isValidating = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final repository = ref.read(profileRepositoryProvider);
+      final response = await repository.updateProfile(invitedByCode: code);
+
+      if (!mounted) return;
+
+      if (response.success) {
+        // Clear error and proceed
+        setState(() {
+          _errorMessage = null;
+          _isValidating = false;
+        });
+        ref.read(onboardingViewModelProvider.notifier).submitInviteCode();
+      } else {
+        // Show error
+        setState(() {
+          _errorMessage = 'Invite code is invalid';
+          _isValidating = false;
+        });
+      }
+    } catch (error) {
+      if (!mounted) return;
       // Show error
       setState(() {
-        _errorMessage = result['message'];
+        _errorMessage = 'Invite code is invalid';
+        _isValidating = false;
       });
     }
   }
@@ -188,28 +199,15 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
               ),
               child: Column(
                 children: [
-                  // Header: Centered logo with check icon
+                  // Header: Centered SVG logo
                   SizedBox(
                     height: 40,
                     child: Align(
                       alignment: Alignment.center,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'authentick',
-                            style: AppTheme.title18.copyWith(
-                              color: AppColors.mono100,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          const Icon(
-                            Icons.check_circle,
-                            color: AppColors.blueberry100,
-                            size: 22,
-                          ),
-                        ],
+                      child: SvgPicture.asset(
+                        'assets/images/authentick_logo.svg',
+                        width: 30,
+                        height: 30,
                       ),
                     ),
                   ),
@@ -279,9 +277,10 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
                     width: double.infinity,
                     height: 54,
                     child: ElevatedButton(
-                      onPressed: state.inviteCode.length == 8
-                          ? _validateAndSubmit
-                          : null,
+                      onPressed:
+                          state.inviteCode.length == 8 && !_isValidating
+                              ? _validateAndSubmit
+                              : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF4300FF),
                         foregroundColor: Colors.white,
@@ -292,13 +291,22 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
                           borderRadius: BorderRadius.circular(14.0),
                         ),
                       ),
-                      child: const Text(
-                        'Get started',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      child: _isValidating
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              'Get started',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ),
                   ),
 
@@ -309,7 +317,9 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
                     width: double.infinity,
                     height: 54,
                     child: OutlinedButton(
-                      onPressed: viewModel.skipInviteCode,
+                      onPressed: () {
+                        context.go(Routes.waitlist);
+                      },
                       style: OutlinedButton.styleFrom(
                         foregroundColor: const Color(0xFF4300FF),
                         side: const BorderSide(

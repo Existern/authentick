@@ -7,25 +7,22 @@ import 'package:flutter_mvvm_riverpod/screens/location/locationpage.dart';
 import 'package:flutter_mvvm_riverpod/screens/post/postpage.dart';
 // import 'package:flutter_mvvm_riverpod/screens/post/postpage.dart';
 import 'package:flutter_mvvm_riverpod/screens/profile/myprofile.dart';
+import 'package:flutter_mvvm_riverpod/features/post/ui/create_post_screen.dart';
+import 'package:flutter_mvvm_riverpod/features/post/repository/feed_repository.dart';
+import 'package:flutter_mvvm_riverpod/features/post/repository/user_posts_repository.dart';
+import 'package:flutter_mvvm_riverpod/features/user/repository/user_profile_repository.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 
-class BottomNavScreen extends StatefulWidget {
+class BottomNavScreen extends ConsumerStatefulWidget {
   const BottomNavScreen({super.key});
 
   @override
-  State<BottomNavScreen> createState() => _BottomNavScreenState();
+  ConsumerState<BottomNavScreen> createState() => _BottomNavScreenState();
 }
 
-class _BottomNavScreenState extends State<BottomNavScreen> {
+class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
   int currentIndex = 0;
-
-  final List<Widget> pages = [
-    const MyHome(),
-    const Locationpage(),
-    const Postpage(),
-    const Friendpage(),
-    const MyProfile(),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +30,13 @@ class _BottomNavScreenState extends State<BottomNavScreen> {
       extendBody: true,
       body: IndexedStack(
         index: currentIndex,
-        children: pages,
+        children: const [
+          MyHome(key: ValueKey('home')),
+          Locationpage(key: ValueKey('location')),
+          Postpage(key: ValueKey('post')),
+          Friendpage(key: ValueKey('friends')),
+          MyProfile(key: ValueKey('profile')),
+        ],
       ),
 
       bottomNavigationBar: Stack(
@@ -88,10 +91,37 @@ class _BottomNavScreenState extends State<BottomNavScreen> {
           Positioned(
             top: -25,
             child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  currentIndex = 2;
-                });
+              onTap: () async {
+                // Navigate to create post screen
+                final result = await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const CreatePostScreen(
+                      isOnboarding: false,
+                    ),
+                  ),
+                );
+
+                // After returning from create post, refresh feeds
+                if (result == true && mounted) {
+                  // Get current user ID to refresh their posts
+                  final currentProfile = ref.read(userProfileRepositoryProvider).value;
+
+                  // Refresh the feed to show new posts
+                  ref.invalidate(feedProvider);
+
+                  // Immediately trigger a refresh of user posts for profile page
+                  // This ensures the new post appears when user navigates to profile
+                  if (currentProfile != null) {
+                    // Using invalidate() to mark as needing refresh
+                    // The profile page will automatically refetch when viewing
+                    ref.invalidate(userPostsProvider(userId: currentProfile.id));
+                  }
+
+                  // Navigate to home tab to see the new post
+                  setState(() {
+                    currentIndex = 0;
+                  });
+                }
               },
               child: Container(
                 height: 65,
