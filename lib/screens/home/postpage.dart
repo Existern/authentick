@@ -97,7 +97,7 @@ class _MyHomeState extends ConsumerState<MyHome> {
                             : null;
 
                         return PostCard(
-                          username: post.user.username,
+                          username: post.user.username ?? 'User',
                           profileImage: post.user.profileImage,
                           postImage: firstMedia?.mediaUrl,
                           content: post.content,

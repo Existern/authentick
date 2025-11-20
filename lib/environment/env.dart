@@ -3,7 +3,7 @@
 // to generate this file from environment variables at build time.
 class Env {
   // API Configuration
-  static const String apiBaseUrl = 'http://3.220.103.255:8080';
+  static const String apiBaseUrl = 'http://34.227.101.233:8092';
   static const String apiVersion = '/api/v1';
 
   // Google Sign-In Configuration

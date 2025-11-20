@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -11,9 +10,10 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '/constants/constants.dart';
 import '/constants/languages.dart';
-import '/environment/env.dart';
+import '../../common/service/secure_storage_service.dart';
 import '../model/auth_request.dart';
 import '../model/auth_response.dart';
+import '../model/refresh_request.dart';
 import '../service/auth_service.dart';
 
 part 'authentication_repository.g.dart';
@@ -26,6 +26,7 @@ AuthenticationRepository authenticationRepository(Ref ref) {
 
 class AuthenticationRepository {
   final AuthService _authService;
+  final SecureStorageService _secureStorage = const SecureStorageService();
 
   const AuthenticationRepository(this._authService);
 
@@ -75,9 +76,15 @@ class AuthenticationRepository {
       }
 
       debugPrint(
-        '${Constants.tag} [AuthenticationRepository] 💾 Saving auth token...',
+        '${Constants.tag} [AuthenticationRepository] 💾 Saving auth tokens to secure storage...',
       );
-      // Store authentication token
+      // Store authentication tokens in secure storage
+      await _secureStorage.saveTokens(
+        accessToken: response.data.tokens.accessToken,
+        refreshToken: response.data.tokens.refreshToken,
+        expiresIn: response.data.tokens.expiresIn,
+      );
+      // Also save to SharedPreferences for backward compatibility with interceptor
       await _saveAuthToken(response.data.tokens.accessToken);
 
       debugPrint(
@@ -150,7 +157,9 @@ class AuthenticationRepository {
   Future<void> _saveUserData(User user) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(Constants.userIdKey, user.id);
-    await prefs.setString(Constants.usernameKey, user.username);
+    if (user.username != null) {
+      await prefs.setString(Constants.usernameKey, user.username!);
+    }
 
     if (user.dateOfBirth != null) {
       await prefs.setString(Constants.birthdayKey, user.dateOfBirth!);
@@ -216,7 +225,7 @@ class AuthenticationRepository {
 
     return User(
       id: userId,
-      username: prefs.getString(Constants.usernameKey) ?? '',
+      username: prefs.getString(Constants.usernameKey),
       dateOfBirth: prefs.getString(Constants.birthdayKey),
       firstName: prefs.getString('first_name_key'),
       lastName: prefs.getString('last_name_key'),
@@ -357,9 +366,106 @@ class AuthenticationRepository {
     }
   }
 
+  /// Refresh access token using refresh token
+  Future<AuthResponse> refreshAccessToken() async {
+    try {
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository] 🔄 Refreshing access token...',
+      );
+
+      // Get refresh token from secure storage
+      final refreshToken = await _secureStorage.getRefreshToken();
+      if (refreshToken == null) {
+        throw Exception('No refresh token found');
+      }
+
+      final request = RefreshRequest(refreshToken: refreshToken);
+      final response = await _authService.refreshToken(request);
+
+      if (!response.success) {
+        throw Exception('Token refresh failed: API returned success=false');
+      }
+
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository] 💾 Saving refreshed tokens...',
+      );
+      // Save new tokens
+      await _secureStorage.saveTokens(
+        accessToken: response.data.tokens.accessToken,
+        refreshToken: response.data.tokens.refreshToken,
+        expiresIn: response.data.tokens.expiresIn,
+      );
+      // Also update SharedPreferences
+      await _saveAuthToken(response.data.tokens.accessToken);
+
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository] ✅ Token refresh complete!',
+      );
+
+      return response;
+    } catch (error, stackTrace) {
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository] ❌ Token refresh failed: $error',
+      );
+      debugPrint('$stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Check if user has stored tokens (for auto-login)
+  Future<bool> hasStoredTokens() async {
+    return await _secureStorage.hasValidTokens();
+  }
+
+  /// Try to auto-login using stored refresh token
+  Future<bool> tryAutoLogin() async {
+    try {
+      final hasTokens = await hasStoredTokens();
+      if (!hasTokens) {
+        debugPrint(
+          '${Constants.tag} [AuthenticationRepository] ⚠️ No stored tokens for auto-login',
+        );
+        // Clear login state since we have no tokens
+        await setIsLogin(false);
+        return false;
+      }
+
+      final isExpired = await _secureStorage.isTokenExpired();
+      if (isExpired) {
+        debugPrint(
+          '${Constants.tag} [AuthenticationRepository] 🔄 Token expired, refreshing...',
+        );
+        await refreshAccessToken();
+      } else {
+        debugPrint(
+          '${Constants.tag} [AuthenticationRepository] ✅ Token still valid',
+        );
+      }
+
+      // Mark as logged in
+      await setIsLogin(true);
+      return true;
+    } catch (error) {
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository] ❌ Auto-login failed: $error',
+      );
+      // Clear invalid tokens and login state
+      await _secureStorage.clearTokens();
+      await setIsLogin(false);
+      return false;
+    }
+  }
+
   Future<void> signOut() async {
     try {
-      // TODO: Implement with your own backend
+      // Clear secure storage tokens
+      await _secureStorage.clearTokens();
+      // Clear SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(Constants.authTokenKey);
+      await prefs.remove(Constants.googleIdTokenKey);
+      await prefs.remove('auth_response');
+      // Clear login state
       setIsLogin(false);
       Purchases.logOut();
     } catch (error) {

@@ -37,7 +37,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       if (profile != null) {
         firstNameController.text = profile.firstName ?? '';
         lastNameController.text = profile.lastName ?? '';
-        handleController.text = profile.username;
+        handleController.text = profile.username ?? '';
       }
     });
   }
@@ -268,7 +268,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       firstNameController.text = profile.firstName ?? '';
                       lastNameController.text = profile.lastName ?? '';
-                      handleController.text = profile.username;
+                      handleController.text = profile.username ?? '';
                     });
                   }
 

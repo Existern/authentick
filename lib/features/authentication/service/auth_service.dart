@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../common/remote/api_client.dart';
 import '../model/auth_request.dart';
 import '../model/auth_response.dart';
+import '../model/refresh_request.dart';
 
 part 'auth_service.g.dart';
 
@@ -23,6 +24,20 @@ class AuthService {
     try {
       final response = await _apiClient.post<Map<String, dynamic>>(
         '/auth/authenticate',
+        data: request.toJson(),
+      );
+      return AuthResponse.fromJson(response);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Refresh access token using refresh token
+  /// POST /auth/refresh
+  Future<AuthResponse> refreshToken(RefreshRequest request) async {
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        '/auth/refresh',
         data: request.toJson(),
       );
       return AuthResponse.fromJson(response);

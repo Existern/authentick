@@ -23,7 +23,7 @@ class UserProfileResponse {
 @JsonSerializable(explicitToJson: true)
 class UserProfileData {
   final String id;
-  final String username;
+  final String? username;
   @JsonKey(name: 'first_name')
   final String? firstName;
   @JsonKey(name: 'last_name')
@@ -58,7 +58,7 @@ class UserProfileData {
 
   UserProfileData({
     required this.id,
-    required this.username,
+    this.username,
     this.firstName,
     this.lastName,
     this.email,
@@ -88,7 +88,7 @@ class UserProfileData {
   String get fullName {
     final first = firstName ?? '';
     final last = lastName ?? '';
-    if (first.isEmpty && last.isEmpty) return username;
+    if (first.isEmpty && last.isEmpty) return username ?? 'User';
     return '$first $last'.trim();
   }
 }

@@ -574,7 +574,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
               height: 20,
             ),
             onPressed: () {
-              _showOptionsMenu(context, requestUser.username);
+              _showOptionsMenu(context, requestUser.username ?? 'User');
             },
           ),
 
@@ -716,7 +716,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
               height: 20,
             ),
             onPressed: () {
-              _showOptionsMenu(context, friendUser.username);
+              _showOptionsMenu(context, friendUser.username ?? 'User');
             },
           ),
         ],
@@ -795,7 +795,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
               height: 20,
             ),
             onPressed: () {
-              _showOptionsMenu(context, followerUser.username);
+              _showOptionsMenu(context, followerUser.username ?? 'User');
             },
           ),
         ],

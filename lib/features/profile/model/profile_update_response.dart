@@ -21,7 +21,7 @@ class ProfileUpdateResponse {
 
 class UserProfile {
   final String id;
-  final String username;
+  final String? username;
   final String? firstName;
   final String? lastName;
   final String? email;
@@ -43,7 +43,7 @@ class UserProfile {
 
   UserProfile({
     required this.id,
-    required this.username,
+    this.username,
     this.firstName,
     this.lastName,
     this.email,
@@ -67,7 +67,7 @@ class UserProfile {
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
       id: json['id'] as String,
-      username: json['username'] as String,
+      username: json['username'] as String?,
       firstName: json['first_name'] as String?,
       lastName: json['last_name'] as String?,
       email: json['email'] as String?,

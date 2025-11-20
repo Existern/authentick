@@ -1,11 +1,13 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../constants/constants.dart';
 import '../../../environment/env.dart';
+import '../service/secure_storage_service.dart';
+import '../../authentication/model/refresh_request.dart';
+import '../../authentication/model/auth_response.dart';
 
 part 'api_client.g.dart';
 
@@ -174,36 +176,114 @@ class ApiClient {
 }
 
 class _AuthInterceptor extends Interceptor {
+  final _secureStorage = SecureStorageService();
+
   @override
   void onRequest(
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) {
-    // Get the auth token from SharedPreferences asynchronously
-    SharedPreferences.getInstance().then((prefs) {
-      final token = prefs.getString(Constants.authTokenKey);
+    // Skip auth for auth endpoints
+    if (options.path.contains('/auth/authenticate') ||
+        options.path.contains('/auth/refresh')) {
+      return handler.next(options);
+    }
 
-      if (token != null && token.isNotEmpty) {
-        // Add Authorization header with Bearer token
-        options.headers['Authorization'] = 'Bearer $token';
-        debugPrint(
-          '${Constants.tag} [AuthInterceptor] 🔑 Added Authorization header',
-        );
+    // Handle async operations - errors are handled in _handleRequest
+    _handleRequest(options, handler);
+  }
+
+  Future<void> _handleRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
+    try {
+      // First check if we have any tokens at all
+      final hasTokens = await _secureStorage.hasValidTokens();
+
+      if (hasTokens) {
+        // Only check expiry if we have tokens
+        final isExpired = await _secureStorage.isTokenExpired();
+
+        if (isExpired) {
+          debugPrint(
+            '${Constants.tag} [AuthInterceptor] 🔄 Token expired, refreshing...',
+          );
+
+          // Get refresh token
+          final refreshToken = await _secureStorage.getRefreshToken();
+          if (refreshToken != null) {
+            // Refresh the token
+            await _refreshToken(refreshToken);
+          }
+        }
+
+        // Get the latest access token
+        final token = await _secureStorage.getAccessToken();
+
+        if (token != null && token.isNotEmpty) {
+          options.headers['Authorization'] = 'Bearer $token';
+          debugPrint(
+            '${Constants.tag} [AuthInterceptor] 🔑 Added Authorization header',
+          );
+        }
       } else {
         debugPrint(
-          '${Constants.tag} [AuthInterceptor] ⚠️ No auth token found',
+          '${Constants.tag} [AuthInterceptor] ⚠️ No stored tokens, proceeding without auth',
         );
       }
 
-      // Continue with the request
       handler.next(options);
-    }).catchError((error) {
+    } catch (error) {
       debugPrint(
-        '${Constants.tag} [AuthInterceptor] ❌ Error getting token: $error',
+        '${Constants.tag} [AuthInterceptor] ❌ Error handling request: $error',
       );
-      // Continue even if there's an error getting the token
       handler.next(options);
-    });
+    }
+  }
+
+  Future<void> _refreshToken(String refreshToken) async {
+    try {
+      final dio = Dio(BaseOptions(
+        baseUrl: '${Env.apiBaseUrl}${Env.apiVersion}',
+        headers: {'Content-Type': 'application/json'},
+      ));
+
+      final request = RefreshRequest(refreshToken: refreshToken);
+      final response = await dio.post<Map<String, dynamic>>(
+        '/auth/refresh',
+        data: request.toJson(),
+      );
+
+      if (response.data != null) {
+        final authResponse = AuthResponse.fromJson(response.data!);
+
+        // Save new tokens
+        await _secureStorage.saveTokens(
+          accessToken: authResponse.data.tokens.accessToken,
+          refreshToken: authResponse.data.tokens.refreshToken,
+          expiresIn: authResponse.data.tokens.expiresIn,
+        );
+
+        // Also update SharedPreferences for backward compatibility
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(
+          Constants.authTokenKey,
+          authResponse.data.tokens.accessToken,
+        );
+
+        debugPrint(
+          '${Constants.tag} [AuthInterceptor] ✅ Token refreshed successfully',
+        );
+      }
+    } catch (e) {
+      debugPrint(
+        '${Constants.tag} [AuthInterceptor] ❌ Failed to refresh token: $e',
+      );
+      // Clear tokens if refresh fails
+      await _secureStorage.clearTokens();
+      rethrow;
+    }
   }
 }
 

@@ -152,7 +152,7 @@ class PostMetadata {
 @JsonSerializable(explicitToJson: true)
 class User {
   final String id;
-  final String username;
+  final String? username;
   @JsonKey(name: 'first_name')
   final String? firstName;
   @JsonKey(name: 'last_name')
@@ -187,7 +187,7 @@ class User {
 
   User({
     required this.id,
-    required this.username,
+    this.username,
     this.firstName,
     this.lastName,
     this.email,
