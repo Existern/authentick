@@ -21,8 +21,7 @@ class ConnectionRepository {
 
   /// Get connections with filters
   Future<PendingConnectionsResponse> getConnections({
-    List<String>? types,
-    List<String>? statuses,
+    String? type,
     int page = 1,
     int limit = 20,
   }) async {
@@ -31,15 +30,14 @@ class ConnectionRepository {
         '${Constants.tag} [ConnectionRepository] 🔄 Fetching connections...',
       );
       debugPrint(
-        '${Constants.tag} [ConnectionRepository] Types: $types, Statuses: $statuses',
+        '${Constants.tag} [ConnectionRepository] Type: $type',
       );
       debugPrint(
         '${Constants.tag} [ConnectionRepository] Page: $page, Limit: $limit',
       );
 
       final response = await _connectionService.getConnections(
-        types: types,
-        statuses: statuses,
+        type: type,
         page: page,
         limit: limit,
       );

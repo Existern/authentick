@@ -6,6 +6,7 @@ import '../../features/connections/model/connection.dart';
 import '../../features/connections/view_model/pending_connections_view_model.dart';
 import '../../features/connections/view_model/friends_view_model.dart';
 import '../../features/connections/view_model/followers_view_model.dart';
+import '../../features/connections/view_model/following_view_model.dart';
 
 class Friendpage extends ConsumerStatefulWidget {
   const Friendpage({super.key});
@@ -104,6 +105,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
     AsyncValue<List<Connection>> pendingConnectionsAsync,
     AsyncValue<List<Connection>> friendsAsync,
     AsyncValue<List<Connection>> followersAsync,
+    AsyncValue<List<Connection>> followingAsync,
   ) {
     switch (selectedTab) {
       case 'Friend requests':
@@ -113,6 +115,11 @@ class _FriendpageState extends ConsumerState<Friendpage> {
         );
       case 'Friends':
         return friendsAsync.maybeWhen(
+          data: (connections) => connections.length,
+          orElse: () => 0,
+        );
+      case 'Following':
+        return followingAsync.maybeWhen(
           data: (connections) => connections.length,
           orElse: () => 0,
         );
@@ -131,6 +138,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
     final pendingConnectionsAsync = ref.watch(pendingConnectionsViewModelProvider);
     final friendsAsync = ref.watch(friendsViewModelProvider);
     final followersAsync = ref.watch(followersViewModelProvider);
+    final followingAsync = ref.watch(followingViewModelProvider);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -184,22 +192,22 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                   _buildTab(
                     label: 'Friend requests',
                     icon: Icons.person_add,
-                    count: getTabCount(pendingConnectionsAsync, friendsAsync, followersAsync),
+                    count: getTabCount(pendingConnectionsAsync, friendsAsync, followersAsync, followingAsync),
                   ),
                   _buildTab(
                     label: 'Friends',
                     icon: Icons.people,
-                    count: getTabCount(pendingConnectionsAsync, friendsAsync, followersAsync),
+                    count: getTabCount(pendingConnectionsAsync, friendsAsync, followersAsync, followingAsync),
                   ),
                   _buildTab(
                     label: 'Following',
                     icon: Icons.visibility,
-                    count: 0,
+                    count: getTabCount(pendingConnectionsAsync, friendsAsync, followersAsync, followingAsync),
                   ),
                   _buildTab(
                     label: 'Followers',
                     icon: Icons.group,
-                    count: getTabCount(pendingConnectionsAsync, friendsAsync, followersAsync),
+                    count: getTabCount(pendingConnectionsAsync, friendsAsync, followersAsync, followingAsync),
                   ),
                   _buildTab(
                     label: 'Friends of friends',
@@ -214,7 +222,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
 
             // User List
             Expanded(
-              child: _buildContent(pendingConnectionsAsync, friendsAsync, followersAsync),
+              child: _buildContent(pendingConnectionsAsync, friendsAsync, followersAsync, followingAsync),
             ),
           ],
         ),
@@ -226,6 +234,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
     AsyncValue<List<Connection>> pendingConnectionsAsync,
     AsyncValue<List<Connection>> friendsAsync,
     AsyncValue<List<Connection>> followersAsync,
+    AsyncValue<List<Connection>> followingAsync,
   ) {
     if (selectedTab == 'Friend requests') {
       return pendingConnectionsAsync.when(
@@ -369,6 +378,82 @@ class _FriendpageState extends ConsumerState<Friendpage> {
               TextButton(
                 onPressed: () {
                   ref.read(friendsViewModelProvider.notifier).refresh();
+                },
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Following tab
+    if (selectedTab == 'Following') {
+      return followingAsync.when(
+        data: (connections) {
+          if (connections.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.visibility_outlined,
+                    size: 64,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Not following anyone yet',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return RefreshIndicator(
+            onRefresh: () async {
+              await ref.read(followingViewModelProvider.notifier).refresh();
+            },
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              itemCount: connections.length,
+              itemBuilder: (context, index) {
+                final connection = connections[index];
+                return _buildFollowingCard(connection);
+              },
+            ),
+          );
+        },
+        loading: () => const Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFF3620B3),
+          ),
+        ),
+        error: (error, stack) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: 64,
+                color: Colors.red[400],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Failed to load following',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () {
+                  ref.read(followingViewModelProvider.notifier).refresh();
                 },
                 child: const Text('Retry'),
               ),
@@ -796,6 +881,85 @@ class _FriendpageState extends ConsumerState<Friendpage> {
             ),
             onPressed: () {
               _showOptionsMenu(context, followerUser.username ?? 'User');
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFollowingCard(Connection connection) {
+    // Get the user being followed
+    final followingUser = connection.connectedUser ?? connection.user;
+
+    if (followingUser == null) {
+      return const SizedBox.shrink();
+    }
+
+    final displayName = followingUser.fullName;
+    final username = '@${followingUser.username}';
+    final profileImage = followingUser.profileImage;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          // Profile Image
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: Colors.grey[300],
+              image: profileImage != null
+                  ? DecorationImage(
+                      image: NetworkImage(profileImage),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+            ),
+            child: profileImage == null
+                ? Icon(
+                    Icons.person,
+                    size: 30,
+                    color: Colors.grey[600],
+                  )
+                : null,
+          ),
+          const SizedBox(width: 12),
+
+          // Name and Username
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  displayName,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  username,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Three dot menu
+          IconButton(
+            icon: SvgPicture.asset(
+              'assets/images/3dot.svg',
+              width: 20,
+              height: 20,
+            ),
+            onPressed: () {
+              _showOptionsMenu(context, followingUser.username ?? 'User');
             },
           ),
         ],

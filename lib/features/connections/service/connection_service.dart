@@ -19,13 +19,11 @@ class ConnectionService {
   /// Get connections with optional filters
   /// GET /connections
   /// Parameters:
-  /// - type: Filter by connection type (friend, follower, close_friend) - can provide multiple values
-  /// - status: Filter by status (pending, accepted, rejected, blocked) - can provide multiple values
+  /// - type: Predefined relationship filter (close_friends, friends, following, followers) - only one value allowed
   /// - page: Page number - defaults to 1
   /// - limit: Items per page - defaults to 20
   Future<PendingConnectionsResponse> getConnections({
-    List<String>? types,
-    List<String>? statuses,
+    String? type,
     int page = 1,
     int limit = 20,
   }) async {
@@ -35,12 +33,8 @@ class ConnectionService {
         'limit': limit,
       };
 
-      if (types != null && types.isNotEmpty) {
-        queryParams['type'] = types.join(',');
-      }
-
-      if (statuses != null && statuses.isNotEmpty) {
-        queryParams['status'] = statuses.join(',');
+      if (type != null) {
+        queryParams['type'] = type;
       }
 
       final response = await _apiClient.get<Map<String, dynamic>>(

@@ -16,8 +16,7 @@ class FriendsViewModel extends _$FriendsViewModel {
   Future<List<Connection>> _fetchFriends() async {
     final repository = ref.read(connectionRepositoryProvider);
     final response = await repository.getConnections(
-      types: ['friend'],
-      statuses: ['accepted'],
+      type: 'friends',
       page: 1,
       limit: 100,
     );
