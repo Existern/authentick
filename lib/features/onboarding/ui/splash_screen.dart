@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -26,19 +28,65 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFF3F0FF), // Light purple
-              Color(0xFFFFFFFF), // White
-            ],
-            stops: [0.0, 1.0],
+      body: Stack(
+        children: [
+          // Background with two ellipses
+          Positioned.fill(
+            child: Container(
+              color: const Color(0xFFF8F7FF),
+              child: Stack(
+                children: [
+                  // Top-left ellipse
+                  Positioned(
+                    top: -100,
+                    left: -100,
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 213.8, sigmaY: 213.8),
+                      child: Container(
+                        width: 300,
+                        height: 300,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              const Color(0xFFE4CAFF).withValues(alpha: 1.0),
+                              const Color(0xFFE4CAFF).withValues(alpha: 0.0),
+                            ],
+                            stops: const [0.0, 1.0],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Bottom-right ellipse
+                  Positioned(
+                    bottom: 200,
+                    right: -100,
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 213.8, sigmaY: 213.8),
+                      child: Container(
+                        width: 300,
+                        height: 300,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              const Color(0xFFE4CAFF).withValues(alpha: 1.0),
+                              const Color(0xFFE4CAFF).withValues(alpha: 0.0),
+                            ],
+                            stops: const [0.0, 1.0],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
-        child: const Center(child: _AuthentickLogo()),
+          // Content
+          const Center(child: _AuthentickLogo()),
+        ],
       ),
     );
   }
@@ -117,8 +165,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         // Onboarding is complete ONLY if:
         // 1. API says completed = true, OR
         // 2. ALL steps have status = "completed"
-        isOnboardingComplete = onboardingData.completed ||
-                              (completedSteps == onboardingData.steps.length && onboardingData.steps.isNotEmpty);
+        isOnboardingComplete =
+            onboardingData.completed ||
+            (completedSteps == onboardingData.steps.length &&
+                onboardingData.steps.isNotEmpty);
 
         debugPrint(
           '${Constants.tag} [SplashScreen] Final isOnboardingComplete decision: $isOnboardingComplete',

@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
@@ -143,127 +145,179 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     final isLoading = authState.isLoading;
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFE8E3FF), // Soft lavender
-              Color(0xFFF5F0FF), // Very light purple
-              Color(0xFFFFFFFF), // White
-              Color(0xFFF0EDFF), // Light purple
-            ],
-            stops: [0.0, 0.3, 0.6, 1.0],
+      body: Stack(
+        children: [
+          // Background with two ellipses
+          Positioned.fill(
+            child: Container(
+              color: const Color(0xFFF8F7FF),
+              child: Stack(
+                children: [
+                  // Top-left ellipse
+                  Positioned(
+                    top: -100,
+                    left: -100,
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 213.8, sigmaY: 213.8),
+                      child: Container(
+                        width: 300,
+                        height: 300,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              const Color(0xFFE4CAFF).withValues(alpha: 1.0),
+                              const Color(0xFFE4CAFF).withValues(alpha: 0.0),
+                            ],
+                            stops: const [0.0, 1.0],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Bottom-right ellipse
+                  Positioned(
+                    bottom: 200,
+                    right: -100,
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 213.8, sigmaY: 213.8),
+                      child: Container(
+                        width: 300,
+                        height: 300,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              const Color(0xFFE4CAFF).withValues(alpha: 1.0),
+                              const Color(0xFFE4CAFF).withValues(alpha: 0.0),
+                            ],
+                            stops: const [0.0, 1.0],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Column(
-              children: [
-                const Spacer(flex: 2),
-
-                // Logo with animation
-                AnimatedBuilder(
-                  animation: _animationController,
-                  builder: (context, child) {
-                    return FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: ScaleTransition(
-                        scale: _scaleAnimation,
-                        child: SvgPicture.asset(
-                          'assets/images/authentick_logo.svg',
-                          width: 220,
-                          height: 70,
-                          fit: BoxFit.contain,
-                          placeholderBuilder: (context) => const SizedBox(
+          // Content
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Spacer(),
+                  // Logo with animation
+                  AnimatedBuilder(
+                    animation: _animationController,
+                    builder: (context, child) {
+                      return FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: ScaleTransition(
+                          scale: _scaleAnimation,
+                          child: SvgPicture.asset(
+                            'assets/images/authentick_logo.svg',
                             width: 220,
                             height: 70,
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Color(0xFF6A4FFB),
+                            fit: BoxFit.contain,
+                            placeholderBuilder: (context) => const SizedBox(
+                              width: 220,
+                              height: 70,
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Color(0xFF6A4FFB),
+                                  ),
                                 ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  },
-                ),
-
-                const SizedBox(height: 24),
-
-                // Tagline
-                Text(
-                  'A social network where every moment is\nreal, every location is verified and every\nthought is authentic',
-                  textAlign: TextAlign.center,
-                  style: AppTheme.body16.copyWith(
-                    color: const Color(0xFF1A1A1A),
-                    height: 1.6,
+                      );
+                    },
                   ),
-                ),
 
-                const Spacer(flex: 3),
+                  const SizedBox(height: 24),
 
-                // Login/Signup Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6A4FFB), // Purple
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
+                  // Tagline
+                  Text(
+                    'A social network where every moment is\nreal, every location is verified and every\nthought is authentic',
+                    textAlign: TextAlign.center,
+                    style: AppTheme.body16.copyWith(
+                      color: const Color(0xFF1A1A1A),
+                      height: 1.6,
+                      fontWeight: FontWeight.w500,
                     ),
-                    onPressed: isLoading
-                        ? null
-                        : () {
-                            ref
-                                .read(authenticationViewModelProvider.notifier)
-                                .signInWithGoogle();
-                          },
-                    icon: isLoading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
+                  ),
+
+                  const SizedBox(height: 48),
+
+                  // Login/Signup Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(
+                          0xFF4300FF,
+                        ), // Vibrant Purple
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: isLoading
+                          ? null
+                          : () {
+                              ref
+                                  .read(
+                                    authenticationViewModelProvider.notifier,
+                                  )
+                                  .signInWithGoogle();
+                            },
+                      child: isLoading
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                               ),
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SvgPicture.asset(
+                                  Assets.googleLogo,
+                                  width: 24,
+                                  height: 24,
+                                  fit: BoxFit.contain,
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  'Login/Signup',
+                                  style: AppTheme.title16.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
                             ),
-                          )
-                        : SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: SvgPicture.asset(
-                              Assets.googleLogo,
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                    label: Text(
-                      'Login/Signup',
-                      style: AppTheme.title16.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
                     ),
                   ),
-                ),
-
-                const SizedBox(height: 48),
-              ],
+                  const Spacer(),
+                ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
