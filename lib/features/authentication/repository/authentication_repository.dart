@@ -501,5 +501,30 @@ class AuthenticationRepository {
   Future<void> setHasCompletedOnboarding(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(Constants.hasCompletedOnboardingKey, value);
+    // Clear current step when onboarding is completed
+    if (value) {
+      await prefs.remove('current_onboarding_step');
+    }
+  }
+
+  /// Save the current onboarding step
+  Future<void> saveCurrentOnboardingStep(String step) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('current_onboarding_step', step);
+    debugPrint(
+      '${Constants.tag} [AuthenticationRepository] Saved current onboarding step: $step',
+    );
+  }
+
+  /// Get the saved current onboarding step
+  Future<String?> getCurrentOnboardingStep() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('current_onboarding_step');
+  }
+
+  /// Clear the saved current onboarding step
+  Future<void> clearCurrentOnboardingStep() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('current_onboarding_step');
   }
 }

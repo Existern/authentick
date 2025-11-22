@@ -53,7 +53,7 @@ class _OnboardingFlowScreenState extends ConsumerState<OnboardingFlowScreen> {
       debugPrint(
         '${Constants.tag} [OnboardingFlowScreen] Auth response found, initializing view model',
       );
-      ref.read(onboardingViewModelProvider.notifier).initializeFromAuthResponse(authResponse);
+      await ref.read(onboardingViewModelProvider.notifier).initializeFromAuthResponse(authResponse);
     } else {
       debugPrint(
         '${Constants.tag} [OnboardingFlowScreen] No auth response found, starting from beginning',
