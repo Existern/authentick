@@ -63,6 +63,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
       // Check if onboarding is completed
       final hasCompletedOnboarding = await authRepo.hasCompletedOnboarding();
+      if (!mounted) return;
 
       if (hasCompletedOnboarding) {
         debugPrint(

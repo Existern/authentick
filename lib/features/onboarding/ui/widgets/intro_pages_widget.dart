@@ -1,4 +1,4 @@
-import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -63,16 +63,16 @@ class _IntroPagesWidgetState extends ConsumerState<IntroPagesWidget> {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFFE4CAFF).withOpacity(0.85),
-                    const Color(0xFFE4CAFF).withOpacity(0.65),
-                    const Color(0xFFE4CAFF).withOpacity(0.35),
-                    const Color(0xFFE4CAFF).withOpacity(0.0),
+                    const Color(0xFFE4CAFF).withValues(alpha: 0.85),
+                    const Color(0xFFE4CAFF).withValues(alpha: 0.65),
+                    const Color(0xFFE4CAFF).withValues(alpha: 0.35),
+                    const Color(0xFFE4CAFF).withValues(alpha: 0.0),
                   ],
                   stops: const [0.0, 0.4, 0.7, 1.0],
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFE4CAFF).withOpacity(0.5),
+                    color: const Color(0xFFE4CAFF).withValues(alpha: 0.5),
                     blurRadius: 80,
                     spreadRadius: 20,
                   ),

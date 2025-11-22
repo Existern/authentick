@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../constants/constants.dart';
-import '../model/connection.dart';
+
 import '../model/pending_connections_response.dart';
 import '../service/connection_service.dart';
 

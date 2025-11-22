@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+
 import 'package:hugeicons/hugeicons.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -132,6 +132,7 @@ class PremiumViewModel extends _$PremiumViewModel {
         return;
       }
 
+      // ignore: deprecated_member_use
       final customerInfo = await Purchases.purchasePackage(revenueCatPackage);
       await ref.read(profileViewModelProvider.notifier).refreshProfile();
 

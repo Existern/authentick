@@ -63,7 +63,7 @@ class _ProfilePictureScreenState extends ConsumerState<ProfilePictureScreen> {
           });
 
           // Show upload error
-          if (mounted) {
+          if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Failed to upload image: $e'),

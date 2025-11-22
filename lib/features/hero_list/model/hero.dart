@@ -12,9 +12,11 @@ abstract class Hero with _$Hero {
     required String description,
     required String imageUrl,
     @Default(false)
+    // ignore: invalid_annotation_target
     @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
     bool isFavorite,
     @Default(0) int power,
+    // ignore: invalid_annotation_target
     @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
     DateTime? lastUpdated,
   }) = _Hero;
