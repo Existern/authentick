@@ -30,6 +30,14 @@
           }
         },
         {
+          "client_id": "795799101051-8f0pfpk7ib601cbo6rgd19q29tgdslco.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "club.authentick",
+            "certificate_hash": "44017ab16196c3afd3000f327e2a716f2058c8b3"
+          }
+        },
+        {
           "client_id": "795799101051-biptcb3ls9hmnbpommaq0m0ocoatqi9l.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
