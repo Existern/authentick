@@ -10,6 +10,7 @@ import '../../../../extensions/build_context_extension.dart';
 import '../../../../routing/routes.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../authentication/repository/authentication_repository.dart';
 import '../../../profile/repository/profile_repository.dart';
 import '../../view_model/onboarding_view_model.dart';
 
@@ -317,7 +318,11 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
                     width: double.infinity,
                     height: 54,
                     child: OutlinedButton(
-                      onPressed: () {
+                      onPressed: () async {
+                        // Save 'waitlist' step so user returns here on app restart
+                        final authRepo = ref.read(authenticationRepositoryProvider);
+                        await authRepo.saveCurrentOnboardingStep('waitlist');
+                        if (!mounted) return;
                         context.go(Routes.waitlist);
                       },
                       style: OutlinedButton.styleFrom(

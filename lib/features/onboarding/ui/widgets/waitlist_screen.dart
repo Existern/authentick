@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../../constants/constants.dart';
-import '../../../authentication/ui/view_model/authentication_view_model.dart';
+import '../../../authentication/repository/authentication_repository.dart';
 import '../../../waitlist/model/waitlist_request.dart';
 import '../../../waitlist/service/waitlist_service.dart';
 
@@ -36,26 +36,16 @@ class _WaitlistScreenState extends ConsumerState<WaitlistScreen> {
     });
 
     try {
-      // Get email from authentication state
-      final authState = ref.read(authenticationViewModelProvider);
+      // Get email from saved auth response
+      final authRepo = ref.read(authenticationRepositoryProvider);
+      final authResponse = await authRepo.getAuthResponse();
 
-      String? email;
-      authState.when(
-        data: (state) {
-          final authResponse = state.authResponse;
-          if (authResponse != null) {
-            final userData = authResponse['user'] as Map<String, dynamic>?;
-            email = userData?['email'] as String?;
-          }
-        },
-        loading: () => email = null,
-        error: (_, __) => email = null,
-      );
+      String? email = authResponse?.data.user.email;
 
-      debugPrint('${Constants.tag} [WaitlistScreen] Retrieved email from auth state: $email');
+      debugPrint('${Constants.tag} [WaitlistScreen] Retrieved email from auth response: $email');
 
-      if (email == null || email!.isEmpty) {
-        debugPrint('${Constants.tag} [WaitlistScreen] No email found in auth state');
+      if (email == null || email.isEmpty) {
+        debugPrint('${Constants.tag} [WaitlistScreen] No email found in auth response');
 
         if (!mounted) return;
 
@@ -69,7 +59,7 @@ class _WaitlistScreenState extends ConsumerState<WaitlistScreen> {
       debugPrint('${Constants.tag} [WaitlistScreen] Submitting email to waitlist: $email');
 
       final service = ref.read(waitlistServiceProvider);
-      final response = await service.joinWaitlist(WaitlistRequest(email: email!));
+      final response = await service.joinWaitlist(WaitlistRequest(email: email));
 
       if (!mounted) return;
 
@@ -94,7 +84,18 @@ class _WaitlistScreenState extends ConsumerState<WaitlistScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) {
+          // User pressed back - save that they're returning to invite code screen
+          debugPrint(
+            '${Constants.tag} [WaitlistScreen] User pressed back, saving invite_code_verified step',
+          );
+          final authRepo = ref.read(authenticationRepositoryProvider);
+          await authRepo.saveCurrentOnboardingStep('invite_code_verified');
+        }
+      },
+      child: Scaffold(
       body: Stack(
         children: [
           // Full background image
@@ -159,6 +160,7 @@ class _WaitlistScreenState extends ConsumerState<WaitlistScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 

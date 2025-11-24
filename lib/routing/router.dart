@@ -88,9 +88,23 @@ final GoRouter router = GoRouter(
       final hasCompletedOnboarding =
           prefs.getBool(Constants.hasCompletedOnboardingKey) ?? false;
 
-      if (!hasCompletedOnboarding &&
-          state.matchedLocation != Routes.onboardingFlow) {
-        return Routes.onboardingFlow;
+      if (!hasCompletedOnboarding) {
+        // Allow access to waitlist screen
+        if (state.matchedLocation == Routes.waitlist) {
+          return null;
+        }
+
+        // Check if user was on waitlist
+        final currentStep = prefs.getString('current_onboarding_step');
+        if (currentStep == 'waitlist' &&
+            state.matchedLocation != Routes.waitlist) {
+          return Routes.waitlist;
+        }
+
+        if (state.matchedLocation != Routes.onboardingFlow) {
+          return Routes.onboardingFlow;
+        }
+        return null;
       }
 
       // Redirect to main if trying to access auth screens while logged in
