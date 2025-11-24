@@ -7,7 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../constants/constants.dart';
 import '../model/confirm_upload_request.dart';
 import '../model/presigned_upload_request.dart';
-import '../model/presigned_upload_response.dart';
+
 import '../model/profile.dart';
 import '../model/profile_update_request.dart';
 import '../model/profile_update_response.dart';

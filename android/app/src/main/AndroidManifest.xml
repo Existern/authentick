@@ -1,9 +1,13 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
 
+    <!-- Explicitly remove AD_ID permission added by dependencies -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
+
     <application
-        android:label="FMR"
+        android:label="Authentick"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

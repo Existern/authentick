@@ -5,9 +5,7 @@ class SecureStorageService {
   const SecureStorageService();
 
   static const _storage = FlutterSecureStorage(
-    aOptions: AndroidOptions(
-      encryptedSharedPreferences: true,
-    ),
+    aOptions: AndroidOptions(),
   );
 
   // Storage keys

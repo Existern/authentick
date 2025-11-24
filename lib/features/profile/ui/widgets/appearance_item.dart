@@ -54,9 +54,12 @@ class AppearanceItem extends ConsumerWidget {
                 ),
               ),
             ),
-            Radio(
+            // ignore: deprecated_member_use
+            Radio<ThemeMode>(
+              // ignore: deprecated_member_use
               groupValue: ref.watch(appThemeModeProvider).value,
               value: value,
+              // ignore: deprecated_member_use
               onChanged: (value) {
                 if (value == null) return;
                 ref.read(appThemeModeProvider.notifier).updateMode(value);

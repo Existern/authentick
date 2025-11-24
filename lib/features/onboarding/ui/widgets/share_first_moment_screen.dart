@@ -15,6 +15,7 @@ class ShareFirstMomentScreen extends ConsumerWidget {
     try {
       // For now, share a simple message
       // Later this can be updated to share the actual post URL or image
+      // ignore: deprecated_member_use
       await Share.share(
         'I just captured my first moment on Authentick! 🎉',
         subject: 'My first Authentick moment',

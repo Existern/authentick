@@ -117,7 +117,21 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         '${Constants.tag} [SplashScreen] Saved onboarding step: $savedStep',
       );
 
+      // Check if user was on waitlist screen
       if (savedStep == 'waitlist') {
+        debugPrint(
+          '${Constants.tag} [SplashScreen] User was on waitlist, redirecting back to waitlist',
+        );
+        if (!mounted) return;
+        context.pushReplacement(Routes.waitlist);
+        return;
+      }
+
+      // Check if onboarding is completed
+      final hasCompletedOnboarding = await authRepo.hasCompletedOnboarding();
+      if (!mounted) return;
+
+      if (hasCompletedOnboarding) {
         debugPrint(
           '${Constants.tag} [SplashScreen] User was on waitlist, redirecting back to waitlist',
         );

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../theme/app_colors.dart';
-import '../../../../theme/app_theme.dart';
+
 
 class IntroPage extends StatelessWidget {
   final String title;
@@ -29,8 +28,8 @@ class IntroPage extends StatelessWidget {
                     center: Alignment.center,
                     radius: 0.8,
                     colors: [
-                      const Color(0xFF9B7EDE).withOpacity(0.15),
-                      const Color(0xFFF8F7FF).withOpacity(0.0),
+                     const Color(0xFFE4CAFF).withValues(alpha: 0.6),
+                     const Color(0xFFE4CAFF).withValues(alpha: 0.3),
                     ],
                     stops: const [0.0, 1.0],
                   ),
