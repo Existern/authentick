@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../common/remote/api_client.dart';
+import '../model/connection_request.dart';
 import '../model/pending_connections_response.dart';
 
 part 'connection_service.g.dart';
@@ -28,10 +29,7 @@ class ConnectionService {
     int limit = 20,
   }) async {
     try {
-      final queryParams = <String, dynamic>{
-        'page': page,
-        'limit': limit,
-      };
+      final queryParams = <String, dynamic>{'page': page, 'limit': limit};
 
       if (type != null) {
         queryParams['type'] = type;
@@ -56,10 +54,7 @@ class ConnectionService {
     try {
       final response = await _apiClient.get<Map<String, dynamic>>(
         '/connections/pending',
-        queryParameters: {
-          'page': page,
-          'limit': limit,
-        },
+        queryParameters: {'page': page, 'limit': limit},
       );
       return PendingConnectionsResponse.fromJson(response);
     } catch (e) {
@@ -73,9 +68,7 @@ class ConnectionService {
     try {
       final response = await _apiClient.patch<Map<String, dynamic>>(
         '/connections/$connectionId',
-        data: {
-          'action': 'accept',
-        },
+        data: {'action': 'accept'},
       );
       return response;
     } catch (e) {
@@ -89,9 +82,23 @@ class ConnectionService {
     try {
       final response = await _apiClient.patch<Map<String, dynamic>>(
         '/connections/$connectionId',
-        data: {
-          'action': 'reject',
-        },
+        data: {'action': 'reject'},
+      );
+      return response;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Send a connection request to another user
+  /// POST /connections
+  Future<Map<String, dynamic>> sendConnectionRequest(
+    ConnectionRequest request,
+  ) async {
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        '/connections',
+        data: request.toJson(),
       );
       return response;
     } catch (e) {

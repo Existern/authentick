@@ -1,6 +1,12 @@
+import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../connections/model/connection_request.dart';
+import '../../../connections/service/connection_service.dart';
+import '../../../user/model/bulk_lookup_request.dart';
+import '../../../user/model/bulk_lookup_response.dart';
+import '../../../user/service/user_service.dart';
 import '../../service/contacts_service.dart';
 import '../../view_model/onboarding_view_model.dart';
 
@@ -12,36 +18,121 @@ class FriendsListScreen extends ConsumerStatefulWidget {
 }
 
 class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
-  List<ContactWithEmails> _contacts = [];
+  List<UserLookupInfo> _authentickUsers = [];
   bool _isLoading = true;
   String? _error;
+  final Set<String> _sendingRequests = {};
 
   @override
   void initState() {
     super.initState();
-    _loadContacts();
+    _loadAuthentickUsers();
   }
 
-  Future<void> _loadContacts() async {
+  Future<void> _loadAuthentickUsers() async {
     try {
       setState(() {
         _isLoading = true;
         _error = null;
       });
 
+      developer.log('FriendsListScreen: Starting to load Authentick users...');
+
+      // First get all contacts with emails
       final contacts = await ContactsService.getAllContactsWithEmails();
+      developer.log('FriendsListScreen: Got ${contacts.length} contacts');
+
+      // Extract emails from contacts
+      final emails = <String>[];
+      for (final contact in contacts) {
+        emails.addAll(contact.emails);
+      }
+
+      developer.log(
+        'FriendsListScreen: Extracted ${emails.length} email addresses',
+      );
+
+      if (emails.isEmpty) {
+        developer.log('FriendsListScreen: No emails found, showing empty list');
+        setState(() {
+          _authentickUsers = [];
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Bulk lookup users on Authentick
+      developer.log(
+        'FriendsListScreen: Performing bulk lookup for ${emails.length} emails',
+      );
+      final userService = ref.read(userServiceProvider);
+      final request = BulkLookupRequest(emails: emails);
+      final response = await userService.bulkLookupUsers(request);
+
+      developer.log('FriendsListScreen: Bulk lookup completed');
+      developer.log(
+        'FriendsListScreen: Found ${response.data.totalFound} users on Authentick',
+      );
+      developer.log(
+        'FriendsListScreen: ${response.data.totalConnected} already connected',
+      );
+      developer.log(
+        'FriendsListScreen: ${response.data.totalRequested} pending requests',
+      );
 
       setState(() {
-        _contacts = contacts;
+        _authentickUsers = response.data.users;
         _isLoading = false;
       });
-
-      // Print all contacts for debugging
-      ContactsService.printAllContactsWithEmails(contacts);
     } catch (error) {
+      developer.log(
+        'FriendsListScreen: Error loading Authentick users: $error',
+      );
       setState(() {
         _error = error.toString();
         _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _sendFriendRequest(UserLookupInfo user) async {
+    if (_sendingRequests.contains(user.id)) return;
+
+    setState(() {
+      _sendingRequests.add(user.id);
+    });
+
+    try {
+      developer.log(
+        'FriendsListScreen: Sending friend request to ${user.username}',
+      );
+
+      final connectionService = ref.read(connectionServiceProvider);
+      final request = ConnectionRequest(
+        connectedUserId: user.id,
+        connectionType: 'friend',
+      );
+
+      await connectionService.sendConnectionRequest(request);
+
+      developer.log(
+        'FriendsListScreen: Friend request sent successfully to ${user.username}',
+      );
+
+      // Refresh the list to update connection status
+      await _loadAuthentickUsers();
+    } catch (error) {
+      developer.log('FriendsListScreen: Error sending friend request: $error');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to send friend request to ${user.username}'),
+          backgroundColor: Colors.red[600],
+        ),
+      );
+    } finally {
+      setState(() {
+        _sendingRequests.remove(user.id);
       });
     }
   }
@@ -116,7 +207,7 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
               child: Row(
                 children: [
                   Text(
-                    'Your Contacts (${_contacts.length})',
+                    'Friends on Authentick (${_authentickUsers.length})',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -129,6 +220,23 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  else
+                    GestureDetector(
+                      onTap: _loadAuthentickUsers,
+                      child: Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF3620B3).withAlpha(25),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.refresh,
+                          color: Color(0xFF3620B3),
+                          size: 16,
+                        ),
+                      ),
                     ),
                 ],
               ),
@@ -137,7 +245,7 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
             const SizedBox(height: 16),
 
             // Contacts list
-            Expanded(child: _buildContactsList()),
+            Expanded(child: _buildAuthentickUsersList()),
 
             // Action buttons
             _buildActionButtons(),
@@ -147,7 +255,7 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
     );
   }
 
-  Widget _buildContactsList() {
+  Widget _buildAuthentickUsersList() {
     if (_isLoading) {
       return const Center(
         child: Column(
@@ -155,7 +263,7 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
           children: [
             CircularProgressIndicator(),
             SizedBox(height: 16),
-            Text('Loading contacts...'),
+            Text('Finding your friends on Authentick...'),
           ],
         ),
       );
@@ -175,7 +283,7 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: _loadContacts,
+              onPressed: _loadAuthentickUsers,
               child: const Text('Retry'),
             ),
           ],
@@ -183,15 +291,15 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
       );
     }
 
-    if (_contacts.isEmpty) {
+    if (_authentickUsers.isEmpty) {
       return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.contacts, size: 48, color: Colors.grey),
+            Icon(Icons.people_outline, size: 48, color: Colors.grey),
             SizedBox(height: 16),
             Text(
-              'No contacts found',
+              'No friends found on Authentick',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w500,
@@ -200,7 +308,7 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
             ),
             SizedBox(height: 8),
             Text(
-              'Make sure you have contacts saved\non your device',
+              'None of your contacts are on Authentick yet.\nInvite them to join!',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey),
             ),
@@ -211,152 +319,157 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
 
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 32.0),
-      itemCount: _contacts.length,
+      itemCount: _authentickUsers.length,
       itemBuilder: (context, index) {
-        final contact = _contacts[index];
+        final user = _authentickUsers[index];
+        final isConnected = user.isConnected;
+        final connectionStatus = user.connectionStatus;
+        final isSendingRequest = _sendingRequests.contains(user.id);
+
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: const Color(0xFFF8F8F8),
             borderRadius: BorderRadius.circular(12),
-            border: contact.emails.isNotEmpty
-                ? Border.all(
-                    color: const Color(0xFF3620B3).withAlpha(51),
-                    width: 1,
-                  )
-                : null,
+            border: Border.all(
+              color: isConnected
+                  ? Colors.green.withAlpha(128)
+                  : const Color(0xFF3620B3).withAlpha(51),
+              width: 1,
+            ),
           ),
-          child: Column(
+          child: Row(
             children: [
-              Row(
-                children: [
-                  // Avatar
-                  CircleAvatar(
-                    radius: 24,
-                    backgroundColor: contact.emails.isNotEmpty
-                        ? const Color(0xFF3620B3)
-                        : Colors.grey[400],
-                    child: Text(
-                      contact.name.isNotEmpty
-                          ? contact.name[0].toUpperCase()
-                          : '?',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(width: 16),
-
-                  // Contact info
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          contact.name,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black,
-                          ),
-                        ),
-                        if (contact.phoneNumber != null)
-                          Text(
-                            contact.phoneNumber!,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-
-                  // Email indicator
-                  if (contact.emails.isNotEmpty)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF3620B3),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        '${contact.emails.length} email${contact.emails.length > 1 ? 's' : ''}',
+              // Avatar
+              CircleAvatar(
+                radius: 24,
+                backgroundColor: isConnected
+                    ? Colors.green[600]
+                    : const Color(0xFF3620B3),
+                backgroundImage: user.profileImage != null
+                    ? NetworkImage(user.profileImage!)
+                    : null,
+                child: user.profileImage == null
+                    ? Text(
+                        user.username.isNotEmpty
+                            ? user.username[0].toUpperCase()
+                            : '?',
                         style: const TextStyle(
-                          fontSize: 10,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
                           color: Colors.white,
-                          fontWeight: FontWeight.w500,
                         ),
-                      ),
-                    )
-                  else
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Text(
-                        'No email',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.grey,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                ],
+                      )
+                    : null,
               ),
 
-              // Show emails if any
-              if (contact.emails.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF3620B3).withAlpha(25),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Email addresses:',
+              const SizedBox(width: 16),
+
+              // User info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '@${user.username}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
+                    ),
+                    if (connectionStatus != null)
+                      Text(
+                        connectionStatus == 'pending'
+                            ? 'Friend request pending'
+                            : connectionStatus,
                         style: TextStyle(
                           fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF3620B3),
+                          color: connectionStatus == 'pending'
+                              ? Colors.orange[700]
+                              : Colors.grey[600],
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      ...contact.emails.map(
-                        (email) => Padding(
-                          padding: const EdgeInsets.only(bottom: 2),
-                          child: Text(
-                            email,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF3620B3),
-                              fontWeight: FontWeight.w500,
-                            ),
+                  ],
+                ),
+              ),
+
+              // Action button
+              if (isConnected)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.green[100],
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    'Connected',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.green[700],
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                )
+              else if (connectionStatus == 'pending')
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.orange[100],
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    'Pending',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.orange[700],
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                )
+              else
+                ElevatedButton(
+                  onPressed: isSendingRequest
+                      ? null
+                      : () => _sendFriendRequest(user),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF3620B3),
+                    disabledBackgroundColor: Colors.grey[300],
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                  ),
+                  child: isSendingRequest
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.grey,
+                          ),
+                        )
+                      : const Text(
+                          'Add Friend',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
                           ),
                         ),
-                      ),
-                    ],
-                  ),
                 ),
-              ],
             ],
           ),
         );
@@ -367,63 +480,9 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
   Widget _buildActionButtons() {
     return Column(
       children: [
-        // Floating action buttons
-        Container(
-          padding: const EdgeInsets.all(32.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Refresh contacts
-              GestureDetector(
-                onTap: _loadContacts,
-                child: Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE91E63),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withAlpha(25),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.refresh,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                ),
-              ),
-
-              const SizedBox(width: 24),
-
-              // Share icon
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: Colors.black,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withAlpha(25),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: const Icon(Icons.share, color: Colors.white, size: 24),
-              ),
-            ],
-          ),
-        ),
-
         // Continue button
         Padding(
-          padding: const EdgeInsets.only(left: 32.0, right: 32.0, bottom: 32.0),
+          padding: const EdgeInsets.all(32.0),
           child: SizedBox(
             width: double.infinity,
             height: 56,
