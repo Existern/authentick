@@ -8,6 +8,7 @@ import '../../profile/repository/profile_repository.dart';
 import '../model/onboarding_state.dart';
 import '../model/onboarding_step_request.dart';
 import '../service/contacts_permission_service.dart';
+import '../service/contacts_service.dart';
 import '../service/onboarding_service.dart';
 
 import 'package:intl/intl.dart';
@@ -640,15 +641,45 @@ class OnboardingViewModel extends _$OnboardingViewModel {
   }
 
   Future<void> allowContactsPermission() async {
+    debugPrint(
+      '${Constants.tag} [OnboardingViewModel] 🚀 allowContactsPermission() called',
+    );
+
+    // Debug permission states
+    await ContactsPermissionService.debugPermissionStates();
+
     // Set loading state
     state = state.copyWith(isLoading: true);
 
     try {
+      debugPrint(
+        '${Constants.tag} [OnboardingViewModel] 📋 Requesting contacts permission from system...',
+      );
+
       // Request contacts permission from the system
       final granted =
           await ContactsPermissionService.requestContactsPermission();
 
+      debugPrint(
+        '${Constants.tag} [OnboardingViewModel] 🔐 Permission result: $granted',
+      );
+
       if (granted) {
+        debugPrint(
+          '${Constants.tag} [OnboardingViewModel] ✅ Contacts permission granted, fetching contacts...',
+        );
+
+        // Fetch all contacts with emails
+        final contactsWithEmails =
+            await ContactsService.getAllContactsWithEmails();
+
+        debugPrint(
+          '${Constants.tag} [OnboardingViewModel] 📱 Fetched ${contactsWithEmails.length} contacts',
+        );
+
+        // Print contacts for debugging
+        ContactsService.printAllContactsWithEmails(contactsWithEmails);
+
         // Permission granted, show friends list (sub-flow continuation, not completion)
         state = state.copyWith(
           currentStep: OnboardingStep.friendsList,
@@ -656,7 +687,14 @@ class OnboardingViewModel extends _$OnboardingViewModel {
           isLoading: false,
         );
         await _saveCurrentStep(OnboardingStep.friendsList);
+
+        debugPrint(
+          '${Constants.tag} [OnboardingViewModel] 🎯 Navigated to friends list screen',
+        );
       } else {
+        debugPrint(
+          '${Constants.tag} [OnboardingViewModel] ❌ Contacts permission denied',
+        );
         // Permission denied, skip entire find_friends flow to next incomplete step
         final nextStep = _getNextStep(OnboardingStep.friendsList);
         state = state.copyWith(
@@ -665,10 +703,14 @@ class OnboardingViewModel extends _$OnboardingViewModel {
           isLoading: false,
         );
         await _saveCurrentStep(nextStep);
+
+        debugPrint(
+          '${Constants.tag} [OnboardingViewModel] ⏭️ Skipped to next step: $nextStep',
+        );
       }
     } catch (error) {
       debugPrint(
-        '${Constants.tag} [OnboardingViewModel] Error requesting contacts permission: $error',
+        '${Constants.tag} [OnboardingViewModel] ❗ Error requesting contacts permission: $error',
       );
       // On error, skip entire find_friends flow to next incomplete step
       final nextStep = _getNextStep(OnboardingStep.friendsList);
