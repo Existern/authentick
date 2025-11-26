@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../features/connections/model/connection.dart';
+import '../../features/connections/model/connection_user.dart';
 import '../../features/connections/view_model/pending_connections_view_model.dart';
 import '../../features/connections/view_model/friends_view_model.dart';
 import '../../features/connections/view_model/followers_view_model.dart';
@@ -103,9 +104,9 @@ class _FriendpageState extends ConsumerState<Friendpage> {
 
   int getTabCount(
     AsyncValue<List<Connection>> pendingConnectionsAsync,
-    AsyncValue<List<Connection>> friendsAsync,
-    AsyncValue<List<Connection>> followersAsync,
-    AsyncValue<List<Connection>> followingAsync,
+    AsyncValue<List<ConnectionUser>> friendsAsync,
+    AsyncValue<List<ConnectionUser>> followersAsync,
+    AsyncValue<List<ConnectionUser>> followingAsync,
   ) {
     switch (selectedTab) {
       case 'Friend requests':
@@ -232,9 +233,9 @@ class _FriendpageState extends ConsumerState<Friendpage> {
 
   Widget _buildContent(
     AsyncValue<List<Connection>> pendingConnectionsAsync,
-    AsyncValue<List<Connection>> friendsAsync,
-    AsyncValue<List<Connection>> followersAsync,
-    AsyncValue<List<Connection>> followingAsync,
+    AsyncValue<List<ConnectionUser>> friendsAsync,
+    AsyncValue<List<ConnectionUser>> followersAsync,
+    AsyncValue<List<ConnectionUser>> followingAsync,
   ) {
     if (selectedTab == 'Friend requests') {
       return pendingConnectionsAsync.when(
@@ -346,8 +347,8 @@ class _FriendpageState extends ConsumerState<Friendpage> {
               padding: const EdgeInsets.symmetric(vertical: 8),
               itemCount: connections.length,
               itemBuilder: (context, index) {
-                final connection = connections[index];
-                return _buildFriendCard(connection);
+                final user = connections[index];
+                return _buildFriendCard(user);
               },
             ),
           );
@@ -422,8 +423,8 @@ class _FriendpageState extends ConsumerState<Friendpage> {
               padding: const EdgeInsets.symmetric(vertical: 8),
               itemCount: connections.length,
               itemBuilder: (context, index) {
-                final connection = connections[index];
-                return _buildFollowingCard(connection);
+                final user = connections[index];
+                return _buildFollowingCard(user);
               },
             ),
           );
@@ -498,8 +499,8 @@ class _FriendpageState extends ConsumerState<Friendpage> {
               padding: const EdgeInsets.symmetric(vertical: 8),
               itemCount: connections.length,
               itemBuilder: (context, index) {
-                final connection = connections[index];
-                return _buildFollowerCard(connection);
+                final user = connections[index];
+                return _buildFollowerCard(user);
               },
             ),
           );
@@ -730,17 +731,11 @@ class _FriendpageState extends ConsumerState<Friendpage> {
     );
   }
 
-  Widget _buildFriendCard(Connection connection) {
+  Widget _buildFriendCard(ConnectionUser user) {
     // Get the connected friend user
-    final friendUser = connection.connectedUser ?? connection.user;
-
-    if (friendUser == null) {
-      return const SizedBox.shrink();
-    }
-
-    final displayName = friendUser.fullName;
-    final username = '@${friendUser.username}';
-    final profileImage = friendUser.profileImage;
+    final displayName = user.fullName;
+    final username = '@${user.username}';
+    final profileImage = user.profileImage;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -801,7 +796,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
               height: 20,
             ),
             onPressed: () {
-              _showOptionsMenu(context, friendUser.username ?? 'User');
+              _showOptionsMenu(context, user.username ?? 'User');
             },
           ),
         ],
@@ -809,17 +804,11 @@ class _FriendpageState extends ConsumerState<Friendpage> {
     );
   }
 
-  Widget _buildFollowerCard(Connection connection) {
+  Widget _buildFollowerCard(ConnectionUser user) {
     // Get the follower user
-    final followerUser = connection.user ?? connection.connectedUser;
-
-    if (followerUser == null) {
-      return const SizedBox.shrink();
-    }
-
-    final displayName = followerUser.fullName;
-    final username = '@${followerUser.username}';
-    final profileImage = followerUser.profileImage;
+    final displayName = user.fullName;
+    final username = '@${user.username}';
+    final profileImage = user.profileImage;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -880,7 +869,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
               height: 20,
             ),
             onPressed: () {
-              _showOptionsMenu(context, followerUser.username ?? 'User');
+              _showOptionsMenu(context, user.username ?? 'User');
             },
           ),
         ],
@@ -888,17 +877,11 @@ class _FriendpageState extends ConsumerState<Friendpage> {
     );
   }
 
-  Widget _buildFollowingCard(Connection connection) {
+  Widget _buildFollowingCard(ConnectionUser user) {
     // Get the user being followed
-    final followingUser = connection.connectedUser ?? connection.user;
-
-    if (followingUser == null) {
-      return const SizedBox.shrink();
-    }
-
-    final displayName = followingUser.fullName;
-    final username = '@${followingUser.username}';
-    final profileImage = followingUser.profileImage;
+    final displayName = user.fullName;
+    final username = '@${user.username}';
+    final profileImage = user.profileImage;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -959,7 +942,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
               height: 20,
             ),
             onPressed: () {
-              _showOptionsMenu(context, followingUser.username ?? 'User');
+              _showOptionsMenu(context, user.username ?? 'User');
             },
           ),
         ],

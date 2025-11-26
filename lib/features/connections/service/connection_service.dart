@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../common/remote/api_client.dart';
+import '../model/connections_response.dart';
 import '../model/pending_connections_response.dart';
 
 part 'connection_service.g.dart';
@@ -16,32 +17,14 @@ class ConnectionService {
 
   ConnectionService(this._apiClient);
 
-  /// Get connections with optional filters
-  /// GET /connections
-  /// Parameters:
-  /// - type: Predefined relationship filter (close_friends, friends, following, followers) - only one value allowed
-  /// - page: Page number - defaults to 1
-  /// - limit: Items per page - defaults to 20
-  Future<PendingConnectionsResponse> getConnections({
-    String? type,
-    int page = 1,
-    int limit = 20,
-  }) async {
+  /// Get connections (friends, following, close friends)
+  /// GET /connections/users
+  Future<ConnectionsResponse> getConnections() async {
     try {
-      final queryParams = <String, dynamic>{
-        'page': page,
-        'limit': limit,
-      };
-
-      if (type != null) {
-        queryParams['type'] = type;
-      }
-
       final response = await _apiClient.get<Map<String, dynamic>>(
-        '/connections',
-        queryParameters: queryParams,
+        '/connections/users',
       );
-      return PendingConnectionsResponse.fromJson(response);
+      return ConnectionsResponse.fromJson(response);
     } catch (e) {
       rethrow;
     }

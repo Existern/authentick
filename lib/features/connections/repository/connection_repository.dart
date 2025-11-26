@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../constants/constants.dart';
 
+import '../model/connections_response.dart';
 import '../model/pending_connections_response.dart';
 import '../service/connection_service.dart';
 
@@ -19,37 +20,23 @@ class ConnectionRepository {
 
   const ConnectionRepository(this._connectionService);
 
-  /// Get connections with filters
-  Future<PendingConnectionsResponse> getConnections({
-    String? type,
-    int page = 1,
-    int limit = 20,
-  }) async {
+  /// Get connections
+  Future<ConnectionsResponse> getConnections() async {
     try {
       debugPrint(
         '${Constants.tag} [ConnectionRepository] 🔄 Fetching connections...',
       );
-      debugPrint(
-        '${Constants.tag} [ConnectionRepository] Type: $type',
-      );
-      debugPrint(
-        '${Constants.tag} [ConnectionRepository] Page: $page, Limit: $limit',
-      );
 
-      final response = await _connectionService.getConnections(
-        type: type,
-        page: page,
-        limit: limit,
-      );
+      final response = await _connectionService.getConnections();
 
       debugPrint(
-        '${Constants.tag} [ConnectionRepository] ✅ Success: ${response.success}',
+        '${Constants.tag} [ConnectionRepository] ✅ Success',
       );
       debugPrint(
-        '${Constants.tag} [ConnectionRepository] Total connections: ${response.data.totalCount}',
+        '${Constants.tag} [ConnectionRepository] Friends: ${response.friends.length}',
       );
       debugPrint(
-        '${Constants.tag} [ConnectionRepository] Connections in this page: ${response.data.connections.length}',
+        '${Constants.tag} [ConnectionRepository] Following: ${response.following.length}',
       );
 
       return response;
