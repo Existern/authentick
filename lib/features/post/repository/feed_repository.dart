@@ -8,14 +8,16 @@ part 'feed_repository.g.dart';
 @riverpod
 Future<FeedResponse> feed(
   Ref ref, {
-  String filter = 'everyone',
+  String filter = 'all',
   int page = 1,
   int limit = 20,
+  String duration = '1w',
 }) async {
   final postService = ref.watch(postServiceProvider);
   return await postService.getFeed(
     filter: filter,
     page: page,
     limit: limit,
+    duration: duration,
   );
 }

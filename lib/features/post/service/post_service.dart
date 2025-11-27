@@ -53,23 +53,25 @@ class PostService {
   }
 
   /// Get personalized feed
-  /// GET /posts/feed
+  /// GET /feed
   /// Parameters:
   /// - filter: Feed filter type (friends, following, everyone) - defaults to 'everyone'
   /// - page: Page number - defaults to 1
   /// - limit: Items per page - defaults to 20
   Future<FeedResponse> getFeed({
-    String filter = 'everyone',
+    String filter = 'all',
     int page = 1,
     int limit = 20,
+    String duration = '1w',
   }) async {
     try {
       final response = await _apiClient.get<Map<String, dynamic>>(
-        '/posts/feed',
+        '/feed',
         queryParameters: {
           'filter': filter,
           'page': page,
           'limit': limit,
+          'duration': duration,
         },
       );
       return FeedResponse.fromJson(response);

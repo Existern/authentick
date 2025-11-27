@@ -12,7 +12,7 @@ class MyHome extends ConsumerStatefulWidget {
 }
 
 class _MyHomeState extends ConsumerState<MyHome> {
-  String selectedTab = 'Friends';
+  String selectedTab = 'All';
 
   String _getFilterForTab() {
     switch (selectedTab) {
@@ -21,9 +21,9 @@ class _MyHomeState extends ConsumerState<MyHome> {
       case 'Following':
         return 'following';
       case 'All':
-        return 'everyone';
+        return 'all';
       default:
-        return 'everyone';
+        return 'all';
     }
   }
 
@@ -60,8 +60,6 @@ class _MyHomeState extends ConsumerState<MyHome> {
                 _buildTab(label: 'All'),
               ],
             ),
-
-
 
             Expanded(
               child: feedAsync.when(
