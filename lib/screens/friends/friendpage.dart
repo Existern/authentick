@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-import '../../features/connections/model/connection.dart';
+import '../../features/connections/model/connection_request.dart';
 import '../../features/connections/model/connection_user.dart';
 import '../../features/connections/view_model/pending_connections_view_model.dart';
 import '../../features/connections/view_model/friends_view_model.dart';
@@ -36,10 +36,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
             builder: (context, value, child) {
               return Transform.scale(
                 scale: value,
-                child: Opacity(
-                  opacity: value,
-                  child: child,
-                ),
+                child: Opacity(opacity: value, child: child),
               );
             },
             child: Container(
@@ -103,7 +100,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
   }
 
   int getTabCount(
-    AsyncValue<List<Connection>> pendingConnectionsAsync,
+    AsyncValue<List<ConnectionRequest>> pendingConnectionsAsync,
     AsyncValue<List<ConnectionUser>> friendsAsync,
     AsyncValue<List<ConnectionUser>> followersAsync,
     AsyncValue<List<ConnectionUser>> followingAsync,
@@ -136,7 +133,9 @@ class _FriendpageState extends ConsumerState<Friendpage> {
 
   @override
   Widget build(BuildContext context) {
-    final pendingConnectionsAsync = ref.watch(pendingConnectionsViewModelProvider);
+    final pendingConnectionsAsync = ref.watch(
+      pendingConnectionsViewModelProvider,
+    );
     final friendsAsync = ref.watch(friendsViewModelProvider);
     final followersAsync = ref.watch(followersViewModelProvider);
     final followingAsync = ref.watch(followingViewModelProvider);
@@ -193,22 +192,42 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                   _buildTab(
                     label: 'Friend requests',
                     icon: Icons.person_add,
-                    count: getTabCount(pendingConnectionsAsync, friendsAsync, followersAsync, followingAsync),
+                    count: getTabCount(
+                      pendingConnectionsAsync,
+                      friendsAsync,
+                      followersAsync,
+                      followingAsync,
+                    ),
                   ),
                   _buildTab(
                     label: 'Friends',
                     icon: Icons.people,
-                    count: getTabCount(pendingConnectionsAsync, friendsAsync, followersAsync, followingAsync),
+                    count: getTabCount(
+                      pendingConnectionsAsync,
+                      friendsAsync,
+                      followersAsync,
+                      followingAsync,
+                    ),
                   ),
                   _buildTab(
                     label: 'Following',
                     icon: Icons.visibility,
-                    count: getTabCount(pendingConnectionsAsync, friendsAsync, followersAsync, followingAsync),
+                    count: getTabCount(
+                      pendingConnectionsAsync,
+                      friendsAsync,
+                      followersAsync,
+                      followingAsync,
+                    ),
                   ),
                   _buildTab(
                     label: 'Followers',
                     icon: Icons.group,
-                    count: getTabCount(pendingConnectionsAsync, friendsAsync, followersAsync, followingAsync),
+                    count: getTabCount(
+                      pendingConnectionsAsync,
+                      friendsAsync,
+                      followersAsync,
+                      followingAsync,
+                    ),
                   ),
                   _buildTab(
                     label: 'Friends of friends',
@@ -223,7 +242,12 @@ class _FriendpageState extends ConsumerState<Friendpage> {
 
             // User List
             Expanded(
-              child: _buildContent(pendingConnectionsAsync, friendsAsync, followersAsync, followingAsync),
+              child: _buildContent(
+                pendingConnectionsAsync,
+                friendsAsync,
+                followersAsync,
+                followingAsync,
+              ),
             ),
           ],
         ),
@@ -232,7 +256,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
   }
 
   Widget _buildContent(
-    AsyncValue<List<Connection>> pendingConnectionsAsync,
+    AsyncValue<List<ConnectionRequest>> pendingConnectionsAsync,
     AsyncValue<List<ConnectionUser>> friendsAsync,
     AsyncValue<List<ConnectionUser>> followersAsync,
     AsyncValue<List<ConnectionUser>> followingAsync,
@@ -253,10 +277,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                   const SizedBox(height: 16),
                   Text(
                     'No pending friend requests',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                   ),
                 ],
               ),
@@ -265,7 +286,9 @@ class _FriendpageState extends ConsumerState<Friendpage> {
 
           return RefreshIndicator(
             onRefresh: () async {
-              await ref.read(pendingConnectionsViewModelProvider.notifier).refresh();
+              await ref
+                  .read(pendingConnectionsViewModelProvider.notifier)
+                  .refresh();
             },
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -278,31 +301,24 @@ class _FriendpageState extends ConsumerState<Friendpage> {
           );
         },
         loading: () => const Center(
-          child: CircularProgressIndicator(
-            color: Color(0xFF3620B3),
-          ),
+          child: CircularProgressIndicator(color: Color(0xFF3620B3)),
         ),
         error: (error, stack) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Colors.red[400],
-              ),
+              Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
               const SizedBox(height: 16),
               Text(
                 'Failed to load friend requests',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
               ),
               const SizedBox(height: 8),
               TextButton(
                 onPressed: () {
-                  ref.read(pendingConnectionsViewModelProvider.notifier).refresh();
+                  ref
+                      .read(pendingConnectionsViewModelProvider.notifier)
+                      .refresh();
                 },
                 child: const Text('Retry'),
               ),
@@ -321,18 +337,11 @@ class _FriendpageState extends ConsumerState<Friendpage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.people_outline,
-                    size: 64,
-                    color: Colors.grey[400],
-                  ),
+                  Icon(Icons.people_outline, size: 64, color: Colors.grey[400]),
                   const SizedBox(height: 16),
                   Text(
                     'No friends yet',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                   ),
                 ],
               ),
@@ -354,26 +363,17 @@ class _FriendpageState extends ConsumerState<Friendpage> {
           );
         },
         loading: () => const Center(
-          child: CircularProgressIndicator(
-            color: Color(0xFF3620B3),
-          ),
+          child: CircularProgressIndicator(color: Color(0xFF3620B3)),
         ),
         error: (error, stack) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Colors.red[400],
-              ),
+              Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
               const SizedBox(height: 16),
               Text(
                 'Failed to load friends',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
               ),
               const SizedBox(height: 8),
               TextButton(
@@ -405,10 +405,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                   const SizedBox(height: 16),
                   Text(
                     'Not following anyone yet',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                   ),
                 ],
               ),
@@ -430,26 +427,17 @@ class _FriendpageState extends ConsumerState<Friendpage> {
           );
         },
         loading: () => const Center(
-          child: CircularProgressIndicator(
-            color: Color(0xFF3620B3),
-          ),
+          child: CircularProgressIndicator(color: Color(0xFF3620B3)),
         ),
         error: (error, stack) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Colors.red[400],
-              ),
+              Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
               const SizedBox(height: 16),
               Text(
                 'Failed to load following',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
               ),
               const SizedBox(height: 8),
               TextButton(
@@ -473,18 +461,11 @@ class _FriendpageState extends ConsumerState<Friendpage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.group_outlined,
-                    size: 64,
-                    color: Colors.grey[400],
-                  ),
+                  Icon(Icons.group_outlined, size: 64, color: Colors.grey[400]),
                   const SizedBox(height: 16),
                   Text(
                     'No followers yet',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                   ),
                 ],
               ),
@@ -506,26 +487,17 @@ class _FriendpageState extends ConsumerState<Friendpage> {
           );
         },
         loading: () => const Center(
-          child: CircularProgressIndicator(
-            color: Color(0xFF3620B3),
-          ),
+          child: CircularProgressIndicator(color: Color(0xFF3620B3)),
         ),
         error: (error, stack) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Colors.red[400],
-              ),
+              Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
               const SizedBox(height: 16),
               Text(
                 'Failed to load followers',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
               ),
               const SizedBox(height: 8),
               TextButton(
@@ -544,10 +516,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
     return Center(
       child: Text(
         '$selectedTab - Coming soon!',
-        style: TextStyle(
-          fontSize: 16,
-          color: Colors.grey[600],
-        ),
+        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
       ),
     );
   }
@@ -589,16 +558,16 @@ class _FriendpageState extends ConsumerState<Friendpage> {
     );
   }
 
-  Widget _buildConnectionCard(Connection connection) {
-    // The user who sent the request
-    final requestUser = connection.user ?? connection.connectedUser;
+  Widget _buildConnectionCard(ConnectionRequest connectionRequest) {
+    // The user who sent the request (requester_user is the one who sent it to the current user)
+    final requestUser = connectionRequest.requesterUser;
 
     if (requestUser == null) {
       return const SizedBox.shrink();
     }
 
     final displayName = requestUser.fullName;
-    final username = '@${requestUser.username}';
+    final username = '@${requestUser.username ?? 'user'}';
     final profileImage = requestUser.profileImage;
 
     return Container(
@@ -620,11 +589,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                   : null,
             ),
             child: profileImage == null
-                ? Icon(
-                    Icons.person,
-                    size: 30,
-                    color: Colors.grey[600],
-                  )
+                ? Icon(Icons.person, size: 30, color: Colors.grey[600])
                 : null,
           ),
           const SizedBox(width: 12),
@@ -643,10 +608,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                 ),
                 Text(
                   username,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
                 ),
               ],
             ),
@@ -660,26 +622,28 @@ class _FriendpageState extends ConsumerState<Friendpage> {
               height: 20,
             ),
             onPressed: () {
-              _showOptionsMenu(context, requestUser.username ?? 'User');
+              _showOptionsMenu(context, username);
             },
           ),
 
           const SizedBox(width: 8),
 
           // Action Buttons
-          _buildActionButtons(connection),
+          _buildActionButtons(connectionRequest),
         ],
       ),
     );
   }
 
-  Widget _buildActionButtons(Connection connection) {
+  Widget _buildActionButtons(ConnectionRequest connectionRequest) {
     return Row(
       children: [
         OutlinedButton(
           onPressed: () async {
             try {
-              await ref.read(pendingConnectionsViewModelProvider.notifier).rejectConnection(connection.id);
+              await ref
+                  .read(pendingConnectionsViewModelProvider.notifier)
+                  .rejectConnection(connectionRequest.id);
               if (mounted) {
                 showCustomNotification('Friend request denied', isError: true);
               }
@@ -696,22 +660,24 @@ class _FriendpageState extends ConsumerState<Friendpage> {
             ),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           ),
-          child: const Text(
-            'Deny',
-            style: TextStyle(color: Color(0xFF3620B3)),
-          ),
+          child: const Text('Deny', style: TextStyle(color: Color(0xFF3620B3))),
         ),
         const SizedBox(width: 8),
         ElevatedButton(
           onPressed: () async {
             try {
-              await ref.read(pendingConnectionsViewModelProvider.notifier).acceptConnection(connection.id);
+              await ref
+                  .read(pendingConnectionsViewModelProvider.notifier)
+                  .acceptConnection(connectionRequest.id);
               if (mounted) {
                 showCustomNotification('Friend request accepted');
               }
             } catch (e) {
               if (mounted) {
-                showCustomNotification('Failed to accept request', isError: true);
+                showCustomNotification(
+                  'Failed to accept request',
+                  isError: true,
+                );
               }
             }
           },
@@ -722,10 +688,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
             ),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           ),
-          child: const Text(
-            'Accept',
-            style: TextStyle(color: Colors.white),
-          ),
+          child: const Text('Accept', style: TextStyle(color: Colors.white)),
         ),
       ],
     );
@@ -756,11 +719,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                   : null,
             ),
             child: profileImage == null
-                ? Icon(
-                    Icons.person,
-                    size: 30,
-                    color: Colors.grey[600],
-                  )
+                ? Icon(Icons.person, size: 30, color: Colors.grey[600])
                 : null,
           ),
           const SizedBox(width: 12),
@@ -779,10 +738,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                 ),
                 Text(
                   username,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
                 ),
               ],
             ),
@@ -829,11 +785,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                   : null,
             ),
             child: profileImage == null
-                ? Icon(
-                    Icons.person,
-                    size: 30,
-                    color: Colors.grey[600],
-                  )
+                ? Icon(Icons.person, size: 30, color: Colors.grey[600])
                 : null,
           ),
           const SizedBox(width: 12),
@@ -852,10 +804,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                 ),
                 Text(
                   username,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
                 ),
               ],
             ),
@@ -902,11 +851,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                   : null,
             ),
             child: profileImage == null
-                ? Icon(
-                    Icons.person,
-                    size: 30,
-                    color: Colors.grey[600],
-                  )
+                ? Icon(Icons.person, size: 30, color: Colors.grey[600])
                 : null,
           ),
           const SizedBox(width: 12),
@@ -925,10 +870,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                 ),
                 Text(
                   username,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
                 ),
               ],
             ),
@@ -983,7 +925,10 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
                 leading: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
@@ -998,10 +943,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                 ),
                 title: const Text(
                   'View Profile',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                 ),
                 onTap: () {
                   Navigator.pop(context);
@@ -1018,29 +960,28 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
                 leading: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(
-                    Icons.block,
-                    color: Colors.red,
-                    size: 24,
-                  ),
+                  child: const Icon(Icons.block, color: Colors.red, size: 24),
                 ),
                 title: const Text(
                   'Block User',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                 ),
                 onTap: () {
                   Navigator.pop(context);
-                  showCustomNotification('$username has been blocked', isError: true);
+                  showCustomNotification(
+                    '$username has been blocked',
+                    isError: true,
+                  );
                 },
               ),
             ),
@@ -1052,7 +993,10 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
                 leading: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
@@ -1067,10 +1011,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                 ),
                 title: const Text(
                   'Report User',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                 ),
                 onTap: () {
                   Navigator.pop(context);
