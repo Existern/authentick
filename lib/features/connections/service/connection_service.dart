@@ -1,7 +1,9 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../common/remote/api_client.dart';
-import '../model/pending_connections_response.dart';
+import '../model/connection_request.dart';
+import '../model/connections_response.dart';
+import '../model/friendship.dart';
 
 part 'connection_service.g.dart';
 
@@ -16,84 +18,193 @@ class ConnectionService {
 
   ConnectionService(this._apiClient);
 
-  /// Get connections with optional filters
-  /// GET /connections
-  /// Parameters:
-  /// - type: Predefined relationship filter (close_friends, friends, following, followers) - only one value allowed
-  /// - page: Page number - defaults to 1
-  /// - limit: Items per page - defaults to 20
-  Future<PendingConnectionsResponse> getConnections({
-    String? type,
-    int page = 1,
-    int limit = 20,
+  /// Get connections (friends, following, close friends)
+  /// GET /connections/users
+  /// [type] can be: all (default), friends, close_friends, followers, following
+  Future<ConnectionsResponse> getConnections({
+    String type = 'all',
   }) async {
     try {
-      final queryParams = <String, dynamic>{
-        'page': page,
-        'limit': limit,
-      };
-
-      if (type != null) {
-        queryParams['type'] = type;
-      }
-
       final response = await _apiClient.get<Map<String, dynamic>>(
-        '/connections',
-        queryParameters: queryParams,
+        '/connections/users',
+        queryParameters: {
+          'type': type,
+        },
       );
-      return PendingConnectionsResponse.fromJson(response);
+      // Response is wrapped in success/data/meta structure
+      final data = response['data'] as Map<String, dynamic>;
+      return ConnectionsResponse.fromJson(data);
     } catch (e) {
       rethrow;
     }
   }
 
-  /// Get pending connection requests
-  /// GET /connections/pending
-  Future<PendingConnectionsResponse> getPendingConnections({
+  /// List friend requests
+  /// GET /connections/friend-requests
+  /// [status] can be: pending (default), accepted, rejected, cancelled (comma-separated for multiple)
+  Future<List<ConnectionRequest>> getFriendRequests({
+    String status = 'pending',
     int page = 1,
     int limit = 20,
   }) async {
     try {
       final response = await _apiClient.get<Map<String, dynamic>>(
-        '/connections/pending',
+        '/connections/friend-requests',
+        queryParameters: {
+          'status': status,
+          'page': page,
+          'limit': limit,
+        },
+      );
+      // Response is wrapped in success/data/meta structure
+      final data = response['data'] as List<dynamic>;
+      return data
+          .map((json) => ConnectionRequest.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Send a friend request
+  /// POST /connections/friend-requests
+  Future<ConnectionRequest> sendFriendRequest(String targetUserId) async {
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        '/connections/friend-requests',
+        data: {
+          'target_user_id': targetUserId,
+        },
+      );
+      // Response is wrapped in success/data/meta structure
+      final data = response['data'] as Map<String, dynamic>;
+      return ConnectionRequest.fromJson(data);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Accept or reject a friend request
+  /// POST /connections/friend-requests/{id}
+  Future<void> respondToFriendRequest(
+    String requestId, {
+    required String action, // 'accept' or 'reject'
+  }) async {
+    try {
+      await _apiClient.post<void>(
+        '/connections/friend-requests/$requestId',
+        data: {
+          'action': action,
+        },
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Accept a friend request
+  /// POST /connections/friend-requests/{id}
+  Future<void> acceptFriendRequest(String requestId) async {
+    return respondToFriendRequest(requestId, action: 'accept');
+  }
+
+  /// Reject a friend request
+  /// POST /connections/friend-requests/{id}
+  Future<void> rejectFriendRequest(String requestId) async {
+    return respondToFriendRequest(requestId, action: 'reject');
+  }
+
+  /// Cancel a friend request sent by the authenticated user
+  /// DELETE /connections/friend-requests/{id}
+  Future<void> cancelFriendRequest(String requestId) async {
+    try {
+      await _apiClient.delete<void>(
+        '/connections/friend-requests/$requestId',
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// List friendships for the authenticated user
+  /// GET /connections/friends
+  Future<List<Friendship>> getFriendships({
+    int page = 1,
+    int limit = 20,
+  }) async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/connections/friends',
         queryParameters: {
           'page': page,
           'limit': limit,
         },
       );
-      return PendingConnectionsResponse.fromJson(response);
+      // Response is wrapped in success/data/meta structure
+      final data = response['data'] as List<dynamic>;
+      return data
+          .map((json) => Friendship.fromJson(json as Map<String, dynamic>))
+          .toList();
     } catch (e) {
       rethrow;
     }
   }
 
-  /// Accept a connection request
-  /// PATCH /connections/{connectionId}
-  Future<Map<String, dynamic>> acceptConnection(String connectionId) async {
+  /// Remove a friendship
+  /// DELETE /connections/friends/{id}
+  Future<void> removeFriendship(String friendUserId) async {
     try {
-      final response = await _apiClient.patch<Map<String, dynamic>>(
-        '/connections/$connectionId',
-        data: {
-          'action': 'accept',
-        },
+      await _apiClient.delete<void>(
+        '/connections/friends/$friendUserId',
       );
-      return response;
     } catch (e) {
       rethrow;
     }
   }
 
-  /// Deny/reject a connection request
-  /// PATCH /connections/{connectionId}
-  Future<Map<String, dynamic>> rejectConnection(String connectionId) async {
+  /// Follow a user
+  /// POST /connections/follow/{id}
+  Future<void> followUser(String userId) async {
     try {
-      final response = await _apiClient.patch<Map<String, dynamic>>(
-        '/connections/$connectionId',
-        data: {
-          'action': 'reject',
-        },
+      await _apiClient.post<void>(
+        '/connections/follow/$userId',
       );
-      return response;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Unfollow a user
+  /// DELETE /connections/follow/{id}
+  Future<void> unfollowUser(String userId) async {
+    try {
+      await _apiClient.delete<void>(
+        '/connections/follow/$userId',
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Mark a friend as a close friend
+  /// POST /connections/close-friends/{id}
+  Future<void> addCloseFriend(String userId) async {
+    try {
+      await _apiClient.post<void>(
+        '/connections/close-friends/$userId',
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Remove a user from close friends
+  /// DELETE /connections/close-friends/{id}
+  Future<void> removeCloseFriend(String userId) async {
+    try {
+      await _apiClient.delete<void>(
+        '/connections/close-friends/$userId',
+      );
     } catch (e) {
       rethrow;
     }

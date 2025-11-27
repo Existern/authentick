@@ -1,6 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../model/connection.dart';
+import '../model/connection_user.dart';
 import '../repository/connection_repository.dart';
 
 part 'followers_view_model.g.dart';
@@ -9,18 +9,14 @@ part 'followers_view_model.g.dart';
 @riverpod
 class FollowersViewModel extends _$FollowersViewModel {
   @override
-  Future<List<Connection>> build() async {
+  Future<List<ConnectionUser>> build() async {
     return await _fetchFollowers();
   }
 
-  Future<List<Connection>> _fetchFollowers() async {
+  Future<List<ConnectionUser>> _fetchFollowers() async {
     final repository = ref.read(connectionRepositoryProvider);
-    final response = await repository.getConnections(
-      type: 'followers',
-      page: 1,
-      limit: 100,
-    );
-    return response.data.connections;
+    final response = await repository.getConnections();
+    return response.followers;
   }
 
   /// Refresh followers list
