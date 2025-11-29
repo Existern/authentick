@@ -430,12 +430,20 @@ class OnboardingViewModel extends _$OnboardingViewModel {
       );
       debugPrint('${Constants.tag} ========================================');
 
+      // Convert DDMMYYYY to YYYY-MM-DD format for API
+      String? apiDateOfBirth;
+      if (currentState.birthday.isNotEmpty &&
+          currentState.birthday.length == 8) {
+        final day = currentState.birthday.substring(0, 2);
+        final month = currentState.birthday.substring(2, 4);
+        final year = currentState.birthday.substring(4, 8);
+        apiDateOfBirth = '$year-$month-$day';
+      }
+
       final response = await profileRepository.updateProfile(
         username: currentState.username,
         firstName: currentState.firstName,
-        dateOfBirth: currentState.birthday.isEmpty
-            ? null
-            : currentState.birthday,
+        dateOfBirth: apiDateOfBirth,
       );
 
       if (response.success) {
