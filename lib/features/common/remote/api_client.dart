@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../constants/constants.dart';
 import '../../../environment/env.dart';
 import '../service/secure_storage_service.dart';
+import '../service/session_manager.dart';
 import '../../authentication/model/refresh_request.dart';
 import '../../authentication/model/auth_response.dart';
 
@@ -168,13 +169,16 @@ class ApiClient {
         // Check for error object in response
         if (data['error'] != null && data['error'] is Map) {
           final error = data['error'] as Map;
-          errorMessage = error['message'] as String? ?? error['details'] as String?;
+          errorMessage =
+              error['message'] as String? ?? error['details'] as String?;
         } else {
           errorMessage = data['message'] as String?;
         }
       }
     } catch (e) {
-      debugPrint('${Constants.tag} [ApiClient] Error parsing error message: $e');
+      debugPrint(
+        '${Constants.tag} [ApiClient] Error parsing error message: $e',
+      );
     }
 
     switch (response.statusCode) {
@@ -198,10 +202,7 @@ class _AuthInterceptor extends Interceptor {
   final _secureStorage = SecureStorageService();
 
   @override
-  void onRequest(
-    RequestOptions options,
-    RequestInterceptorHandler handler,
-  ) {
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     // Skip auth for auth endpoints
     if (options.path.contains('/auth/authenticate') ||
         options.path.contains('/auth/refresh')) {
@@ -245,28 +246,72 @@ class _AuthInterceptor extends Interceptor {
           debugPrint(
             '${Constants.tag} [AuthInterceptor] 🔑 Added Authorization header',
           );
+        } else {
+          // Fallback: Try to get token from SharedPreferences
+          debugPrint(
+            '${Constants.tag} [AuthInterceptor] ⚠️ Secure storage token null, trying SharedPreferences fallback...',
+          );
+          final prefs = await SharedPreferences.getInstance();
+          final fallbackToken = prefs.getString(Constants.authTokenKey);
+          if (fallbackToken != null && fallbackToken.isNotEmpty) {
+            options.headers['Authorization'] = 'Bearer $fallbackToken';
+            debugPrint(
+              '${Constants.tag} [AuthInterceptor] 🔑 Added Authorization header from SharedPreferences fallback',
+            );
+          }
         }
       } else {
+        // Fallback: Check SharedPreferences even if secure storage has no tokens
         debugPrint(
-          '${Constants.tag} [AuthInterceptor] ⚠️ No stored tokens, proceeding without auth',
+          '${Constants.tag} [AuthInterceptor] ⚠️ No stored tokens in secure storage, checking SharedPreferences fallback...',
         );
+        final prefs = await SharedPreferences.getInstance();
+        final fallbackToken = prefs.getString(Constants.authTokenKey);
+        if (fallbackToken != null && fallbackToken.isNotEmpty) {
+          options.headers['Authorization'] = 'Bearer $fallbackToken';
+          debugPrint(
+            '${Constants.tag} [AuthInterceptor] 🔑 Added Authorization header from SharedPreferences fallback',
+          );
+        } else {
+          debugPrint(
+            '${Constants.tag} [AuthInterceptor] ⚠️ No tokens found anywhere, proceeding without auth',
+          );
+        }
       }
 
       handler.next(options);
-    } catch (error) {
+    } catch (error, stackTrace) {
       debugPrint(
         '${Constants.tag} [AuthInterceptor] ❌ Error handling request: $error',
       );
+      debugPrint('$stackTrace');
+
+      // Last resort fallback on error
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final fallbackToken = prefs.getString(Constants.authTokenKey);
+        if (fallbackToken != null && fallbackToken.isNotEmpty) {
+          options.headers['Authorization'] = 'Bearer $fallbackToken';
+          debugPrint(
+            '${Constants.tag} [AuthInterceptor] 🔑 Added Authorization header from fallback after error',
+          );
+        }
+      } catch (_) {
+        // Ignore fallback errors
+      }
+
       handler.next(options);
     }
   }
 
   Future<void> _refreshToken(String refreshToken) async {
     try {
-      final dio = Dio(BaseOptions(
-        baseUrl: '${Env.apiBaseUrl}${Env.apiVersion}',
-        headers: {'Content-Type': 'application/json'},
-      ));
+      final dio = Dio(
+        BaseOptions(
+          baseUrl: '${Env.apiBaseUrl}${Env.apiVersion}',
+          headers: {'Content-Type': 'application/json'},
+        ),
+      );
 
       final request = RefreshRequest(refreshToken: refreshToken);
       final response = await dio.post<Map<String, dynamic>>(
@@ -309,34 +354,52 @@ class _AuthInterceptor extends Interceptor {
 class _LoggingInterceptor extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    debugPrint('${Constants.tag} ┌────────────────────────────────────────────────────────');
+    debugPrint(
+      '${Constants.tag} ┌────────────────────────────────────────────────────────',
+    );
     debugPrint('${Constants.tag} │ 📤 REQUEST [${options.method}]');
     debugPrint('${Constants.tag} │ URL: ${options.baseUrl}${options.path}');
     debugPrint('${Constants.tag} │ Headers: ${options.headers}');
     debugPrint('${Constants.tag} │ Body: ${options.data}');
-    debugPrint('${Constants.tag} └────────────────────────────────────────────────────────');
+    debugPrint(
+      '${Constants.tag} └────────────────────────────────────────────────────────',
+    );
     super.onRequest(options, handler);
   }
 
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
-    debugPrint('${Constants.tag} ┌────────────────────────────────────────────────────────');
+    debugPrint(
+      '${Constants.tag} ┌────────────────────────────────────────────────────────',
+    );
     debugPrint('${Constants.tag} │ 📥 RESPONSE [${response.statusCode}]');
-    debugPrint('${Constants.tag} │ URL: ${response.requestOptions.baseUrl}${response.requestOptions.path}');
+    debugPrint(
+      '${Constants.tag} │ URL: ${response.requestOptions.baseUrl}${response.requestOptions.path}',
+    );
     debugPrint('${Constants.tag} │ Data: ${response.data}');
-    debugPrint('${Constants.tag} └────────────────────────────────────────────────────────');
+    debugPrint(
+      '${Constants.tag} └────────────────────────────────────────────────────────',
+    );
     super.onResponse(response, handler);
   }
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    debugPrint('${Constants.tag} ┌────────────────────────────────────────────────────────');
-    debugPrint('${Constants.tag} │ ⚠️ ERROR [${err.response?.statusCode ?? "NO STATUS"}]');
-    debugPrint('${Constants.tag} │ URL: ${err.requestOptions.baseUrl}${err.requestOptions.path}');
+    debugPrint(
+      '${Constants.tag} ┌────────────────────────────────────────────────────────',
+    );
+    debugPrint(
+      '${Constants.tag} │ ⚠️ ERROR [${err.response?.statusCode ?? "NO STATUS"}]',
+    );
+    debugPrint(
+      '${Constants.tag} │ URL: ${err.requestOptions.baseUrl}${err.requestOptions.path}',
+    );
     debugPrint('${Constants.tag} │ Type: ${err.type}');
     debugPrint('${Constants.tag} │ Message: ${err.message}');
     debugPrint('${Constants.tag} │ Response Data: ${err.response?.data}');
-    debugPrint('${Constants.tag} └────────────────────────────────────────────────────────');
+    debugPrint(
+      '${Constants.tag} └────────────────────────────────────────────────────────',
+    );
     super.onError(err, handler);
   }
 }
@@ -344,7 +407,16 @@ class _LoggingInterceptor extends Interceptor {
 class _ErrorInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    // Add any global error handling logic here
+    // Handle 401 Unauthorized - clear storage and redirect to login
+    if (err.response?.statusCode == 401) {
+      debugPrint(
+        '${Constants.tag} [ErrorInterceptor] 🚫 401 Unauthorized detected - triggering logout',
+      );
+
+      // Trigger async logout without blocking
+      SessionManager.instance.handleUnauthorized();
+    }
+
     super.onError(err, handler);
   }
 }
