@@ -6,6 +6,7 @@ import '../constants/constants.dart';
 import '../features/authentication/ui/otp_screen.dart';
 import '../features/authentication/ui/sign_in_screen.dart';
 import '../features/authentication/ui/register_screen.dart';
+import '../features/common/service/session_manager.dart';
 
 // import '../features/main/ui/main_screen.dart';
 import '../screens/bottomnav/bottomnav.dart';
@@ -71,6 +72,7 @@ class SlideRouteTransition extends CustomTransitionPage<void> {
 }
 
 final GoRouter router = GoRouter(
+  navigatorKey: SessionManager.navigatorKey,
   initialLocation: Routes.splash,
   redirect: (context, state) async {
     // Skip redirect for splash screen (initial loading)

@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../constants/constants.dart';
 import '../../../environment/env.dart';
 import '../service/secure_storage_service.dart';
+import '../service/session_manager.dart';
 import '../../authentication/model/refresh_request.dart';
 import '../../authentication/model/auth_response.dart';
 
@@ -406,7 +407,16 @@ class _LoggingInterceptor extends Interceptor {
 class _ErrorInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    // Add any global error handling logic here
+    // Handle 401 Unauthorized - clear storage and redirect to login
+    if (err.response?.statusCode == 401) {
+      debugPrint(
+        '${Constants.tag} [ErrorInterceptor] 🚫 401 Unauthorized detected - triggering logout',
+      );
+
+      // Trigger async logout without blocking
+      SessionManager.instance.handleUnauthorized();
+    }
+
     super.onError(err, handler);
   }
 }
