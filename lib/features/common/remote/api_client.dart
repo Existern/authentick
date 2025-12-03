@@ -346,6 +346,13 @@ class _AuthInterceptor extends Interceptor {
       );
       // Clear tokens if refresh fails
       await _secureStorage.clearTokens();
+
+      // Trigger complete logout flow when token refresh fails
+      debugPrint(
+        '${Constants.tag} [AuthInterceptor] 🚪 Token refresh failed, triggering logout...',
+      );
+      SessionManager.instance.handleUnauthorized();
+
       rethrow;
     }
   }

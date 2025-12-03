@@ -11,6 +11,7 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '/constants/constants.dart';
 import '/constants/languages.dart';
 import '../../common/service/secure_storage_service.dart';
+import '../../common/service/session_manager.dart';
 import '../model/auth_request.dart';
 import '../model/auth_response.dart';
 import '../model/refresh_request.dart';
@@ -32,9 +33,7 @@ class AuthenticationRepository {
 
   /// Authenticate user with Google token
   /// Calls the /auth/authenticate endpoint
-  Future<AuthResponse> authenticate({
-    String? googleToken,
-  }) async {
+  Future<AuthResponse> authenticate({String? googleToken}) async {
     try {
       // If googleToken is not provided, try to read it from SharedPreferences
       String? finalGoogleToken = googleToken;
@@ -51,9 +50,7 @@ class AuthenticationRepository {
         }
       }
 
-      final request = AuthRequest(
-        googleToken: finalGoogleToken,
-      );
+      final request = AuthRequest(googleToken: finalGoogleToken);
 
       debugPrint(
         '${Constants.tag} [AuthenticationRepository] 🔄 Calling API service...',
@@ -129,6 +126,10 @@ class AuthenticationRepository {
       );
       debugPrint('${Constants.tag} [AuthenticationRepository] Stack Trace:');
       debugPrint('$stackTrace');
+
+      // Handle authentication-related errors
+      await handleAuthenticationError(error);
+
       rethrow;
     }
   }
@@ -181,19 +182,23 @@ class AuthenticationRepository {
   Future<void> saveAuthResponse(AuthResponse authResponse) async {
     final prefs = await SharedPreferences.getInstance();
     // Convert the entire auth response to JSON and save it
-    await prefs.setString('auth_response', jsonEncode({
-      'success': authResponse.success,
-      'data': {
-        'tokens': authResponse.data.tokens.toJson(),
-        'user': authResponse.data.user.toJson(),
-        if (authResponse.data.onboarding != null)
-          'onboarding': authResponse.data.onboarding!.toJson(),
-      },
-      if (authResponse.meta != null) 'meta': {
-        'request_id': authResponse.meta!.requestId,
-        'timestamp': authResponse.meta!.timestamp,
-      },
-    }));
+    await prefs.setString(
+      'auth_response',
+      jsonEncode({
+        'success': authResponse.success,
+        'data': {
+          'tokens': authResponse.data.tokens.toJson(),
+          'user': authResponse.data.user.toJson(),
+          if (authResponse.data.onboarding != null)
+            'onboarding': authResponse.data.onboarding!.toJson(),
+        },
+        if (authResponse.meta != null)
+          'meta': {
+            'request_id': authResponse.meta!.requestId,
+            'timestamp': authResponse.meta!.timestamp,
+          },
+      }),
+    );
   }
 
   Future<AuthResponse?> getAuthResponse() async {
@@ -205,7 +210,9 @@ class AuthenticationRepository {
       final json = jsonDecode(jsonString) as Map<String, dynamic>;
       return AuthResponse.fromJson(json);
     } catch (e) {
-      debugPrint('${Constants.tag} [AuthenticationRepository] Error parsing auth response: $e');
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository] Error parsing auth response: $e',
+      );
       return null;
     }
   }
@@ -286,9 +293,7 @@ class AuthenticationRepository {
       );
 
       // Call the authenticate API with google_token
-      final authResponse = await authenticate(
-        googleToken: idToken,
-      );
+      final authResponse = await authenticate(googleToken: idToken);
 
       debugPrint(
         '${Constants.tag} [AuthenticationRepository.signInWithGoogle] ✅ API Response received!',
@@ -408,6 +413,17 @@ class AuthenticationRepository {
         '${Constants.tag} [AuthenticationRepository] ❌ Token refresh failed: $error',
       );
       debugPrint('$stackTrace');
+
+      // Clear tokens and trigger complete logout when refresh fails
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository] 🚪 Token refresh failed, triggering complete logout...',
+      );
+      await _secureStorage.clearTokens();
+      await setIsLogin(false);
+
+      // Use session manager for complete logout flow including navigation
+      SessionManager.instance.handleUnauthorized();
+
       rethrow;
     }
   }
@@ -449,9 +465,11 @@ class AuthenticationRepository {
       debugPrint(
         '${Constants.tag} [AuthenticationRepository] ❌ Auto-login failed: $error',
       );
-      // Clear invalid tokens and login state
-      await _secureStorage.clearTokens();
-      await setIsLogin(false);
+      // Use session manager for complete logout flow when auto-login fails
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository] 🚪 Auto-login failed, triggering complete logout...',
+      );
+      SessionManager.instance.handleUnauthorized();
       return false;
     }
   }
@@ -526,5 +544,32 @@ class AuthenticationRepository {
   Future<void> clearCurrentOnboardingStep() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('current_onboarding_step');
+  }
+
+  /// Helper method to handle authentication-related errors
+  /// Automatically logs out user and clears all authentication data
+  Future<void> handleAuthenticationError(Object? error) async {
+    if (error == null) return;
+
+    final errorString = error.toString().toLowerCase();
+    final isAuthError =
+        errorString.contains('unauthorized') ||
+        errorString.contains('token') ||
+        errorString.contains('401') ||
+        errorString.contains('authentication failed') ||
+        errorString.contains('invalid token') ||
+        errorString.contains('expired token');
+
+    if (isAuthError) {
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository] 🚪 Authentication error detected: $error',
+      );
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository] 🚪 Triggering complete logout...',
+      );
+
+      // Use session manager for complete logout flow
+      SessionManager.instance.handleUnauthorized();
+    }
   }
 }
