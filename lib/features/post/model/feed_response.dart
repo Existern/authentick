@@ -158,7 +158,7 @@ class User {
   @JsonKey(name: 'last_name')
   final String? lastName;
   final String? email;
-  @JsonKey(name: 'profile_image')
+  @JsonKey(name: 'profile_image_thumbnail')
   final String? profileImage;
   @JsonKey(name: 'cover_image')
   final String? coverImage;

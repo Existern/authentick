@@ -4,11 +4,7 @@ class AuthResponse {
   final AuthData data;
   final ResponseMeta? meta;
 
-  AuthResponse({
-    required this.success,
-    required this.data,
-    this.meta,
-  });
+  AuthResponse({required this.success, required this.data, this.meta});
 
   factory AuthResponse.fromJson(Map<String, dynamic> json) {
     return AuthResponse(
@@ -26,11 +22,7 @@ class AuthData {
   final User user;
   final Onboarding? onboarding;
 
-  AuthData({
-    required this.tokens,
-    required this.user,
-    this.onboarding,
-  });
+  AuthData({required this.tokens, required this.user, this.onboarding});
 
   factory AuthData.fromJson(Map<String, dynamic> json) {
     return AuthData(
@@ -89,8 +81,11 @@ class Onboarding {
       completed: json['completed'] as bool? ?? false,
       completedAt: json['completed_at'] as String?,
       userId: json['user_id'] as String,
-      steps: (json['steps'] as List<dynamic>?)
-              ?.map((step) => OnboardingStep.fromJson(step as Map<String, dynamic>))
+      steps:
+          (json['steps'] as List<dynamic>?)
+              ?.map(
+                (step) => OnboardingStep.fromJson(step as Map<String, dynamic>),
+              )
               .toList() ??
           [],
     );
@@ -156,6 +151,7 @@ class User {
   final String? bio;
   final String? location;
   final String? profileImage;
+  final String? profileImageThumbnail;
   final String? coverImage;
   final bool? isActive;
   final bool? isVerified;
@@ -178,6 +174,7 @@ class User {
     this.bio,
     this.location,
     this.profileImage,
+    this.profileImageThumbnail,
     this.coverImage,
     this.isActive,
     this.isVerified,
@@ -202,6 +199,7 @@ class User {
       bio: json['bio'] as String?,
       location: json['location'] as String?,
       profileImage: json['profile_image'] as String?,
+      profileImageThumbnail: json['profile_image_thumbnail'] as String?,
       coverImage: json['cover_image'] as String?,
       isActive: json['is_active'] as bool?,
       isVerified: json['is_verified'] as bool?,
@@ -227,6 +225,7 @@ class User {
       'bio': bio,
       'location': location,
       'profile_image': profileImage,
+      'profile_image_thumbnail': profileImageThumbnail,
       'cover_image': coverImage,
       'is_active': isActive,
       'is_verified': isVerified,
@@ -243,11 +242,7 @@ class ResponseMeta {
   final String? timestamp;
   final Pagination? pagination;
 
-  ResponseMeta({
-    this.requestId,
-    this.timestamp,
-    this.pagination,
-  });
+  ResponseMeta({this.requestId, this.timestamp, this.pagination});
 
   factory ResponseMeta.fromJson(Map<String, dynamic> json) {
     return ResponseMeta(

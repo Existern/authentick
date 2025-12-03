@@ -151,9 +151,9 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                                 borderRadius: BorderRadius.circular(16),
                                 color: Colors.grey[300],
                               ),
-                              child: profile.profileImage != null && profile.profileImage!.isNotEmpty
+                              child: profile.profileImageThumbnail != null && profile.profileImageThumbnail!.isNotEmpty
                                   ? Image.network(
-                                      profile.profileImage!,
+                                      profile.profileImageThumbnail!,
                                       fit: BoxFit.cover,
                                       loadingBuilder: (context, child, loadingProgress) {
                                         if (loadingProgress == null) return child;

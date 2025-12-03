@@ -133,10 +133,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
       if (hasCompletedOnboarding) {
         debugPrint(
-          '${Constants.tag} [SplashScreen] User was on waitlist, redirecting back to waitlist',
+          '${Constants.tag} [SplashScreen] ✅ Onboarding already completed, navigating to main app',
         );
         if (!mounted) return;
-        context.pushReplacement(Routes.waitlist);
+        context.pushReplacement(Routes.main);
         return;
       }
 

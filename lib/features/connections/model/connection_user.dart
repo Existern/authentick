@@ -13,7 +13,7 @@ class ConnectionUser {
   final String? email;
   @JsonKey(name: 'email_verified')
   final bool? emailVerified;
-  @JsonKey(name: 'profile_image')
+  @JsonKey(name: 'profile_image_thumbnail')
   final String? profileImage;
   @JsonKey(name: 'cover_image')
   final String? coverImage;

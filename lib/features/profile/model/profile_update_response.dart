@@ -33,6 +33,7 @@ class UserProfile {
   final String? bio;
   final String? location;
   final String? profileImage;
+  final String? profileImageThumbnail;
   final String? coverImage;
   final bool? isActive;
   final bool? isVerified;
@@ -55,6 +56,7 @@ class UserProfile {
     this.bio,
     this.location,
     this.profileImage,
+    this.profileImageThumbnail,
     this.coverImage,
     this.isActive,
     this.isVerified,
@@ -79,6 +81,7 @@ class UserProfile {
       bio: json['bio'] as String?,
       location: json['location'] as String?,
       profileImage: json['profile_image'] as String?,
+      profileImageThumbnail: json['profile_image_thumbnail'] as String?,
       coverImage: json['cover_image'] as String?,
       isActive: json['is_active'] as bool?,
       isVerified: json['is_verified'] as bool?,
@@ -95,11 +98,7 @@ class ResponseMeta {
   final String? timestamp;
   final Pagination? pagination;
 
-  ResponseMeta({
-    this.requestId,
-    this.timestamp,
-    this.pagination,
-  });
+  ResponseMeta({this.requestId, this.timestamp, this.pagination});
 
   factory ResponseMeta.fromJson(Map<String, dynamic> json) {
     return ResponseMeta(
