@@ -64,17 +64,17 @@ class OnboardingViewModel extends _$OnboardingViewModel {
       );
     }
 
-    // Extract completed step names from API response
+    // Extract terminal step names (completed or skipped) from API response
     final completedSteps = onboarding.steps
-        .where((step) => step.status == 'completed')
+        .where((step) => step.status == 'completed' || step.status == 'skipped')
         .map((step) => step.step)
         .toSet();
 
     debugPrint(
-      '${Constants.tag} [OnboardingViewModel] Completed steps: $completedSteps',
+      '${Constants.tag} [OnboardingViewModel] Terminal steps (completed/skipped): $completedSteps',
     );
     debugPrint(
-      '${Constants.tag} [OnboardingViewModel] Completed count: ${completedSteps.length}/${onboarding.steps.length}',
+      '${Constants.tag} [OnboardingViewModel] Terminal count: ${completedSteps.length}/${onboarding.steps.length}',
     );
 
     // Check if there's a saved current step (from last session)
@@ -199,16 +199,16 @@ class OnboardingViewModel extends _$OnboardingViewModel {
     }
   }
 
-  /// Find the first step that is not completed
-  /// Steps with 'skipped', 'pending', or any other status should be shown
+  /// Find the first pending step
+  /// Only show steps with 'pending' status - skip 'completed' and 'skipped' (both terminal states)
   OnboardingStep? _findFirstIncompleteStep(List<auth.OnboardingStep> apiSteps) {
     for (final apiStep in apiSteps) {
       debugPrint(
         '${Constants.tag} [OnboardingViewModel] Step: ${apiStep.step}, Status: ${apiStep.status}',
       );
 
-      // Only skip completed steps - show everything else (skipped, pending, etc.)
-      if (apiStep.status == 'completed') {
+      // Only show pending steps - skip completed and skipped (both are terminal states)
+      if (apiStep.status != 'pending') {
         continue;
       }
 

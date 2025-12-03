@@ -168,21 +168,26 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
           '${Constants.tag} [SplashScreen] Total steps: ${onboardingData.steps.length}',
         );
 
-        // Count completed steps
-        final completedSteps = onboardingData.steps
-            .where((step) => step.status == 'completed')
+        // Count terminal steps (completed or skipped)
+        final terminalSteps = onboardingData.steps
+            .where((step) => step.status == 'completed' || step.status == 'skipped')
+            .length;
+        final pendingSteps = onboardingData.steps
+            .where((step) => step.status == 'pending')
             .length;
         debugPrint(
-          '${Constants.tag} [SplashScreen] Completed steps: $completedSteps/${onboardingData.steps.length}',
+          '${Constants.tag} [SplashScreen] Terminal steps (completed/skipped): $terminalSteps/${onboardingData.steps.length}',
+        );
+        debugPrint(
+          '${Constants.tag} [SplashScreen] Pending steps: $pendingSteps',
         );
 
         // Onboarding is complete ONLY if:
         // 1. API says completed = true, OR
-        // 2. ALL steps have status = "completed"
+        // 2. ALL steps have terminal status (completed/skipped) - no pending steps left
         isOnboardingComplete =
             onboardingData.completed ||
-            (completedSteps == onboardingData.steps.length &&
-                onboardingData.steps.isNotEmpty);
+            (pendingSteps == 0 && onboardingData.steps.isNotEmpty);
 
         debugPrint(
           '${Constants.tag} [SplashScreen] Final isOnboardingComplete decision: $isOnboardingComplete',
