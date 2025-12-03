@@ -31,6 +31,8 @@ class UserProfileData {
   final String? email;
   @JsonKey(name: 'profile_image')
   final String? profileImage;
+  @JsonKey(name: 'profile_image_thumbnail')
+  final String? profileImageThumbnail;
   @JsonKey(name: 'cover_image')
   final String? coverImage;
   final String? bio;
@@ -63,6 +65,7 @@ class UserProfileData {
     this.lastName,
     this.email,
     this.profileImage,
+    this.profileImageThumbnail,
     this.coverImage,
     this.bio,
     this.location,

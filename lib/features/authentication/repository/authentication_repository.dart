@@ -173,8 +173,8 @@ class AuthenticationRepository {
     if (user.email != null) {
       await prefs.setString('email_key', user.email!);
     }
-    if (user.profileImage != null) {
-      await prefs.setString('profile_image_key', user.profileImage!);
+    if (user.profileImageThumbnail != null) {
+      await prefs.setString('profile_image_key', user.profileImageThumbnail!);
     }
   }
 
