@@ -703,6 +703,20 @@ class OnboardingViewModel extends _$OnboardingViewModel {
         debugPrint(
           '${Constants.tag} [OnboardingViewModel] ❌ Contacts permission denied',
         );
+        
+        // Call API to skip find_friends step
+        try {
+          final service = ref.read(onboardingServiceProvider);
+          await service.updateOnboardingStep(
+            OnboardingStepRequest(step: 'find_friends'),
+          );
+        } catch (e) {
+          debugPrint(
+            '${Constants.tag} [OnboardingViewModel] Error skipping find friends after permission denial: $e',
+          );
+          // Continue anyway - don't block user flow
+        }
+
         // Permission denied, skip entire find_friends flow to next incomplete step
         final nextStep = _getNextStep(OnboardingStep.friendsList);
         state = state.copyWith(
@@ -720,6 +734,20 @@ class OnboardingViewModel extends _$OnboardingViewModel {
       debugPrint(
         '${Constants.tag} [OnboardingViewModel] ❗ Error requesting contacts permission: $error',
       );
+      
+      // Call API to skip find_friends step
+      try {
+        final service = ref.read(onboardingServiceProvider);
+        await service.updateOnboardingStep(
+          OnboardingStepRequest(step: 'find_friends'),
+        );
+      } catch (e) {
+        debugPrint(
+          '${Constants.tag} [OnboardingViewModel] Error skipping find friends after error: $e',
+        );
+        // Continue anyway - don't block user flow
+      }
+
       // On error, skip entire find_friends flow to next incomplete step
       final nextStep = _getNextStep(OnboardingStep.friendsList);
       state = state.copyWith(
@@ -733,6 +761,19 @@ class OnboardingViewModel extends _$OnboardingViewModel {
   }
 
   Future<void> skipContactsPermission() async {
+    // Call API to skip find_friends step
+    try {
+      final service = ref.read(onboardingServiceProvider);
+      await service.updateOnboardingStep(
+        OnboardingStepRequest(step: 'find_friends'),
+      );
+    } catch (e) {
+      debugPrint(
+        '${Constants.tag} [OnboardingViewModel] Error skipping find friends: $e',
+      );
+      // Continue anyway - don't block user flow
+    }
+
     // User declined contacts permission, skip entire find_friends flow
     final updatedCompletedSteps = Set<String>.from(state.completedSteps)
       ..add('find_friends');
@@ -750,6 +791,19 @@ class OnboardingViewModel extends _$OnboardingViewModel {
   }
 
   Future<void> completeFriendsFlow() async {
+    // Call API to complete find_friends step
+    try {
+      final service = ref.read(onboardingServiceProvider);
+      await service.updateOnboardingStep(
+        OnboardingStepRequest(step: 'find_friends', action: 'complete'),
+      );
+    } catch (e) {
+      debugPrint(
+        '${Constants.tag} [OnboardingViewModel] Error completing find friends: $e',
+      );
+      // Continue anyway - don't block user flow
+    }
+
     // Complete the friends flow and get next step
     final updatedCompletedSteps = Set<String>.from(state.completedSteps)
       ..add('find_friends');

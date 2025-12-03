@@ -2,7 +2,6 @@ import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../connections/model/connection_request.dart';
 import '../../../connections/service/connection_service.dart';
 import '../../../user/model/bulk_lookup_request.dart';
 import '../../../user/model/bulk_lookup_response.dart';
@@ -108,12 +107,7 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
       );
 
       final connectionService = ref.read(connectionServiceProvider);
-      final request = ConnectionRequest(
-        connectedUserId: user.id,
-        connectionType: 'friend',
-      );
-
-      await connectionService.sendConnectionRequest(request);
+      await connectionService.sendFriendRequest(user.id);
 
       developer.log(
         'FriendsListScreen: Friend request sent successfully to ${user.username}',
