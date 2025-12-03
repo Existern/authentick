@@ -21,27 +21,48 @@ class InviteCodeFormatter extends TextInputFormatter {
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
-    // Remove any non-alphanumeric characters
+    // Remove any non-alphanumeric characters except dash
     String text = newValue.text
-        .replaceAll(RegExp(r'[^a-zA-Z0-9]'), '')
+        .replaceAll(RegExp(r'[^a-zA-Z0-9-]'), '')
         .toUpperCase();
 
+    // Remove existing dashes to rebuild formatting
+    String cleanText = text.replaceAll('-', '');
+
     // Limit to 8 characters
-    if (text.length > 8) {
-      text = text.substring(0, 8);
+    if (cleanText.length > 8) {
+      cleanText = cleanText.substring(0, 8);
     }
 
     // Add dash after 4th character
     String formatted = '';
-    if (text.length > 4) {
-      formatted = '${text.substring(0, 4)}-${text.substring(4)}';
+    if (cleanText.length > 4) {
+      formatted = '${cleanText.substring(0, 4)}-${cleanText.substring(4)}';
     } else {
-      formatted = text;
+      formatted = cleanText;
+    }
+
+    // Maintain cursor position properly
+    int newCursorPosition = formatted.length;
+    if (newValue.selection.baseOffset <= oldValue.text.length) {
+      // Calculate new cursor position based on old position
+      int oldCleanLength = oldValue.text.replaceAll('-', '').length;
+      int newCleanLength = cleanText.length;
+      if (newCleanLength > oldCleanLength) {
+        // Adding characters
+        newCursorPosition = formatted.length;
+      } else if (newCleanLength < oldCleanLength) {
+        // Removing characters
+        newCursorPosition = newValue.selection.baseOffset;
+        if (newCursorPosition > formatted.length) {
+          newCursorPosition = formatted.length;
+        }
+      }
     }
 
     return TextEditingValue(
       text: formatted,
-      selection: TextSelection.collapsed(offset: formatted.length),
+      selection: TextSelection.collapsed(offset: newCursorPosition),
     );
   }
 }
@@ -55,6 +76,7 @@ class InviteCodeScreen extends ConsumerStatefulWidget {
 
 class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
   final TextEditingController _codeController = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
   String? _errorMessage;
   bool _isValidating = false;
 
@@ -62,12 +84,17 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
   void initState() {
     super.initState();
     _codeController.addListener(_onCodeChanged);
+    // Request focus after the frame is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focusNode.requestFocus();
+    });
   }
 
   @override
   void dispose() {
     _codeController.removeListener(_onCodeChanged);
     _codeController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -78,9 +105,13 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
         _errorMessage = null;
       });
     }
-    // Store the raw code without dash
-    final rawCode = _codeController.text.replaceAll('-', '');
-    ref.read(onboardingViewModelProvider.notifier).updateInviteCode(rawCode);
+
+    // Only update if the field is focused and has content
+    if (_focusNode.hasFocus) {
+      // Store the raw code without dash
+      final rawCode = _codeController.text.replaceAll('-', '');
+      ref.read(onboardingViewModelProvider.notifier).updateInviteCode(rawCode);
+    }
   }
 
   Future<void> _validateAndSubmit() async {
@@ -198,195 +229,230 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
                 horizontal: 24.0,
                 vertical: 16.0,
               ),
-              child: Column(
-                children: [
-                  // Header: Centered SVG logo
-                  SizedBox(
-                    height: 40,
-                    child: Align(
-                      alignment: Alignment.center,
-                      child: SvgPicture.asset(
-                        'assets/images/authentick_logo.svg',
-                        width: 30,
-                        height: 30,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
                       ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 40),
-
-                  // Title
-                  Text(
-                    'Enter your invite code',
-                    style: AppTheme.title24.copyWith(
-                      color: AppColors.mono100,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // Invite code input
-                  TextField(
-                    controller: _codeController,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.mono100,
-                      letterSpacing: 4.0,
-                    ),
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      hintText: '--------',
-                      hintStyle: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.mono40,
-                        letterSpacing: 4.0,
-                      ),
-                    ),
-                    inputFormatters: [InviteCodeFormatter()],
-                    keyboardType: TextInputType.text,
-                    textCapitalization: TextCapitalization.characters,
-                  ),
-
-                  // Error message
-                  if (_errorMessage != null) ...[
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.cancel, color: Colors.red, size: 16),
-                        const SizedBox(width: 4),
-                        Text(
-                          _errorMessage!,
-                          style: AppTheme.body14.copyWith(
-                            color: Colors.red,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-
-                  const Spacer(),
-
-                  // Get started button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 54,
-                    child: ElevatedButton(
-                      onPressed:
-                          state.inviteCode.length == 8 && !_isValidating
-                              ? _validateAndSubmit
-                              : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4300FF),
-                        foregroundColor: Colors.white,
-                        disabledBackgroundColor: const Color(0xFFEDE9FF),
-                        disabledForegroundColor: const Color(0xFFC4B5FD),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14.0),
-                        ),
-                      ),
-                      child: _isValidating
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
+                      child: IntrinsicHeight(
+                        child: Column(
+                          children: [
+                            // Header: Centered SVG logo
+                            SizedBox(
+                              height: 40,
+                              child: Align(
+                                alignment: Alignment.center,
+                                child: SvgPicture.asset(
+                                  'assets/images/authentick_logo.svg',
+                                  width: 30,
+                                  height: 30,
+                                ),
                               ),
-                            )
-                          : const Text(
-                              'Get started',
-                              style: TextStyle(
-                                fontSize: 16,
+                            ),
+
+                            const SizedBox(height: 40),
+
+                            // Title
+                            Text(
+                              'Enter your invite code',
+                              style: AppTheme.title24.copyWith(
+                                color: AppColors.mono100,
                                 fontWeight: FontWeight.bold,
                               ),
+                              textAlign: TextAlign.center,
                             ),
-                    ),
-                  ),
 
-                  const SizedBox(height: 16),
+                            const SizedBox(height: 32),
 
-                  // Skip button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 54,
-                    child: OutlinedButton(
-                      onPressed: () async {
-                        // Save 'waitlist' step so user returns here on app restart
-                        final authRepo = ref.read(authenticationRepositoryProvider);
-                        await authRepo.saveCurrentOnboardingStep('waitlist');
-                        if (!mounted) return;
-                        context.go(Routes.waitlist);
-                      },
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF4300FF),
-                        side: const BorderSide(
-                          color: Color(0xFF4300FF),
-                          width: 1.5,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14.0),
+                            // Invite code input
+                            TextField(
+                              controller: _codeController,
+                              focusNode: _focusNode,
+                              autofocus: true,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.mono100,
+                                letterSpacing: 4.0,
+                              ),
+                              decoration: const InputDecoration(
+                                border: InputBorder.none,
+                                hintText: '--------',
+                                hintStyle: TextStyle(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.mono40,
+                                  letterSpacing: 4.0,
+                                ),
+                                counterText: '', // Hide character counter
+                              ),
+                              inputFormatters: [InviteCodeFormatter()],
+                              keyboardType: TextInputType.visiblePassword,
+                              textCapitalization: TextCapitalization.characters,
+                              enableSuggestions: false,
+                              autocorrect: false,
+                              maxLength: 9, // 8 chars + 1 dash
+                            ),
+
+                            // Error message
+                            if (_errorMessage != null) ...[
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(
+                                    Icons.cancel,
+                                    color: Colors.red,
+                                    size: 16,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    _errorMessage!,
+                                    style: AppTheme.body14.copyWith(
+                                      color: Colors.red,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+
+                            const Spacer(),
+
+                            // Get started button
+                            SizedBox(
+                              width: double.infinity,
+                              height: 54,
+                              child: ElevatedButton(
+                                onPressed:
+                                    state.inviteCode.length == 8 &&
+                                        !_isValidating
+                                    ? _validateAndSubmit
+                                    : null,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF4300FF),
+                                  foregroundColor: Colors.white,
+                                  disabledBackgroundColor: const Color(
+                                    0xFFEDE9FF,
+                                  ),
+                                  disabledForegroundColor: const Color(
+                                    0xFFC4B5FD,
+                                  ),
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14.0),
+                                  ),
+                                ),
+                                child: _isValidating
+                                    ? const SizedBox(
+                                        height: 20,
+                                        width: 20,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Text(
+                                        'Get started',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 16),
+
+                            // Skip button
+                            SizedBox(
+                              width: double.infinity,
+                              height: 54,
+                              child: OutlinedButton(
+                                onPressed: () async {
+                                  // Save 'waitlist' step so user returns here on app restart
+                                  final authRepo = ref.read(
+                                    authenticationRepositoryProvider,
+                                  );
+                                  await authRepo.saveCurrentOnboardingStep(
+                                    'waitlist',
+                                  );
+                                  if (!mounted) return;
+                                  context.go(Routes.waitlist);
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: const Color(0xFF4300FF),
+                                  side: const BorderSide(
+                                    color: Color(0xFF4300FF),
+                                    width: 1.5,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14.0),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'I don\'t have an invite code',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 24),
+
+                            // Terms text
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              child: RichText(
+                                textAlign: TextAlign.center,
+                                text: TextSpan(
+                                  style: AppTheme.body12.copyWith(
+                                    color: AppColors.mono60,
+                                    height: 1.4,
+                                  ),
+                                  children: [
+                                    const TextSpan(
+                                      text:
+                                          'By continuing, you agree to Authentick\'s ',
+                                    ),
+                                    TextSpan(
+                                      text: 'EULA',
+                                      style: AppTheme.body12.copyWith(
+                                        color: AppColors.blueberry100,
+                                      ),
+                                    ),
+                                    const TextSpan(text: ', '),
+                                    TextSpan(
+                                      text: 'terms of service',
+                                      style: AppTheme.body12.copyWith(
+                                        color: AppColors.blueberry100,
+                                      ),
+                                    ),
+                                    const TextSpan(text: ' and '),
+                                    TextSpan(
+                                      text: 'privacy policy',
+                                      style: AppTheme.body12.copyWith(
+                                        color: AppColors.blueberry100,
+                                      ),
+                                    ),
+                                    const TextSpan(text: '.'),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      child: const Text(
-                        'I don\'t have an invite code',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
                     ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Terms text
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: RichText(
-                      textAlign: TextAlign.center,
-                      text: TextSpan(
-                        style: AppTheme.body12.copyWith(
-                          color: AppColors.mono60,
-                          height: 1.4,
-                        ),
-                        children: [
-                          const TextSpan(
-                            text: 'By continuing, you agree to Authentick\'s ',
-                          ),
-                          TextSpan(
-                            text: 'EULA',
-                            style: AppTheme.body12.copyWith(
-                              color: AppColors.blueberry100,
-                            ),
-                          ),
-                          const TextSpan(text: ', '),
-                          TextSpan(
-                            text: 'terms of service',
-                            style: AppTheme.body12.copyWith(
-                              color: AppColors.blueberry100,
-                            ),
-                          ),
-                          const TextSpan(text: ' and '),
-                          TextSpan(
-                            text: 'privacy policy',
-                            style: AppTheme.body12.copyWith(
-                              color: AppColors.blueberry100,
-                            ),
-                          ),
-                          const TextSpan(text: '.'),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+                  );
+                },
               ),
             ),
           ),
