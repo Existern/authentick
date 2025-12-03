@@ -7,6 +7,7 @@ class Locationpage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: Stack(
         children: [
           SizedBox.expand(
@@ -42,17 +43,17 @@ class Locationpage extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 28, // adjust for screen size
                       fontWeight: FontWeight.bold,
-
+                      color: Colors.black87,
                       height: 1.3, // line spacing
                     ),
                   ),
                   SizedBox(height: 25),
                   Text(
-                    'See unfiltered moments on a real-time map, from your city to cities you’ve never seen.',
+                    'See unfiltered moments on a real-time map, from your city to cities you\'ve never seen.',
                     style: TextStyle(
                       fontSize: 20, // adjust for screen size
                       fontWeight: FontWeight.bold,
-
+                      color: Colors.black87,
                       height: 1.3, // line spacing
                     ),
                     textAlign: TextAlign.center,

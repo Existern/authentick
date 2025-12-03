@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_mvvm_riverpod/extensions/build_context_extension.dart';
 import 'package:flutter_mvvm_riverpod/features/post/repository/feed_repository.dart';
 import 'package:flutter_mvvm_riverpod/screens/home/postcard.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -38,7 +39,6 @@ class _MyHomeState extends ConsumerState<MyHome> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             Padding(
               padding: const EdgeInsets.only(left: 16, top: 16),
               child: SvgPicture.asset(
@@ -50,7 +50,6 @@ class _MyHomeState extends ConsumerState<MyHome> {
             ),
 
             const SizedBox(height: 10),
-
 
             Row(
               children: [
@@ -67,12 +66,12 @@ class _MyHomeState extends ConsumerState<MyHome> {
                   final posts = feedResponse.data.posts;
 
                   if (posts.isEmpty) {
-                    return const Center(
+                    return Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.post_add, size: 64, color: Colors.grey),
-                          SizedBox(height: 16),
+                          const SizedBox(height: 16),
                           Text(
                             'No posts yet',
                             style: TextStyle(fontSize: 18, color: Colors.grey),
@@ -110,9 +109,7 @@ class _MyHomeState extends ConsumerState<MyHome> {
                   );
                 },
                 loading: () => const Center(
-                  child: CircularProgressIndicator(
-                    color: Color(0xFF3620B3),
-                  ),
+                  child: CircularProgressIndicator(color: Color(0xFF3620B3)),
                 ),
                 error: (error, stack) => Center(
                   child: Column(
@@ -126,16 +123,17 @@ class _MyHomeState extends ConsumerState<MyHome> {
                       const SizedBox(height: 16),
                       Text(
                         'Failed to load feed',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
+                          color: Colors.black87,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         error.toString(),
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.grey),
+                        style: TextStyle(color: Colors.grey),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(

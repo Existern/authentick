@@ -47,7 +47,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ? AppColors.rambutan80
         : AppColors.rambutan100;
     return Scaffold(
-      backgroundColor: context.secondaryBackgroundColor,
+      backgroundColor: Colors.white,
       body: ListView(
         padding: EdgeInsets.fromLTRB(
           16,

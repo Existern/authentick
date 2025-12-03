@@ -71,22 +71,16 @@ class _MainScreenState extends ConsumerState<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final selectedColor =
-        context.isDarkMode ? AppColors.blueberry100 : AppColors.blueberry100;
-    final unselectedColor =
-        context.isDarkMode ? AppColors.mono40 : AppColors.mono60;
+    final selectedColor = AppColors.blueberry100;
+    final unselectedColor = AppColors.mono60;
     return Scaffold(
       body: PersistentTabView(
         context,
         controller: _controller,
         screens: _screens,
-        items: _navBarsItems(
-          context,
-          selectedColor,
-          unselectedColor,
-        ),
+        items: _navBarsItems(context, selectedColor, unselectedColor),
         confineToSafeArea: true,
-        backgroundColor: context.secondaryWidgetColor,
+        backgroundColor: Colors.white,
         handleAndroidBackButtonPress: true,
         resizeToAvoidBottomInset: true,
         stateManagement: true,

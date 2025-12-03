@@ -72,9 +72,8 @@ class _LocationPickerDialogState extends State<LocationPickerDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
         padding: const EdgeInsets.all(16),
         constraints: const BoxConstraints(maxHeight: 500),
@@ -89,11 +88,12 @@ class _LocationPickerDialogState extends State<LocationPickerDialog> {
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
+                    color: Colors.black87,
                   ),
                 ),
                 const Spacer(),
                 IconButton(
-                  icon: const Icon(Icons.close),
+                  icon: const Icon(Icons.close, color: Colors.black87),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ],
@@ -103,9 +103,11 @@ class _LocationPickerDialogState extends State<LocationPickerDialog> {
             // Search field
             TextField(
               controller: _searchController,
+              style: const TextStyle(color: Colors.black87),
               decoration: InputDecoration(
                 hintText: 'Enter a location...',
-                prefixIcon: const Icon(Icons.search),
+                hintStyle: const TextStyle(color: Colors.grey),
+                prefixIcon: const Icon(Icons.search, color: Colors.grey),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -132,8 +134,14 @@ class _LocationPickerDialogState extends State<LocationPickerDialog> {
                   itemCount: _locationSuggestions.length,
                   itemBuilder: (context, index) {
                     return ListTile(
-                      leading: const Icon(Icons.location_on),
-                      title: Text(_locationSuggestions[index]),
+                      leading: const Icon(
+                        Icons.location_on,
+                        color: Colors.grey,
+                      ),
+                      title: Text(
+                        _locationSuggestions[index],
+                        style: const TextStyle(color: Colors.black87),
+                      ),
                       onTap: () {
                         Navigator.of(context).pop(_locationSuggestions[index]);
                       },

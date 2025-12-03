@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_mvvm_riverpod/extensions/build_context_extension.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class PostCard extends StatefulWidget {
@@ -63,13 +64,11 @@ class _PostCardState extends State<PostCard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween, 
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-            
               Row(
                 children: [
                   Container(
@@ -98,27 +97,25 @@ class _PostCardState extends State<PostCard> {
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
+                          color: Colors.black87,
                         ),
                       ),
                       Text(
                         '${widget.location ?? 'Location'} • ${_formatTimeAgo(widget.createdAt)}',
-                        style: const TextStyle(color: Colors.grey, fontSize: 13),
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 13,
+                        ),
                       ),
                     ],
                   ),
                 ],
               ),
 
-
-              SvgPicture.asset(
-                'assets/images/3dot.svg',
-                width: 24,
-                height: 24,
-              ),
+              SvgPicture.asset('assets/images/3dot.svg', width: 24, height: 24),
             ],
           ),
         ),
-
 
         if (widget.postImage != null)
           ClipRRect(
@@ -155,14 +152,26 @@ class _PostCardState extends State<PostCard> {
                   const SizedBox(width: 6),
                   Text(
                     '${widget.likesCount}',
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
                   ),
                   const SizedBox(width: 16),
-                  const Icon(Icons.comment_outlined, size: 24),
+                  const Icon(
+                    Icons.comment_outlined,
+                    size: 24,
+                    color: Colors.black87,
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     '${widget.commentsCount}',
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
                   ),
                 ],
               ),
@@ -175,13 +184,12 @@ class _PostCardState extends State<PostCard> {
           ),
         ),
 
-
         if (widget.content != null && widget.content!.isNotEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4),
             child: Text(
               widget.content!,
-              style: const TextStyle(fontSize: 16),
+              style: const TextStyle(fontSize: 16, color: Colors.black87),
             ),
           ),
       ],

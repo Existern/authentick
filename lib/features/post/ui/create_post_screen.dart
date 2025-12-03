@@ -155,9 +155,9 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to open camera: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to open camera: $e')));
       }
     }
   }
@@ -186,9 +186,9 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to select photo: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to select photo: $e')));
       }
     }
   }
@@ -260,11 +260,13 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
           formattedTime = null;
         }
 
-        ref.read(onboardingViewModelProvider.notifier).updateFirstPostData(
-          mediaUrl: mediaUrl,
-          location: _location,
-          time: formattedTime,
-        );
+        ref
+            .read(onboardingViewModelProvider.notifier)
+            .updateFirstPostData(
+              mediaUrl: mediaUrl,
+              location: _location,
+              time: formattedTime,
+            );
       }
 
       setState(() {
@@ -307,9 +309,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: _selectedImage == null
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
+          ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
                 // Header
@@ -323,7 +323,10 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                     child: Row(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.arrow_back),
+                          icon: const Icon(
+                            Icons.arrow_back,
+                            color: Colors.black87,
+                          ),
                           onPressed: () => Navigator.of(context).pop(),
                         ),
                         const Spacer(),
@@ -332,6 +335,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
+                            color: Colors.black87,
                           ),
                         ),
                         const Spacer(),
@@ -418,7 +422,10 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                                 fontSize: 16,
                               ),
                             ),
-                            style: const TextStyle(fontSize: 16),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.black87,
+                            ),
                             maxLines: 2,
                             minLines: 1,
                           ),
