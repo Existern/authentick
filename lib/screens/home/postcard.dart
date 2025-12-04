@@ -79,7 +79,9 @@ class _PostCardState extends State<PostCard> {
                       color: Colors.grey[300],
                       image: widget.profileImage != null
                           ? DecorationImage(
-                              image: CachedNetworkImageProvider(widget.profileImage!),
+                              image: CachedNetworkImageProvider(
+                                widget.profileImage!,
+                              ),
                               fit: BoxFit.cover,
                             )
                           : null,

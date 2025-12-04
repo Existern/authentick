@@ -21,9 +21,7 @@ class HeroItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 6,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
@@ -33,12 +31,10 @@ class HeroItem extends StatelessWidget {
               child: CachedNetworkImage(
                 imageUrl: imageUrl,
                 fit: BoxFit.cover,
-                placeholder: (context, url) => const Center(
-                  child: CircularProgressIndicator(),
-                ),
-                errorWidget: (context, url, error) => const Center(
-                  child: Icon(Icons.error, color: Colors.red),
-                ),
+                placeholder: (context, url) =>
+                    const Center(child: CircularProgressIndicator()),
+                errorWidget: (context, url, error) =>
+                    const Center(child: Icon(Icons.error, color: Colors.red)),
               ),
             ),
             Positioned.fill(
@@ -47,10 +43,7 @@ class HeroItem extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withAlpha(200),
-                    ],
+                    colors: [Colors.transparent, Colors.black.withAlpha(200)],
                   ),
                 ),
               ),

@@ -45,9 +45,7 @@ class _MyProfileState extends ConsumerState<MyProfile> {
       // Update user profile with new image URL
       await ref
           .read(userProfileRepositoryProvider.notifier)
-          .updateProfile(
-            UpdateProfileRequest(profileImage: imageUrl),
-          );
+          .updateProfile(UpdateProfileRequest(profileImage: imageUrl));
 
       if (mounted) {
         setState(() {
@@ -89,7 +87,10 @@ class _MyProfileState extends ConsumerState<MyProfile> {
           children: [
             // 🔹 Header Row
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12.0,
+                vertical: 4,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -124,183 +125,198 @@ class _MyProfileState extends ConsumerState<MyProfile> {
             SizedBox(
               child: profileAsync.when(
                 data: (profile) {
-                if (profile == null) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(20.0),
-                      child: Text('Unable to load profile'),
-                    ),
-                  );
-                }
+                  if (profile == null) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(20.0),
+                        child: Text('Unable to load profile'),
+                      ),
+                    );
+                  }
 
-                return Center(
-                  child: Column(
-                    children: [
-                      Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: Container(
-                              height: 120,
-                              width: 120,
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: const Color(0xFF3620B3),
-                                  width: 3,
+                  return Center(
+                    child: Column(
+                      children: [
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: Container(
+                                height: 120,
+                                width: 120,
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: const Color(0xFF3620B3),
+                                    width: 3,
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                  color: Colors.grey[300],
                                 ),
-                                borderRadius: BorderRadius.circular(16),
-                                color: Colors.grey[300],
-                              ),
-                              child: profile.profileImageThumbnail != null && profile.profileImageThumbnail!.isNotEmpty
-                                  ? CachedNetworkImage(
-                                      imageUrl: profile.profileImageThumbnail!,
-                                      fit: BoxFit.cover,
-                                      placeholder: (context, url) => const Center(
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Color(0xFF3620B3),
-                                        ),
-                                      ),
-                                      errorWidget: (context, url, error) => const Icon(
+                                child:
+                                    profile.profileImageThumbnail != null &&
+                                        profile
+                                            .profileImageThumbnail!
+                                            .isNotEmpty
+                                    ? CachedNetworkImage(
+                                        imageUrl:
+                                            profile.profileImageThumbnail!,
+                                        fit: BoxFit.cover,
+                                        placeholder: (context, url) =>
+                                            const Center(
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: Color(0xFF3620B3),
+                                              ),
+                                            ),
+                                        errorWidget: (context, url, error) =>
+                                            const Icon(
+                                              Icons.person,
+                                              size: 60,
+                                              color: Colors.grey,
+                                            ),
+                                      )
+                                    : const Icon(
                                         Icons.person,
                                         size: 60,
                                         color: Colors.grey,
                                       ),
-                                    )
-                                  : const Icon(
-                                      Icons.person,
-                                      size: 60,
-                                      color: Colors.grey,
-                                    ),
-                            ),
-                          ),
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: GestureDetector(
-                              onTap: _isUploadingImage ? null : _handleProfileImageUpdate,
-                              child: Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFF3620B3),
-                                  shape: BoxShape.rectangle,
-                                ),
-                                child: _isUploadingImage
-                                    ? const SizedBox(
-                                        width: 18,
-                                        height: 18,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                    : const Icon(
-                                        Icons.edit,
-                                        color: Colors.white,
-                                        size: 18,
-                                      ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        profile.fullName,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      Text(
-                        '@${profile.username}',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          color: Colors.black,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      if (profile.bio != null && profile.bio!.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(
-                            profile.bio!,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.black54,
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: GestureDetector(
+                                onTap: _isUploadingImage
+                                    ? null
+                                    : _handleProfileImageUpdate,
+                                child: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF3620B3),
+                                    shape: BoxShape.rectangle,
+                                  ),
+                                  child: _isUploadingImage
+                                      ? const SizedBox(
+                                          width: 18,
+                                          height: 18,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : const Icon(
+                                          Icons.edit,
+                                          color: Colors.white,
+                                          size: 18,
+                                        ),
+                                ),
+                              ),
                             ),
-                            textAlign: TextAlign.center,
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          profile.fullName,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
                           ),
                         ),
-                      if (profile.location != null && profile.location!.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.location_on, size: 14, color: Colors.grey),
-                              const SizedBox(width: 4),
-                              Text(
-                                profile.location!,
-                                style: const TextStyle(
-                                  fontSize: 12,
+                        Text(
+                          '@${profile.username}',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            color: Colors.black,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        if (profile.bio != null && profile.bio!.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: Text(
+                              profile.bio!,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.black54,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        if (profile.location != null &&
+                            profile.location!.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.location_on,
+                                  size: 14,
                                   color: Colors.grey,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 4),
+                                Text(
+                                  profile.location!,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                    ],
-                  ),
-                );
-              },
-              loading: () => const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(40.0),
-                  child: CircularProgressIndicator(
-                    color: Color(0xFF3620B3),
+                      ],
+                    ),
+                  );
+                },
+                loading: () => const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(40.0),
+                    child: CircularProgressIndicator(color: Color(0xFF3620B3)),
                   ),
                 ),
-              ),
-              error: (error, stack) => Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.error_outline,
-                        size: 48,
-                        color: Colors.red,
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Failed to load profile',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        error.toString(),
-                        style: const TextStyle(fontSize: 12, color: Colors.grey),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      ElevatedButton(
-                        onPressed: () {
-                          ref.invalidate(userProfileRepositoryProvider);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF3620B3),
-                          foregroundColor: Colors.white,
+                error: (error, stack) => Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: Colors.red,
                         ),
-                        child: const Text('Retry'),
-                      ),
-                    ],
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Failed to load profile',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          error.toString(),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        ElevatedButton(
+                          onPressed: () {
+                            ref.invalidate(userProfileRepositoryProvider);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF3620B3),
+                            foregroundColor: Colors.white,
+                          ),
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
               ),
             ),
 
@@ -310,9 +326,7 @@ class _MyProfileState extends ConsumerState<MyProfile> {
               child: profileAsync.when(
                 data: (profile) {
                   if (profile == null) {
-                    return const Center(
-                      child: Text('Unable to load profile'),
-                    );
+                    return const Center(child: Text('Unable to load profile'));
                   }
 
                   final userPostsAsync = ref.watch(
@@ -327,7 +341,9 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                         return RefreshIndicator(
                           onRefresh: () async {
                             // Refresh user posts
-                            ref.invalidate(userPostsProvider(userId: profile.id));
+                            ref.invalidate(
+                              userPostsProvider(userId: profile.id),
+                            );
                           },
                           color: const Color(0xFF3620B3),
                           child: SingleChildScrollView(
@@ -338,16 +354,26 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.photo_library_outlined, size: 64, color: Colors.grey),
+                                    Icon(
+                                      Icons.photo_library_outlined,
+                                      size: 64,
+                                      color: Colors.grey,
+                                    ),
                                     SizedBox(height: 16),
                                     Text(
                                       'No posts yet',
-                                      style: TextStyle(fontSize: 18, color: Colors.grey),
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        color: Colors.grey,
+                                      ),
                                     ),
                                     SizedBox(height: 8),
                                     Text(
                                       'Pull down to refresh',
-                                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -375,9 +401,10 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                             physics: const AlwaysScrollableScrollPhysics(
                               parent: BouncingScrollPhysics(),
                             ),
-                            gridDelegate: const SliverSimpleGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                            ),
+                            gridDelegate:
+                                const SliverSimpleGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                ),
                             mainAxisSpacing: 8,
                             crossAxisSpacing: 8,
                             itemCount: mediaItems.length,
@@ -385,9 +412,14 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                               final media = mediaItems[index];
 
                               // Calculate height based on aspect ratio if available
-                              final double height = (media.height != null && media.width != null)
+                              final double height =
+                                  (media.height != null && media.width != null)
                                   ? (media.height! / media.width!) * 180
-                                  : ((index % 3 == 0) ? 250 : (index % 3 == 1) ? 180 : 220);
+                                  : ((index % 3 == 0)
+                                        ? 250
+                                        : (index % 3 == 1)
+                                        ? 180
+                                        : 220);
 
                               return ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
@@ -403,9 +435,13 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                                         color: Color(0xFF3620B3),
                                       ),
                                     ),
-                                    errorWidget: (context, url, error) => const Center(
-                                      child: Icon(Icons.error, color: Colors.red),
-                                    ),
+                                    errorWidget: (context, url, error) =>
+                                        const Center(
+                                          child: Icon(
+                                            Icons.error,
+                                            color: Colors.red,
+                                          ),
+                                        ),
                                   ),
                                 ),
                               );
@@ -436,13 +472,18 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                           const SizedBox(height: 4),
                           Text(
                             error.toString(),
-                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 8),
                           ElevatedButton(
                             onPressed: () {
-                              ref.invalidate(userPostsProvider(userId: profile.id));
+                              ref.invalidate(
+                                userPostsProvider(userId: profile.id),
+                              );
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF3620B3),
@@ -456,13 +497,10 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                   );
                 },
                 loading: () => const Center(
-                  child: CircularProgressIndicator(
-                    color: Color(0xFF3620B3),
-                  ),
+                  child: CircularProgressIndicator(color: Color(0xFF3620B3)),
                 ),
-                error: (error, stack) => const Center(
-                  child: Text('Unable to load profile'),
-                ),
+                error: (error, stack) =>
+                    const Center(child: Text('Unable to load profile')),
               ),
             ),
           ],
