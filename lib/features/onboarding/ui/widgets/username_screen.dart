@@ -42,7 +42,8 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
         _errorMessage = null;
       });
     }
-    ref.read(onboardingViewModelProvider.notifier)
+    ref
+        .read(onboardingViewModelProvider.notifier)
         .updateUsername(_usernameController.text);
   }
 
@@ -63,7 +64,8 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
 
       // Save firstName from API response
       if (response.data.firstName != null) {
-        ref.read(onboardingViewModelProvider.notifier)
+        ref
+            .read(onboardingViewModelProvider.notifier)
             .updateFirstName(response.data.firstName!);
       }
 
@@ -316,8 +318,9 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
                       textAlign: TextAlign.center,
                       text: TextSpan(
                         style: AppTheme.body12.copyWith(
-                          color: AppColors.mono60,
+                          color: AppColors.mono100,
                           height: 1.4,
+                          fontWeight: FontWeight.w600,
                         ),
                         children: [
                           const TextSpan(
@@ -326,21 +329,24 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
                           TextSpan(
                             text: 'EULA',
                             style: AppTheme.body12.copyWith(
-                              color: AppColors.blueberry100,
+                              color: const Color(0xFF0D47A1),
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                           const TextSpan(text: ', '),
                           TextSpan(
                             text: 'terms of service',
                             style: AppTheme.body12.copyWith(
-                              color: AppColors.blueberry100,
+                              color: const Color(0xFF0D47A1),
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                           const TextSpan(text: ' and '),
                           TextSpan(
                             text: 'privacy policy',
                             style: AppTheme.body12.copyWith(
-                              color: AppColors.blueberry100,
+                              color: const Color(0xFF0D47A1),
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                           const TextSpan(text: '.'),

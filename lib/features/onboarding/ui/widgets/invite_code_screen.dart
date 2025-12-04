@@ -414,8 +414,9 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
                                 textAlign: TextAlign.center,
                                 text: TextSpan(
                                   style: AppTheme.body12.copyWith(
-                                    color: AppColors.mono60,
+                                    color: AppColors.mono100,
                                     height: 1.4,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                   children: [
                                     const TextSpan(
@@ -425,21 +426,24 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
                                     TextSpan(
                                       text: 'EULA',
                                       style: AppTheme.body12.copyWith(
-                                        color: AppColors.blueberry100,
+                                        color: const Color(0xFF0D47A1),
+                                        fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                     const TextSpan(text: ', '),
                                     TextSpan(
                                       text: 'terms of service',
                                       style: AppTheme.body12.copyWith(
-                                        color: AppColors.blueberry100,
+                                        color: const Color(0xFF0D47A1),
+                                        fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                     const TextSpan(text: ' and '),
                                     TextSpan(
                                       text: 'privacy policy',
                                       style: AppTheme.body12.copyWith(
-                                        color: AppColors.blueberry100,
+                                        color: const Color(0xFF0D47A1),
+                                        fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                     const TextSpan(text: '.'),
