@@ -8,6 +8,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:flutter_mvvm_riverpod/screens/settings/settingspage.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class MyProfile extends ConsumerStatefulWidget {
   const MyProfile({super.key});
@@ -152,29 +153,20 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                                 color: Colors.grey[300],
                               ),
                               child: profile.profileImageThumbnail != null && profile.profileImageThumbnail!.isNotEmpty
-                                  ? Image.network(
-                                      profile.profileImageThumbnail!,
+                                  ? CachedNetworkImage(
+                                      imageUrl: profile.profileImageThumbnail!,
                                       fit: BoxFit.cover,
-                                      loadingBuilder: (context, child, loadingProgress) {
-                                        if (loadingProgress == null) return child;
-                                        return Center(
-                                          child: CircularProgressIndicator(
-                                            value: loadingProgress.expectedTotalBytes != null
-                                                ? loadingProgress.cumulativeBytesLoaded /
-                                                    loadingProgress.expectedTotalBytes!
-                                                : null,
-                                            strokeWidth: 2,
-                                            color: const Color(0xFF3620B3),
-                                          ),
-                                        );
-                                      },
-                                      errorBuilder: (context, error, stackTrace) {
-                                        return const Icon(
-                                          Icons.person,
-                                          size: 60,
-                                          color: Colors.grey,
-                                        );
-                                      },
+                                      placeholder: (context, url) => const Center(
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Color(0xFF3620B3),
+                                        ),
+                                      ),
+                                      errorWidget: (context, url, error) => const Icon(
+                                        Icons.person,
+                                        size: 60,
+                                        color: Colors.grey,
+                                      ),
                                     )
                                   : const Icon(
                                       Icons.person,
@@ -402,20 +394,18 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                                 child: Container(
                                   height: height,
                                   color: Colors.grey[200],
-                                  child: Image.network(
-                                    media.mediaUrl,
+                                  child: CachedNetworkImage(
+                                    imageUrl: media.mediaUrl,
                                     fit: BoxFit.cover,
-                                    loadingBuilder: (context, child, progress) {
-                                      if (progress == null) return child;
-                                      return const Center(
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Color(0xFF3620B3),
-                                        ),
-                                      );
-                                    },
-                                    errorBuilder: (context, error, stackTrace) =>
-                                        const Center(child: Icon(Icons.error, color: Colors.red)),
+                                    placeholder: (context, url) => const Center(
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Color(0xFF3620B3),
+                                      ),
+                                    ),
+                                    errorWidget: (context, url, error) => const Center(
+                                      child: Icon(Icons.error, color: Colors.red),
+                                    ),
                                   ),
                                 ),
                               );

@@ -1,6 +1,7 @@
 import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../connections/service/connection_service.dart';
 import '../../../user/model/bulk_lookup_request.dart';
@@ -342,7 +343,7 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
                     ? Colors.green[600]
                     : const Color(0xFF3620B3),
                 backgroundImage: user.profileImage != null
-                    ? NetworkImage(user.profileImage!)
+                    ? CachedNetworkImageProvider(user.profileImage!)
                     : null,
                 child: user.profileImage == null
                     ? Text(

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_mvvm_riverpod/extensions/build_context_extension.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class PostCard extends StatefulWidget {
   final String username;
@@ -79,7 +79,7 @@ class _PostCardState extends State<PostCard> {
                       color: Colors.grey[300],
                       image: widget.profileImage != null
                           ? DecorationImage(
-                              image: NetworkImage(widget.profileImage!),
+                              image: CachedNetworkImageProvider(widget.profileImage!),
                               fit: BoxFit.cover,
                             )
                           : null,
@@ -120,11 +120,34 @@ class _PostCardState extends State<PostCard> {
         if (widget.postImage != null)
           ClipRRect(
             borderRadius: BorderRadius.circular(0),
-            child: Image.network(
-              widget.postImage!,
+            child: CachedNetworkImage(
+              imageUrl: widget.postImage!,
               width: double.infinity,
               height: 300,
               fit: BoxFit.cover,
+              placeholder: (context, url) => Container(
+                width: double.infinity,
+                height: 300,
+                color: Colors.grey[300],
+                child: const Center(
+                  child: CircularProgressIndicator(
+                    color: Color(0xFF3620B3),
+                    strokeWidth: 2,
+                  ),
+                ),
+              ),
+              errorWidget: (context, url, error) => Container(
+                width: double.infinity,
+                height: 300,
+                color: Colors.grey[300],
+                child: const Center(
+                  child: Icon(
+                    Icons.error_outline,
+                    color: Colors.grey,
+                    size: 48,
+                  ),
+                ),
+              ),
             ),
           ),
 
