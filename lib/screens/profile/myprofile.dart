@@ -125,7 +125,9 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                 onRefresh: () async {
                   // Refresh both profile and posts
                   ref.invalidate(userProfileRepositoryProvider);
-                  final profile = await ref.read(userProfileRepositoryProvider.future);
+                  final profile = await ref.read(
+                    userProfileRepositoryProvider.future,
+                  );
                   if (profile != null) {
                     ref.invalidate(userPostsProvider(userId: profile.id));
                   }
@@ -165,29 +167,43 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                                             color: const Color(0xFF3620B3),
                                             width: 3,
                                           ),
-                                          borderRadius: BorderRadius.circular(16),
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
                                           color: Colors.grey[300],
                                         ),
-                                        child: profile.profileImageThumbnail != null &&
-                                                profile.profileImageThumbnail!.isNotEmpty
+                                        child:
+                                            profile.profileImageThumbnail !=
+                                                    null &&
+                                                profile
+                                                    .profileImageThumbnail!
+                                                    .isNotEmpty
                                             ? CachedNetworkImage(
-                                                imageUrl: profile.profileImageThumbnail!,
+                                                imageUrl: profile
+                                                    .profileImageThumbnail!,
                                                 fit: BoxFit.cover,
-                                                cacheKey: '${profile.profileImageThumbnail!}_${DateTime.now().millisecondsSinceEpoch ~/ (1000 * 60 * 60)}', // Cache for 1 hour
+                                                cacheKey:
+                                                    '${profile.profileImageThumbnail!}_${DateTime.now().millisecondsSinceEpoch ~/ (1000 * 60 * 60)}', // Cache for 1 hour
                                                 httpHeaders: {
                                                   'Cache-Control': 'no-cache',
                                                 },
-                                                placeholder: (context, url) => const Center(
-                                                  child: CircularProgressIndicator(
-                                                    strokeWidth: 2,
-                                                    color: Color(0xFF3620B3),
-                                                  ),
-                                                ),
-                                                errorWidget: (context, url, error) => const Icon(
-                                                  Icons.person,
-                                                  size: 60,
-                                                  color: Colors.grey,
-                                                ),
+                                                placeholder: (context, url) =>
+                                                    const Center(
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                            strokeWidth: 2,
+                                                            color: Color(
+                                                              0xFF3620B3,
+                                                            ),
+                                                          ),
+                                                    ),
+                                                errorWidget:
+                                                    (context, url, error) =>
+                                                        const Icon(
+                                                          Icons.person,
+                                                          size: 60,
+                                                          color: Colors.grey,
+                                                        ),
                                               )
                                             : const Icon(
                                                 Icons.person,
@@ -196,298 +212,319 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                                               ),
                                       ),
                                     ),
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: GestureDetector(
-                                onTap: _isUploadingImage
-                                    ? null
-                                    : _handleProfileImageUpdate,
-                                child: Container(
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFF3620B3),
-                                    shape: BoxShape.rectangle,
-                                  ),
-                                  child: _isUploadingImage
-                                      ? const SizedBox(
-                                          width: 18,
-                                          height: 18,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: Colors.white,
+                                    Positioned(
+                                      bottom: 0,
+                                      right: 0,
+                                      child: GestureDetector(
+                                        onTap: _isUploadingImage
+                                            ? null
+                                            : _handleProfileImageUpdate,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(6),
+                                          decoration: const BoxDecoration(
+                                            color: Color(0xFF3620B3),
+                                            shape: BoxShape.rectangle,
                                           ),
-                                        )
-                                      : const Icon(
-                                          Icons.edit,
-                                          color: Colors.white,
-                                          size: 18,
+                                          child: _isUploadingImage
+                                              ? const SizedBox(
+                                                  width: 18,
+                                                  height: 18,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                        color: Colors.white,
+                                                      ),
+                                                )
+                                              : const Icon(
+                                                  Icons.edit,
+                                                  color: Colors.white,
+                                                  size: 18,
+                                                ),
                                         ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  profile.fullName,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                Text(
+                                  '@${profile.username}',
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                if (profile.bio != null &&
+                                    profile.bio!.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 8.0),
+                                    child: Text(
+                                      profile.bio!,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.black54,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                if (profile.location != null &&
+                                    profile.location!.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4.0),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(
+                                          Icons.location_on,
+                                          size: 14,
+                                          color: Colors.grey,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          profile.location!,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          profile.fullName,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        Text(
-                          '@${profile.username}',
-                          style: const TextStyle(
-                            fontSize: 20,
-                            color: Colors.black,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        if (profile.bio != null && profile.bio!.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(
-                              profile.bio!,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.black54,
-                              ),
-                              textAlign: TextAlign.center,
+                          );
+                        },
+                        loading: () => const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(40.0),
+                            child: CircularProgressIndicator(
+                              color: Color(0xFF3620B3),
                             ),
                           ),
-                        if (profile.location != null &&
-                            profile.location!.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                        ),
+                        error: (error, stack) => Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(20.0),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 const Icon(
-                                  Icons.location_on,
-                                  size: 14,
-                                  color: Colors.grey,
+                                  Icons.error_outline,
+                                  size: 48,
+                                  color: Colors.red,
                                 ),
-                                const SizedBox(width: 4),
+                                const SizedBox(height: 8),
+                                const Text(
+                                  'Failed to load profile',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 4),
                                 Text(
-                                  profile.location!,
+                                  error.toString(),
                                   style: const TextStyle(
                                     fontSize: 12,
                                     color: Colors.grey,
                                   ),
+                                  textAlign: TextAlign.center,
                                 ),
-                              ],
-                            ),
-                          ),
-                      ],
-                    ),
-                  );
-                },
-                loading: () => const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(40.0),
-                    child: CircularProgressIndicator(color: Color(0xFF3620B3)),
-                  ),
-                ),
-                error: (error, stack) => Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.error_outline,
-                          size: 48,
-                          color: Colors.red,
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Failed to load profile',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          error.toString(),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 8),
-                        ElevatedButton(
-                          onPressed: () {
-                            ref.invalidate(userProfileRepositoryProvider);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF3620B3),
-                            foregroundColor: Colors.white,
-                          ),
-                          child: const Text('Retry'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Posts Section
-              profileAsync.when(
-                data: (profile) {
-                  if (profile == null) {
-                    return const SizedBox();
-                  }
-
-                  final userPostsAsync = ref.watch(
-                    userPostsProvider(userId: profile.id),
-                  );
-
-                  return userPostsAsync.when(
-                    data: (postsResponse) {
-                      final posts = postsResponse.data.posts;
-
-                      if (posts.isEmpty) {
-                        return SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.3,
-                          child: const Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.photo_library_outlined,
-                                  size: 64,
-                                  color: Colors.grey,
-                                ),
-                                SizedBox(height: 16),
-                                Text(
-                                  'No posts yet',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                                SizedBox(height: 8),
-                                Text(
-                                  'Pull down to refresh',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }
-
-                      // Extract all media URLs from posts
-                      final mediaItems = posts
-                          .expand((post) => post.media ?? [])
-                          .where((media) => media.mediaType == 'image')
-                          .toList();
-
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                        child: MasonryGridView.builder(
-                          physics: const NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          gridDelegate:
-                              const SliverSimpleGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                              ),
-                          mainAxisSpacing: 8,
-                          crossAxisSpacing: 8,
-                          itemCount: mediaItems.length,
-                          itemBuilder: (context, index) {
-                            final media = mediaItems[index];
-
-                            // Calculate height based on aspect ratio if available
-                            final double height =
-                                (media.height != null && media.width != null)
-                                ? (media.height! / media.width!) * 180
-                                : ((index % 3 == 0)
-                                      ? 250
-                                      : (index % 3 == 1)
-                                      ? 180
-                                      : 220);
-
-                            return ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Container(
-                                height: height,
-                                color: Colors.grey[200],
-                                child: CachedNetworkImage(
-                                  imageUrl: media.mediaUrl,
-                                  fit: BoxFit.cover,
-                                  cacheKey: '${media.mediaUrl}_${DateTime.now().millisecondsSinceEpoch ~/ (1000 * 60 * 60)}', // Cache for 1 hour
-                                  httpHeaders: {
-                                    'Cache-Control': 'no-cache',
+                                const SizedBox(height: 8),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    ref.invalidate(
+                                      userProfileRepositoryProvider,
+                                    );
                                   },
-                                  placeholder: (context, url) => const Center(
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Color(0xFF3620B3),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF3620B3),
+                                    foregroundColor: Colors.white,
+                                  ),
+                                  child: const Text('Retry'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // Posts Section
+                      profileAsync.when(
+                        data: (profile) {
+                          if (profile == null) {
+                            return const SizedBox();
+                          }
+
+                          final userPostsAsync = ref.watch(
+                            userPostsProvider(userId: profile.id),
+                          );
+
+                          return userPostsAsync.when(
+                            data: (postsResponse) {
+                              final posts = postsResponse.data.posts;
+
+                              if (posts.isEmpty) {
+                                return SizedBox(
+                                  height:
+                                      MediaQuery.of(context).size.height * 0.3,
+                                  child: const Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.photo_library_outlined,
+                                          size: 64,
+                                          color: Colors.grey,
+                                        ),
+                                        SizedBox(height: 16),
+                                        Text(
+                                          'No posts yet',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text(
+                                          'Pull down to refresh',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                  errorWidget: (context, url, error) =>
-                                      const Center(
-                                        child: Icon(
-                                          Icons.error,
-                                          color: Colors.red,
+                                );
+                              }
+
+                              // Extract all media URLs from posts
+                              final mediaItems = posts
+                                  .expand((post) => post.media ?? [])
+                                  .where((media) => media.mediaType == 'image')
+                                  .toList();
+
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10.0,
+                                ),
+                                child: MasonryGridView.builder(
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  shrinkWrap: true,
+                                  gridDelegate:
+                                      const SliverSimpleGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: 2,
+                                      ),
+                                  mainAxisSpacing: 8,
+                                  crossAxisSpacing: 8,
+                                  itemCount: mediaItems.length,
+                                  itemBuilder: (context, index) {
+                                    final media = mediaItems[index];
+
+                                    // Calculate height based on aspect ratio if available
+                                    final double height =
+                                        (media.height != null &&
+                                            media.width != null)
+                                        ? (media.height! / media.width!) * 180
+                                        : ((index % 3 == 0)
+                                              ? 250
+                                              : (index % 3 == 1)
+                                              ? 180
+                                              : 220);
+
+                                    return ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Container(
+                                        height: height,
+                                        color: Colors.grey[200],
+                                        child: CachedNetworkImage(
+                                          imageUrl: media.mediaUrl,
+                                          fit: BoxFit.cover,
+                                          cacheKey:
+                                              '${media.mediaUrl}_${DateTime.now().millisecondsSinceEpoch ~/ (1000 * 60 * 60)}', // Cache for 1 hour
+                                          httpHeaders: {
+                                            'Cache-Control': 'no-cache',
+                                          },
+                                          placeholder: (context, url) =>
+                                              const Center(
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                      color: Color(0xFF3620B3),
+                                                    ),
+                                              ),
+                                          errorWidget: (context, url, error) =>
+                                              const Center(
+                                                child: Icon(
+                                                  Icons.error,
+                                                  color: Colors.red,
+                                                ),
+                                              ),
                                         ),
                                       ),
+                                    );
+                                  },
+                                ),
+                              );
+                            },
+                            loading: () => const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(40.0),
+                                child: CircularProgressIndicator(
+                                  color: Color(0xFF3620B3),
                                 ),
                               ),
-                            );
-                          },
-                        ),
-                      );
-                    },
-                    loading: () => const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(40.0),
-                        child: CircularProgressIndicator(color: Color(0xFF3620B3)),
-                      ),
-                    ),
-                    error: (error, stack) => SizedBox(
-                      height: MediaQuery.of(context).size.height * 0.3,
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.error_outline,
-                              size: 48,
-                              color: Colors.red,
                             ),
-                            const SizedBox(height: 8),
-                            const Text('Failed to load posts'),
-                            const SizedBox(height: 8),
-                            ElevatedButton(
-                              onPressed: () {
-                                ref.invalidate(userPostsProvider(userId: profile.id));
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF3620B3),
-                                foregroundColor: Colors.white,
+                            error: (error, stack) => SizedBox(
+                              height: MediaQuery.of(context).size.height * 0.3,
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(
+                                      Icons.error_outline,
+                                      size: 48,
+                                      color: Colors.red,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    const Text('Failed to load posts'),
+                                    const SizedBox(height: 8),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        ref.invalidate(
+                                          userPostsProvider(userId: profile.id),
+                                        );
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(
+                                          0xFF3620B3,
+                                        ),
+                                        foregroundColor: Colors.white,
+                                      ),
+                                      child: const Text('Retry'),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              child: const Text('Retry'),
                             ),
-                          ],
-                        ),
+                          );
+                        },
+                        loading: () => const SizedBox(),
+                        error: (error, stack) => const SizedBox(),
                       ),
-                    ),
-                  );
-                },
-                loading: () => const SizedBox(),
-                error: (error, stack) => const SizedBox(),
-              ),
-            ],
-          ),
-        ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ],
