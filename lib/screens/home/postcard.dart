@@ -197,8 +197,6 @@ class _PostCardState extends State<PostCard> {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              SvgPicture.asset('assets/images/3dot.svg', width: 24, height: 24),
             ],
           ),
         ),
@@ -241,52 +239,19 @@ class _PostCardState extends State<PostCard> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        isLiked = !isLiked;
-                      });
-                    },
-                    child: SvgPicture.asset(
-                      isLiked
-                          ? 'assets/images/liked_star.svg'
-                          : 'assets/images/star.svg',
-                      width: 24,
-                      height: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    '${widget.likesCount}',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  const Icon(
-                    Icons.comment_outlined,
-                    size: 24,
-                    color: Colors.black87,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    '${widget.commentsCount}',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ],
-              ),
-              SvgPicture.asset(
-                'assets/images/share.svg',
-                width: 24,
-                height: 24,
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    isLiked = !isLiked;
+                  });
+                },
+                child: SvgPicture.asset(
+                  isLiked
+                      ? 'assets/images/liked_star.svg'
+                      : 'assets/images/star.svg',
+                  width: 24,
+                  height: 24,
+                ),
               ),
             ],
           ),
