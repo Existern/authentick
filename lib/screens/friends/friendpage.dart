@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../features/connections/model/connection_request.dart';
 import '../../features/connections/model/connection_user.dart';
@@ -583,7 +584,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
               color: Colors.grey[300],
               image: profileImage != null
                   ? DecorationImage(
-                      image: NetworkImage(profileImage),
+                      image: CachedNetworkImageProvider(profileImage),
                       fit: BoxFit.cover,
                     )
                   : null,
@@ -713,7 +714,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
               color: Colors.grey[300],
               image: profileImage != null
                   ? DecorationImage(
-                      image: NetworkImage(profileImage),
+                      image: CachedNetworkImageProvider(profileImage),
                       fit: BoxFit.cover,
                     )
                   : null,
@@ -779,7 +780,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
               color: Colors.grey[300],
               image: profileImage != null
                   ? DecorationImage(
-                      image: NetworkImage(profileImage),
+                      image: CachedNetworkImageProvider(profileImage),
                       fit: BoxFit.cover,
                     )
                   : null,
@@ -845,7 +846,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
               color: Colors.grey[300],
               image: profileImage != null
                   ? DecorationImage(
-                      image: NetworkImage(profileImage),
+                      image: CachedNetworkImageProvider(profileImage),
                       fit: BoxFit.cover,
                     )
                   : null,

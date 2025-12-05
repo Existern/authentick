@@ -50,6 +50,11 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Android configuration files (machine-specific)
+android/gradle.properties
+android/local.properties
+android/app/build.gradle
+
 # Android signing keys
 **/key.properties
 *.jks

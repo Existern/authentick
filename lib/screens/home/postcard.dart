@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class PostCard extends StatefulWidget {
   final String username;
@@ -58,76 +59,181 @@ class _PostCardState extends State<PostCard> {
     }
   }
 
+  Widget _buildLocationTimeText() {
+    final locationText = widget.location;
+    final timeText = _formatTimeAgo(widget.createdAt);
+
+    // If no location, just show time
+    if (locationText == null || locationText.isEmpty) {
+      return Text(
+        timeText,
+        style: const TextStyle(color: Colors.grey, fontSize: 13),
+      );
+    }
+
+    // If location exists, show location with time
+    return Row(
+      children: [
+        Expanded(
+          child: GestureDetector(
+            onTap: () {
+              if (locationText.length > 30) {
+                _showLocationTooltip(context, locationText);
+              }
+            },
+            child: Tooltip(
+              message: locationText,
+              preferBelow: false,
+              child: Text(
+                locationText,
+                style: const TextStyle(color: Colors.grey, fontSize: 13),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          '• $timeText',
+          style: const TextStyle(color: Colors.grey, fontSize: 13),
+        ),
+      ],
+    );
+  }
+
+  void _showLocationTooltip(BuildContext context, String fullLocation) {
+    final RenderBox renderBox = context.findRenderObject() as RenderBox;
+    final position = renderBox.localToGlobal(Offset.zero);
+
+    final overlay = Overlay.of(context);
+    late OverlayEntry overlayEntry;
+
+    overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        left: position.dx + 10,
+        top: position.dy - 60,
+        child: Material(
+          elevation: 4,
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 0.8,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.black87,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              fullLocation,
+              style: const TextStyle(color: Colors.white, fontSize: 12),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(overlayEntry);
+
+    // Remove tooltip after 3 seconds
+    Future.delayed(const Duration(seconds: 3), () {
+      overlayEntry.remove();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween, 
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-            
-              Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      color: Colors.grey[300],
-                      image: widget.profileImage != null
-                          ? DecorationImage(
-                              image: NetworkImage(widget.profileImage!),
-                              fit: BoxFit.cover,
-                            )
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.grey[300],
+                        image: widget.profileImage != null
+                            ? DecorationImage(
+                                image: CachedNetworkImageProvider(
+                                  widget.profileImage!,
+                                ),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                      ),
+                      child: widget.profileImage == null
+                          ? const Icon(Icons.person, color: Colors.grey)
                           : null,
                     ),
-                    child: widget.profileImage == null
-                        ? const Icon(Icons.person, color: Colors.grey)
-                        : null,
-                  ),
-                  const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.username,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.username,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: Colors.black87,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          _buildLocationTimeText(),
+                        ],
                       ),
-                      Text(
-                        '${widget.location ?? 'Location'} • ${_formatTimeAgo(widget.createdAt)}',
-                        style: const TextStyle(color: Colors.grey, fontSize: 13),
-                      ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
-
-
-              SvgPicture.asset(
-                'assets/images/3dot.svg',
-                width: 24,
-                height: 24,
-              ),
+              const SizedBox(width: 8),
+              SvgPicture.asset('assets/images/3dot.svg', width: 24, height: 24),
             ],
           ),
         ),
 
-
         if (widget.postImage != null)
           ClipRRect(
             borderRadius: BorderRadius.circular(0),
-            child: Image.network(
-              widget.postImage!,
+            child: CachedNetworkImage(
+              imageUrl: widget.postImage!,
               width: double.infinity,
               height: 300,
               fit: BoxFit.cover,
+              placeholder: (context, url) => Container(
+                width: double.infinity,
+                height: 300,
+                color: Colors.grey[300],
+                child: const Center(
+                  child: CircularProgressIndicator(
+                    color: Color(0xFF3620B3),
+                    strokeWidth: 2,
+                  ),
+                ),
+              ),
+              errorWidget: (context, url, error) => Container(
+                width: double.infinity,
+                height: 300,
+                color: Colors.grey[300],
+                child: const Center(
+                  child: Icon(
+                    Icons.error_outline,
+                    color: Colors.grey,
+                    size: 48,
+                  ),
+                ),
+              ),
             ),
           ),
 
@@ -155,14 +261,26 @@ class _PostCardState extends State<PostCard> {
                   const SizedBox(width: 6),
                   Text(
                     '${widget.likesCount}',
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
                   ),
                   const SizedBox(width: 16),
-                  const Icon(Icons.comment_outlined, size: 24),
+                  const Icon(
+                    Icons.comment_outlined,
+                    size: 24,
+                    color: Colors.black87,
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     '${widget.commentsCount}',
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
                   ),
                 ],
               ),
@@ -175,13 +293,12 @@ class _PostCardState extends State<PostCard> {
           ),
         ),
 
-
         if (widget.content != null && widget.content!.isNotEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4),
             child: Text(
               widget.content!,
-              style: const TextStyle(fontSize: 16),
+              style: const TextStyle(fontSize: 16, color: Colors.black87),
             ),
           ),
       ],

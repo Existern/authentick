@@ -21,15 +21,11 @@ class ConnectionService {
   /// Get connections (friends, following, close friends)
   /// GET /connections/users
   /// [type] can be: all (default), friends, close_friends, followers, following
-  Future<ConnectionsResponse> getConnections({
-    String type = 'all',
-  }) async {
+  Future<ConnectionsResponse> getConnections({String type = 'all'}) async {
     try {
       final response = await _apiClient.get<Map<String, dynamic>>(
         '/connections/users',
-        queryParameters: {
-          'type': type,
-        },
+        queryParameters: {'type': type},
       );
       // Response is wrapped in success/data/meta structure
       final data = response['data'] as Map<String, dynamic>;
@@ -50,16 +46,14 @@ class ConnectionService {
     try {
       final response = await _apiClient.get<Map<String, dynamic>>(
         '/connections/friend-requests',
-        queryParameters: {
-          'status': status,
-          'page': page,
-          'limit': limit,
-        },
+        queryParameters: {'status': status, 'page': page, 'limit': limit},
       );
       // Response is wrapped in success/data/meta structure
       final data = response['data'] as List<dynamic>;
       return data
-          .map((json) => ConnectionRequest.fromJson(json as Map<String, dynamic>))
+          .map(
+            (json) => ConnectionRequest.fromJson(json as Map<String, dynamic>),
+          )
           .toList();
     } catch (e) {
       rethrow;
@@ -72,9 +66,7 @@ class ConnectionService {
     try {
       final response = await _apiClient.post<Map<String, dynamic>>(
         '/connections/friend-requests',
-        data: {
-          'target_user_id': targetUserId,
-        },
+        data: {'target_user_id': targetUserId},
       );
       // Response is wrapped in success/data/meta structure
       final data = response['data'] as Map<String, dynamic>;
@@ -93,9 +85,7 @@ class ConnectionService {
     try {
       await _apiClient.post<void>(
         '/connections/friend-requests/$requestId',
-        data: {
-          'action': action,
-        },
+        data: {'action': action},
       );
     } catch (e) {
       rethrow;
@@ -118,9 +108,7 @@ class ConnectionService {
   /// DELETE /connections/friend-requests/{id}
   Future<void> cancelFriendRequest(String requestId) async {
     try {
-      await _apiClient.delete<void>(
-        '/connections/friend-requests/$requestId',
-      );
+      await _apiClient.delete<void>('/connections/friend-requests/$requestId');
     } catch (e) {
       rethrow;
     }
@@ -135,10 +123,7 @@ class ConnectionService {
     try {
       final response = await _apiClient.get<Map<String, dynamic>>(
         '/connections/friends',
-        queryParameters: {
-          'page': page,
-          'limit': limit,
-        },
+        queryParameters: {'page': page, 'limit': limit},
       );
       // Response is wrapped in success/data/meta structure
       final data = response['data'] as List<dynamic>;
@@ -154,9 +139,7 @@ class ConnectionService {
   /// DELETE /connections/friends/{id}
   Future<void> removeFriendship(String friendUserId) async {
     try {
-      await _apiClient.delete<void>(
-        '/connections/friends/$friendUserId',
-      );
+      await _apiClient.delete<void>('/connections/friends/$friendUserId');
     } catch (e) {
       rethrow;
     }
@@ -166,9 +149,7 @@ class ConnectionService {
   /// POST /connections/follow/{id}
   Future<void> followUser(String userId) async {
     try {
-      await _apiClient.post<void>(
-        '/connections/follow/$userId',
-      );
+      await _apiClient.post<void>('/connections/follow/$userId');
     } catch (e) {
       rethrow;
     }
@@ -178,9 +159,7 @@ class ConnectionService {
   /// DELETE /connections/follow/{id}
   Future<void> unfollowUser(String userId) async {
     try {
-      await _apiClient.delete<void>(
-        '/connections/follow/$userId',
-      );
+      await _apiClient.delete<void>('/connections/follow/$userId');
     } catch (e) {
       rethrow;
     }
@@ -190,9 +169,7 @@ class ConnectionService {
   /// POST /connections/close-friends/{id}
   Future<void> addCloseFriend(String userId) async {
     try {
-      await _apiClient.post<void>(
-        '/connections/close-friends/$userId',
-      );
+      await _apiClient.post<void>('/connections/close-friends/$userId');
     } catch (e) {
       rethrow;
     }
@@ -202,9 +179,7 @@ class ConnectionService {
   /// DELETE /connections/close-friends/{id}
   Future<void> removeCloseFriend(String userId) async {
     try {
-      await _apiClient.delete<void>(
-        '/connections/close-friends/$userId',
-      );
+      await _apiClient.delete<void>('/connections/close-friends/$userId');
     } catch (e) {
       rethrow;
     }

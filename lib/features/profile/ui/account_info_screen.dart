@@ -60,6 +60,7 @@ class _AccountInfoScreenState extends ConsumerState<AccountInfoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: Column(
         children: [
           CommonHeader(header: Languages.accountInformation),

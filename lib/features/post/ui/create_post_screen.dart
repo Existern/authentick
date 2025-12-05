@@ -5,12 +5,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:exif/exif.dart';
 import 'package:intl/intl.dart';
 
 import '../repository/post_repository.dart';
-import 'widgets/location_picker_dialog.dart';
 import 'widgets/privacy_selector.dart';
+import 'widgets/location_privacy_dialog.dart';
 import '../../onboarding/view_model/onboarding_view_model.dart';
 
 /// Screen for creating a new post
@@ -35,9 +34,12 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   final TextEditingController _captionController = TextEditingController();
   XFile? _selectedImage;
   bool _isLoading = false;
+  bool _isLocationLoading = false;
   String? _location;
   double? _latitude;
   double? _longitude;
+  Placemark? _placemark; // Store placemark for privacy options
+  LocationPrivacyLevel _locationPrivacyLevel = LocationPrivacyLevel.exact;
   PostPrivacy _privacy = PostPrivacy.friends;
 
   @override
@@ -55,29 +57,70 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
     super.dispose();
   }
 
-  /// Get current device location
+  /// Get current device location automatically
   Future<void> _getCurrentLocation() async {
+    setState(() {
+      _isLocationLoading = true;
+    });
+
     try {
+      // Check if location services are enabled
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Location services are disabled. Please enable them to auto-tag your location.',
+              ),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
         setState(() {
           _location = null;
+          _latitude = null;
+          _longitude = null;
+          _isLocationLoading = false;
         });
         return;
       }
 
+      // Check and request location permission
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
+        if (permission == LocationPermission.denied ||
+            permission == LocationPermission.deniedForever) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Location permission denied. Your post will not include location information.',
+                ),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
           setState(() {
             _location = null;
+            _latitude = null;
+            _longitude = null;
+            _isLocationLoading = false;
           });
           return;
         }
       }
 
-      Position position = await Geolocator.getCurrentPosition();
+      // Get current position with high accuracy
+      Position position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 10),
+        ),
+      );
+
+      // Convert coordinates to readable address
       List<Placemark> placemarks = await placemarkFromCoordinates(
         position.latitude,
         position.longitude,
@@ -85,51 +128,148 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
 
       if (placemarks.isNotEmpty) {
         final placemark = placemarks.first;
-        final locationName = [
-          placemark.locality,
-          placemark.administrativeArea,
-          placemark.country,
-        ].where((e) => e != null && e.isNotEmpty).join(', ');
+
+        // Store the placemark for privacy options
+        _placemark = placemark;
+
+        // Create exact location string with all available details
+        String exactLocationName = '';
+        final locationParts = <String>[];
+
+        // Add house number and street (exact address)
+        if (placemark.subThoroughfare != null &&
+            placemark.subThoroughfare!.isNotEmpty) {
+          if (placemark.thoroughfare != null &&
+              placemark.thoroughfare!.isNotEmpty) {
+            // Both house number and street name available
+            locationParts.add(
+              '${placemark.subThoroughfare}, ${placemark.thoroughfare}',
+            );
+          } else {
+            // Only house number available
+            locationParts.add(placemark.subThoroughfare!);
+          }
+        } else if (placemark.thoroughfare != null &&
+            placemark.thoroughfare!.isNotEmpty) {
+          // Only street name available
+          locationParts.add(placemark.thoroughfare!);
+        } else if (placemark.name != null && placemark.name!.isNotEmpty) {
+          // Fallback to place name
+          locationParts.add(placemark.name!);
+        }
+
+        // Add neighborhood if available and different from city
+        if (placemark.subLocality != null &&
+            placemark.subLocality!.isNotEmpty &&
+            placemark.subLocality != placemark.locality) {
+          locationParts.add(placemark.subLocality!);
+        }
+
+        // Add locality (city/town)
+        if (placemark.locality != null && placemark.locality!.isNotEmpty) {
+          locationParts.add(placemark.locality!);
+        }
+
+        // Add administrative area (state/province)
+        if (placemark.administrativeArea != null &&
+            placemark.administrativeArea!.isNotEmpty) {
+          locationParts.add(placemark.administrativeArea!);
+        }
+
+        // Add country
+        if (placemark.country != null && placemark.country!.isNotEmpty) {
+          locationParts.add(placemark.country!);
+        }
+
+        // Create the exact location string
+        exactLocationName = locationParts.isNotEmpty
+            ? locationParts.join(', ')
+            : 'Unknown Location';
 
         setState(() {
-          _location = locationName;
+          _location = exactLocationName;
           _latitude = position.latitude;
           _longitude = position.longitude;
+          _locationPrivacyLevel =
+              LocationPrivacyLevel.exact; // Default to exact location
+          _isLocationLoading = false;
+        });
+      } else {
+        setState(() {
+          _location = 'Location Found';
+          _latitude = position.latitude;
+          _longitude = position.longitude;
+          _isLocationLoading = false;
         });
       }
     } catch (e) {
+      // Handle specific error types
+      String errorMessage = 'Could not get your location';
+      if (e.toString().contains('timeout') ||
+          e.toString().contains('TimeLimit')) {
+        errorMessage =
+            'Location request timed out. Your post will not include location information.';
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage), backgroundColor: Colors.orange),
+        );
+      }
+
       setState(() {
         _location = null;
         _latitude = null;
         _longitude = null;
+        _isLocationLoading = false;
       });
     }
   }
 
-  /// Extract location from image EXIF data
+  /// Get location automatically when image is selected
   Future<void> _extractLocationFromImage(String imagePath) async {
-    try {
-      final bytes = await File(imagePath).readAsBytes();
-      final data = await readExifFromBytes(bytes);
+    // Always use current device location instead of EXIF data
+    await _getCurrentLocation();
+  }
 
-      if (data.isEmpty) {
-        await _getCurrentLocation();
-        return;
-      }
+  /// Handle location privacy selection
+  Future<void> _showLocationPrivacyDialog() async {
+    if (_placemark == null) return;
 
-      // Try to get GPS coordinates from EXIF
-      final latValue = data['GPS GPSLatitude'];
-      final lonValue = data['GPS GPSLongitude'];
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) => LocationPrivacyDialog(
+        placemark: _placemark,
+        currentLevel: _locationPrivacyLevel,
+        currentLocationText: _location,
+      ),
+    );
 
-      if (latValue != null && lonValue != null) {
-        // Parse GPS coordinates and get location name
-        await _getCurrentLocation(); // Fallback for now
-      } else {
-        await _getCurrentLocation();
-      }
-    } catch (e) {
-      // Fallback to current location if EXIF reading fails
-      await _getCurrentLocation();
+    if (result != null) {
+      setState(() {
+        _locationPrivacyLevel = result['level'] as LocationPrivacyLevel;
+        _location = result['locationText'] as String?;
+      });
+    }
+  }
+
+  /// Get appropriate icon based on location privacy level
+  IconData _getLocationIcon() {
+    switch (_locationPrivacyLevel) {
+      case LocationPrivacyLevel.none:
+        return Icons.location_off;
+      case LocationPrivacyLevel.country:
+        return Icons.public;
+      case LocationPrivacyLevel.state:
+        return Icons.map;
+      case LocationPrivacyLevel.city:
+        return Icons.location_city;
+      case LocationPrivacyLevel.neighborhood:
+        return Icons.home_work;
+      case LocationPrivacyLevel.street:
+        return Icons.route;
+      case LocationPrivacyLevel.exact:
+        return Icons.my_location;
     }
   }
 
@@ -155,54 +295,10 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to open camera: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to open camera: $e')));
       }
-    }
-  }
-
-  Future<void> _retakePhoto() async {
-    setState(() {
-      _selectedImage = null;
-      _location = null;
-    });
-    await _openCamera();
-  }
-
-  Future<void> _selectFromGallery() async {
-    try {
-      final XFile? photo = await _picker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 85,
-      );
-
-      if (photo != null) {
-        setState(() {
-          _selectedImage = photo;
-        });
-        // Extract location from image
-        await _extractLocationFromImage(photo.path);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to select photo: $e')),
-        );
-      }
-    }
-  }
-
-  Future<void> _changeLocation() async {
-    final result = await showDialog<String>(
-      context: context,
-      builder: (context) => LocationPickerDialog(currentLocation: _location),
-    );
-
-    if (result != null) {
-      setState(() {
-        _location = result;
-      });
     }
   }
 
@@ -233,9 +329,15 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
             ? null
             : _captionController.text.trim(),
         privacy: _privacy,
-        location: _location,
-        latitude: _latitude,
-        longitude: _longitude,
+        location: _locationPrivacyLevel == LocationPrivacyLevel.none
+            ? null
+            : _location,
+        latitude: _locationPrivacyLevel == LocationPrivacyLevel.none
+            ? null
+            : _latitude,
+        longitude: _locationPrivacyLevel == LocationPrivacyLevel.none
+            ? null
+            : _longitude,
       );
 
       if (!mounted) return;
@@ -260,11 +362,13 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
           formattedTime = null;
         }
 
-        ref.read(onboardingViewModelProvider.notifier).updateFirstPostData(
-          mediaUrl: mediaUrl,
-          location: _location,
-          time: formattedTime,
-        );
+        ref
+            .read(onboardingViewModelProvider.notifier)
+            .updateFirstPostData(
+              mediaUrl: mediaUrl,
+              location: _location,
+              time: formattedTime,
+            );
       }
 
       setState(() {
@@ -307,9 +411,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: _selectedImage == null
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
+          ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
                 // Header
@@ -323,7 +425,10 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                     child: Row(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.arrow_back),
+                          icon: const Icon(
+                            Icons.arrow_back,
+                            color: Colors.black87,
+                          ),
                           onPressed: () => Navigator.of(context).pop(),
                         ),
                         const Spacer(),
@@ -332,6 +437,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
+                            color: Colors.black87,
                           ),
                         ),
                         const Spacer(),
@@ -353,37 +459,115 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                           fit: BoxFit.cover,
                         ),
                       ),
-                      // Location overlay on image (centered at bottom)
-                      Positioned(
-                        bottom: 16,
-                        left: 0,
-                        right: 0,
-                        child: Center(
-                          child: GestureDetector(
-                            onTap: _changeLocation,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
+                      // Location overlay on image (centered at bottom) - Auto-detected location
+                      if ((_location != null &&
+                              _locationPrivacyLevel !=
+                                  LocationPrivacyLevel.none) ||
+                          _isLocationLoading)
+                        Positioned(
+                          bottom: 16,
+                          left: 16,
+                          right: 16,
+                          child: Center(
+                            child: GestureDetector(
+                              onTap: _isLocationLoading
+                                  ? null
+                                  : _showLocationPrivacyDialog,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                constraints: BoxConstraints(
+                                  maxWidth:
+                                      MediaQuery.of(context).size.width * 0.9,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.7),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (_isLocationLoading)
+                                      const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                Colors.white,
+                                              ),
+                                        ),
+                                      )
+                                    else
+                                      Icon(
+                                        _getLocationIcon(),
+                                        color: Colors.white,
+                                        size: 16,
+                                      ),
+                                    const SizedBox(width: 6),
+                                    Flexible(
+                                      child: Text(
+                                        _isLocationLoading
+                                            ? 'Getting location...'
+                                            : _location!,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w500,
+                                          height: 1.2,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 2,
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                    if (!_isLocationLoading)
+                                      const SizedBox(width: 4),
+                                    if (!_isLocationLoading)
+                                      const Icon(
+                                        Icons.edit,
+                                        color: Colors.white70,
+                                        size: 12,
+                                      ),
+                                  ],
+                                ),
                               ),
+                            ),
+                          ),
+                        ),
+
+                      // Add location button when no location is shared
+                      if (_placemark != null &&
+                          _locationPrivacyLevel == LocationPrivacyLevel.none &&
+                          !_isLocationLoading)
+                        Positioned(
+                          bottom: 16,
+                          right: 16,
+                          child: GestureDetector(
+                            onTap: _showLocationPrivacyDialog,
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.6),
+                                color: Colors.black.withValues(alpha: 0.7),
                                 borderRadius: BorderRadius.circular(20),
                               ),
-                              child: Row(
+                              child: const Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(
-                                    Icons.location_on,
+                                  Icon(
+                                    Icons.add_location_alt,
                                     color: Colors.white,
                                     size: 16,
                                   ),
-                                  const SizedBox(width: 4),
+                                  SizedBox(width: 4),
                                   Text(
-                                    _location ?? 'Add location...',
-                                    style: const TextStyle(
+                                    'Add location',
+                                    style: TextStyle(
                                       color: Colors.white,
-                                      fontSize: 12,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
@@ -392,7 +576,6 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                             ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),
@@ -418,7 +601,10 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                                 fontSize: 16,
                               ),
                             ),
-                            style: const TextStyle(fontSize: 16),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.black87,
+                            ),
                             maxLines: 2,
                             minLines: 1,
                           ),

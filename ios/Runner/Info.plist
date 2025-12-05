@@ -49,5 +49,9 @@
 	<string>We need access to your photo library to let you select and update your profile avatar</string>
 	<key>NSContactsUsageDescription</key>
 	<string>We need access to your contacts to help you find friends on Authentick</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>We need access to your location to automatically tag posts with your current location</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>We need access to your location to automatically tag posts with your current location</string>
 </dict>
 </plist>

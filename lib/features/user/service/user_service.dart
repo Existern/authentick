@@ -1,6 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../common/remote/api_client.dart';
+import '../model/bulk_lookup_request.dart';
+import '../model/bulk_lookup_response.dart';
 import '../model/update_profile_request.dart';
 import '../model/user_profile_response.dart';
 
@@ -33,13 +35,29 @@ class UserService {
   /// Update authenticated user profile
   /// PUT /users/profile
   /// Only include fields you want to update in the request
-  Future<UserProfileResponse> updateProfile(UpdateProfileRequest request) async {
+  Future<UserProfileResponse> updateProfile(
+    UpdateProfileRequest request,
+  ) async {
     try {
       final response = await _apiClient.put<Map<String, dynamic>>(
         '/users/profile',
         data: request.toJson(),
       );
       return UserProfileResponse.fromJson(response);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Bulk lookup users by email addresses
+  /// POST /users/bulk-lookup
+  Future<BulkLookupResponse> bulkLookupUsers(BulkLookupRequest request) async {
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        '/users/bulk-lookup',
+        data: request.toJson(),
+      );
+      return BulkLookupResponse.fromJson(response);
     } catch (e) {
       rethrow;
     }
