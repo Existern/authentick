@@ -209,8 +209,7 @@ class _PostCardState extends State<PostCard> {
             child: CachedNetworkImage(
               imageUrl: widget.postImage!,
               width: double.infinity,
-              height: 300,
-              fit: BoxFit.cover,
+              fit: BoxFit.fitWidth,
               placeholder: (context, url) => Container(
                 width: double.infinity,
                 height: 300,
