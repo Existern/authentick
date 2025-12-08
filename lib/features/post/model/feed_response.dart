@@ -8,11 +8,7 @@ class FeedResponse {
   final FeedData data;
   final FeedMeta meta;
 
-  FeedResponse({
-    required this.success,
-    required this.data,
-    required this.meta,
-  });
+  FeedResponse({required this.success, required this.data, required this.meta});
 
   factory FeedResponse.fromJson(Map<String, dynamic> json) =>
       _$FeedResponseFromJson(json);
@@ -26,10 +22,7 @@ class FeedData {
   @JsonKey(name: 'total_count')
   final int totalCount;
 
-  FeedData({
-    required this.posts,
-    required this.totalCount,
-  });
+  FeedData({required this.posts, required this.totalCount});
 
   factory FeedData.fromJson(Map<String, dynamic> json) =>
       _$FeedDataFromJson(json);
@@ -215,16 +208,12 @@ class User {
 
 @JsonSerializable(explicitToJson: true)
 class FeedMeta {
-  final Pagination pagination;
+  final Pagination? pagination;
   @JsonKey(name: 'request_id')
   final String requestId;
   final String timestamp;
 
-  FeedMeta({
-    required this.pagination,
-    required this.requestId,
-    required this.timestamp,
-  });
+  FeedMeta({this.pagination, required this.requestId, required this.timestamp});
 
   factory FeedMeta.fromJson(Map<String, dynamic> json) =>
       _$FeedMetaFromJson(json);

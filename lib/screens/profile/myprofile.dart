@@ -8,6 +8,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:flutter_mvvm_riverpod/screens/settings/settingspage.dart';
 import 'package:flutter_mvvm_riverpod/screens/profile/profile_image_full_view.dart';
+import 'package:flutter_mvvm_riverpod/screens/post/post_detail_screen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
@@ -380,8 +381,9 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                             return const SizedBox();
                           }
 
+                          final profileId = profile.id;
                           final userPostsAsync = ref.watch(
-                            userPostsProvider(userId: profile.id),
+                            userPostsProvider(userId: profileId),
                           );
 
                           return userPostsAsync.when(
@@ -424,10 +426,13 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                                 );
                               }
 
-                              // Extract all media URLs from posts
-                              final mediaItems = posts
-                                  .expand((post) => post.media ?? [])
-                                  .where((media) => media.mediaType == 'image')
+                              // Filter posts with images
+                              final postsWithImages = posts
+                                  .where((post) =>
+                                      post.media != null &&
+                                      post.media!.isNotEmpty &&
+                                      post.media!.any(
+                                          (media) => media.mediaType == 'image'))
                                   .toList();
 
                               return Padding(
@@ -443,44 +448,73 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                                       ),
                                   mainAxisSpacing: 8,
                                   crossAxisSpacing: 8,
-                                  itemCount: mediaItems.length,
+                                  itemCount: postsWithImages.length,
                                   itemBuilder: (context, index) {
-                                    final media = mediaItems[index];
+                                    final post = postsWithImages[index];
+                                    final firstImageMedia = post.media!
+                                        .where(
+                                            (media) => media.mediaType == 'image')
+                                        .first;
 
                                     // Calculate height based on aspect ratio if available
                                     final double height =
-                                        (media.height != null &&
-                                            media.width != null)
-                                        ? (media.height! / media.width!) * 180
+                                        (firstImageMedia.height != null &&
+                                            firstImageMedia.width != null)
+                                        ? (firstImageMedia.height! /
+                                                firstImageMedia.width!) *
+                                            180
                                         : ((index % 3 == 0)
                                               ? 250
                                               : (index % 3 == 1)
                                               ? 180
                                               : 220);
 
-                                    return ClipRRect(
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: Container(
-                                        height: height,
-                                        color: Colors.grey[200],
-                                        child: CachedNetworkImage(
-                                          imageUrl: media.mediaUrl,
-                                          fit: BoxFit.cover,
-                                          placeholder: (context, url) =>
-                                              const Center(
-                                                child:
-                                                    CircularProgressIndicator(
-                                                      strokeWidth: 2,
-                                                      color: Color(0xFF3620B3),
-                                                    ),
+                                    return GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                PostDetailScreen(
+                                              postId: post.id,
+                                            ),
+                                          ),
+                                        ).then((deleted) {
+                                          // Refresh posts if a post was deleted
+                                          if (deleted == true && mounted) {
+                                            ref.invalidate(
+                                              userPostsProvider(
+                                                userId: profileId,
                                               ),
-                                          errorWidget: (context, url, error) =>
-                                              const Center(
-                                                child: Icon(
-                                                  Icons.error,
-                                                  color: Colors.red,
+                                            );
+                                          }
+                                        });
+                                      },
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: Container(
+                                          height: height,
+                                          color: Colors.grey[200],
+                                          child: CachedNetworkImage(
+                                            imageUrl: firstImageMedia.mediaUrl,
+                                            fit: BoxFit.cover,
+                                            placeholder: (context, url) =>
+                                                const Center(
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                        color: Color(0xFF3620B3),
+                                                      ),
                                                 ),
-                                              ),
+                                            errorWidget:
+                                                (context, url, error) =>
+                                                    const Center(
+                                                      child: Icon(
+                                                        Icons.error,
+                                                        color: Colors.red,
+                                                      ),
+                                                    ),
+                                          ),
                                         ),
                                       ),
                                     );
@@ -513,7 +547,7 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                                     ElevatedButton(
                                       onPressed: () {
                                         ref.invalidate(
-                                          userPostsProvider(userId: profile.id),
+                                          userPostsProvider(userId: profileId),
                                         );
                                       },
                                       style: ElevatedButton.styleFrom(
