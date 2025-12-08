@@ -15,16 +15,20 @@ const String _userProfileKey = 'user_profile_cache';
 class UserProfileRepository extends _$UserProfileRepository {
   @override
   Future<UserProfileData?> build() async {
-    // Try to load cached profile first
-    final cachedProfile = await _loadCachedProfile();
-    if (cachedProfile != null) {
-      // Return cached profile immediately, then fetch fresh data in background
-      _fetchAndCacheProfile();
-      return cachedProfile;
+    // Always fetch fresh profile data first to ensure we have the latest image URLs
+    // This prevents loading stale image URLs from cache
+    try {
+      return await _fetchAndCacheProfile();
+    } catch (e) {
+      // If fetch fails, fall back to cached profile if available
+      final cachedProfile = await _loadCachedProfile();
+      if (cachedProfile != null) {
+        // Still try to fetch fresh data in background for next time
+        _fetchAndCacheProfile();
+        return cachedProfile;
+      }
+      rethrow;
     }
-
-    // No cached profile, fetch from API
-    return await _fetchAndCacheProfile();
   }
 
   /// Load profile from SharedPreferences cache
@@ -100,5 +104,15 @@ class UserProfileRepository extends _$UserProfileRepository {
     state = AsyncValue.data(response.data);
 
     return response.data;
+  }
+
+  /// Delete profile or cover image
+  /// DELETE /users/image?type=profile
+  Future<void> deleteImage(String imageType) async {
+    final userService = ref.read(userServiceProvider);
+    await userService.deleteImage(imageType);
+
+    // Refresh profile to get updated data without the image
+    await refresh();
   }
 }

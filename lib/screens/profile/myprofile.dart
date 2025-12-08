@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:flutter_mvvm_riverpod/screens/settings/settingspage.dart';
+import 'package:flutter_mvvm_riverpod/screens/profile/profile_image_full_view.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
@@ -172,44 +173,59 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                                           ),
                                           color: Colors.grey[300],
                                         ),
-                                        child:
-                                            profile.profileImageThumbnail !=
-                                                    null &&
-                                                profile
-                                                    .profileImageThumbnail!
-                                                    .isNotEmpty
-                                            ? CachedNetworkImage(
-                                                imageUrl: profile
-                                                    .profileImageThumbnail!,
-                                                fit: BoxFit.cover,
-                                                cacheKey:
-                                                    '${profile.profileImageThumbnail!}_${DateTime.now().millisecondsSinceEpoch ~/ (1000 * 60 * 60)}', // Cache for 1 hour
-                                                httpHeaders: {
-                                                  'Cache-Control': 'no-cache',
-                                                },
-                                                placeholder: (context, url) =>
-                                                    const Center(
-                                                      child:
-                                                          CircularProgressIndicator(
-                                                            strokeWidth: 2,
-                                                            color: Color(
-                                                              0xFF3620B3,
-                                                            ),
-                                                          ),
+                                        child: GestureDetector(
+                                          onTap: profile.profileImageThumbnail !=
+                                                  null &&
+                                              profile.profileImageThumbnail!
+                                                  .isNotEmpty
+                                              ? () {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          ProfileImageFullView(
+                                                        profileImage:
+                                                            profile.profileImage,
+                                                        profileImageThumbnail:
+                                                            profile
+                                                                .profileImageThumbnail,
+                                                      ),
                                                     ),
-                                                errorWidget:
-                                                    (context, url, error) =>
-                                                        const Icon(
-                                                          Icons.person,
-                                                          size: 60,
-                                                          color: Colors.grey,
+                                                  );
+                                                }
+                                              : null,
+                                          child: profile.profileImageThumbnail !=
+                                                  null &&
+                                              profile.profileImageThumbnail!
+                                                  .isNotEmpty
+                                              ? CachedNetworkImage(
+                                                  imageUrl: profile
+                                                      .profileImageThumbnail!,
+                                                  fit: BoxFit.cover,
+                                                  placeholder: (context, url) =>
+                                                      const Center(
+                                                        child:
+                                                            CircularProgressIndicator(
+                                                          strokeWidth: 2,
+                                                          color: Color(
+                                                            0xFF3620B3,
+                                                          ),
                                                         ),
-                                              )
-                                            : const Icon(
-                                                Icons.person,
-                                                size: 60,
-                                                color: Colors.grey,
-                                              ),
+                                                      ),
+                                                  errorWidget:
+                                                      (context, url, error) =>
+                                                          const Icon(
+                                                            Icons.person,
+                                                            size: 60,
+                                                            color: Colors.grey,
+                                                          ),
+                                                )
+                                              : const Icon(
+                                                  Icons.person,
+                                                  size: 60,
+                                                  color: Colors.grey,
+                                                ),
+                                        ),
                                       ),
                                     ),
                                     Positioned(
@@ -450,11 +466,6 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                                         child: CachedNetworkImage(
                                           imageUrl: media.mediaUrl,
                                           fit: BoxFit.cover,
-                                          cacheKey:
-                                              '${media.mediaUrl}_${DateTime.now().millisecondsSinceEpoch ~/ (1000 * 60 * 60)}', // Cache for 1 hour
-                                          httpHeaders: {
-                                            'Cache-Control': 'no-cache',
-                                          },
                                           placeholder: (context, url) =>
                                               const Center(
                                                 child:
