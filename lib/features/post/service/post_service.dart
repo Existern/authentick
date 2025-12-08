@@ -4,6 +4,7 @@ import '../../common/remote/api_client.dart';
 import '../model/create_post_request.dart';
 import '../model/create_post_response.dart';
 import '../model/feed_response.dart';
+import '../model/like_response.dart';
 import '../model/presigned_media_urls_request.dart';
 import '../model/presigned_media_urls_response.dart';
 
@@ -100,6 +101,36 @@ class PostService {
         },
       );
       return FeedResponse.fromJson(response);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Like a post
+  /// POST /posts/{id}/like
+  /// Parameters:
+  /// - postId: Post ID
+  Future<LikeResponse> likePost({required String postId}) async {
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        '/posts/$postId/like',
+      );
+      return LikeResponse.fromJson(response);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Unlike a post
+  /// DELETE /posts/{id}/like
+  /// Parameters:
+  /// - postId: Post ID
+  Future<LikeResponse> unlikePost({required String postId}) async {
+    try {
+      final response = await _apiClient.delete<Map<String, dynamic>>(
+        '/posts/$postId/like',
+      );
+      return LikeResponse.fromJson(response);
     } catch (e) {
       rethrow;
     }
