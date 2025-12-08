@@ -201,6 +201,11 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                     ),
                   ),
                   _buildTab(
+                    label: 'Friends of friends',
+                    icon: Icons.people_outline,
+                    count: 0,
+                  ),
+                  _buildTab(
                     label: 'Friends',
                     icon: Icons.people,
                     count: getTabCount(
@@ -229,11 +234,6 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                       followersAsync,
                       followingAsync,
                     ),
-                  ),
-                  _buildTab(
-                    label: 'Friends of friends',
-                    icon: Icons.people_outline,
-                    count: 0,
                   ),
                 ],
               ),

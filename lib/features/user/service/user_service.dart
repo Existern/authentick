@@ -62,4 +62,17 @@ class UserService {
       rethrow;
     }
   }
+
+  /// Delete profile or cover image
+  /// DELETE /users/image?type=profile
+  Future<void> deleteImage(String imageType) async {
+    try {
+      await _apiClient.delete<Map<String, dynamic>>(
+        '/users/image',
+        queryParameters: {'type': imageType},
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

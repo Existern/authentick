@@ -447,17 +447,15 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                   ),
                 ),
 
-                // Image - Fixed height container
-                SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.45,
+                // Image - Natural aspect ratio container
+                Container(
+                  width: double.infinity,
                   child: Stack(
-                    fit: StackFit.expand,
                     children: [
-                      ClipRect(
-                        child: Image.file(
-                          File(_selectedImage!.path),
-                          fit: BoxFit.cover,
-                        ),
+                      Image.file(
+                        File(_selectedImage!.path),
+                        width: double.infinity,
+                        fit: BoxFit.fitWidth,
                       ),
                       // Location overlay on image (centered at bottom) - Auto-detected location
                       if ((_location != null &&

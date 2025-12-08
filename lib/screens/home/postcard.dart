@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_mvvm_riverpod/extensions/build_context_extension.dart';
+import 'package:flutter_mvvm_riverpod/features/post/service/post_service.dart';
+import 'package:flutter_mvvm_riverpod/theme/app_theme.dart';
 
-class PostCard extends StatefulWidget {
+class PostCard extends ConsumerStatefulWidget {
+  final String postId;
   final String username;
   final String? profileImage;
   final String? postImage;
@@ -15,6 +20,7 @@ class PostCard extends StatefulWidget {
 
   const PostCard({
     super.key,
+    required this.postId,
     required this.username,
     this.profileImage,
     this.postImage,
@@ -27,16 +33,34 @@ class PostCard extends StatefulWidget {
   });
 
   @override
-  State<PostCard> createState() => _PostCardState();
+  ConsumerState<PostCard> createState() => _PostCardState();
 }
 
-class _PostCardState extends State<PostCard> {
+class _PostCardState extends ConsumerState<PostCard> {
   late bool isLiked;
+  late int currentLikesCount;
+  bool isProcessing = false;
 
   @override
   void initState() {
     super.initState();
     isLiked = widget.initialIsLiked;
+    currentLikesCount = widget.likesCount;
+  }
+
+  @override
+  void didUpdateWidget(PostCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Sync with latest data from feed if not currently processing
+    if (!isProcessing && oldWidget.postId == widget.postId) {
+      if (oldWidget.likesCount != widget.likesCount ||
+          oldWidget.initialIsLiked != widget.initialIsLiked) {
+        setState(() {
+          isLiked = widget.initialIsLiked;
+          currentLikesCount = widget.likesCount;
+        });
+      }
+    }
   }
 
   String _formatTimeAgo(String dateTimeStr) {
@@ -144,6 +168,63 @@ class _PostCardState extends State<PostCard> {
     });
   }
 
+  String _formatLikeCount(int count) {
+    if (count == 0) {
+      return '0 likes';
+    } else if (count == 1) {
+      return '1 like';
+    } else if (count < 1000) {
+      return '$count likes';
+    } else if (count < 1000000) {
+      final k = (count / 1000).toStringAsFixed(1);
+      return '${k.replaceAll(RegExp(r'\.0$'), '')}K likes';
+    } else {
+      final m = (count / 1000000).toStringAsFixed(1);
+      return '${m.replaceAll(RegExp(r'\.0$'), '')}M likes';
+    }
+  }
+
+  Future<void> _handleLikeToggle() async {
+    if (isProcessing) return;
+
+    setState(() {
+      isProcessing = true;
+      // Optimistic update
+      final wasLiked = isLiked;
+      isLiked = !wasLiked;
+      currentLikesCount = wasLiked
+          ? (currentLikesCount - 1).clamp(0, double.infinity).toInt()
+          : currentLikesCount + 1;
+    });
+
+    try {
+      final postService = ref.read(postServiceProvider);
+      
+      if (isLiked) {
+        await postService.likePost(postId: widget.postId);
+      } else {
+        await postService.unlikePost(postId: widget.postId);
+      }
+    } catch (e) {
+      // Revert optimistic update on error
+      if (mounted) {
+        setState(() {
+          isLiked = !isLiked;
+          currentLikesCount = widget.likesCount;
+          isProcessing = false;
+        });
+        context.showErrorSnackBar('Failed to update like. Please try again.');
+      }
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        isProcessing = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -197,8 +278,6 @@ class _PostCardState extends State<PostCard> {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              SvgPicture.asset('assets/images/3dot.svg', width: 24, height: 24),
             ],
           ),
         ),
@@ -209,8 +288,7 @@ class _PostCardState extends State<PostCard> {
             child: CachedNetworkImage(
               imageUrl: widget.postImage!,
               width: double.infinity,
-              height: 300,
-              fit: BoxFit.cover,
+              fit: BoxFit.fitWidth,
               placeholder: (context, url) => Container(
                 width: double.infinity,
                 height: 300,
@@ -245,49 +323,26 @@ class _PostCardState extends State<PostCard> {
               Row(
                 children: [
                   GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        isLiked = !isLiked;
-                      });
-                    },
-                    child: SvgPicture.asset(
-                      isLiked
-                          ? 'assets/images/liked_star.svg'
-                          : 'assets/images/star.svg',
-                      width: 24,
-                      height: 24,
+                    onTap: isProcessing ? null : _handleLikeToggle,
+                    child: Opacity(
+                      opacity: isProcessing ? 0.5 : 1.0,
+                      child: SvgPicture.asset(
+                        isLiked
+                            ? 'assets/images/liked_star.svg'
+                            : 'assets/images/star.svg',
+                        width: 24,
+                        height: 24,
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 8),
                   Text(
-                    '${widget.likesCount}',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  const Icon(
-                    Icons.comment_outlined,
-                    size: 24,
-                    color: Colors.black87,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    '${widget.commentsCount}',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
+                    _formatLikeCount(currentLikesCount),
+                    style: AppTheme.body14.copyWith(
+                      color: context.secondaryTextColor,
                     ),
                   ),
                 ],
-              ),
-              SvgPicture.asset(
-                'assets/images/share.svg',
-                width: 24,
-                height: 24,
               ),
             ],
           ),
