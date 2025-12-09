@@ -310,50 +310,6 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
                   ),
 
                   const SizedBox(height: 24),
-
-                  // Terms text
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: RichText(
-                      textAlign: TextAlign.center,
-                      text: TextSpan(
-                        style: AppTheme.body12.copyWith(
-                          color: AppColors.mono100,
-                          height: 1.4,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        children: [
-                          const TextSpan(
-                            text: 'By continuing, you agree to Authentick\'s ',
-                          ),
-                          TextSpan(
-                            text: 'EULA',
-                            style: AppTheme.body12.copyWith(
-                              color: const Color(0xFF0D47A1),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const TextSpan(text: ', '),
-                          TextSpan(
-                            text: 'terms of service',
-                            style: AppTheme.body12.copyWith(
-                              color: const Color(0xFF0D47A1),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const TextSpan(text: ' and '),
-                          TextSpan(
-                            text: 'privacy policy',
-                            style: AppTheme.body12.copyWith(
-                              color: const Color(0xFF0D47A1),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const TextSpan(text: '.'),
-                        ],
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
