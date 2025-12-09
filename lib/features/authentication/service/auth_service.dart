@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../common/remote/api_client.dart';
@@ -36,9 +37,15 @@ class AuthService {
   /// POST /auth/refresh
   Future<AuthResponse> refreshToken(RefreshRequest request) async {
     try {
+      // Include Authorization header if access token is provided
+      final options = request.accessToken != null
+          ? Options(headers: {'Authorization': 'Bearer ${request.accessToken}'})
+          : null;
+
       final response = await _apiClient.post<Map<String, dynamic>>(
         '/auth/refresh',
         data: request.toJson(),
+        options: options,
       );
       return AuthResponse.fromJson(response);
     } catch (e) {

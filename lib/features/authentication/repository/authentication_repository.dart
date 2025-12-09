@@ -10,6 +10,7 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '/constants/constants.dart';
 import '/constants/languages.dart';
+import '../../common/remote/api_client.dart';
 import '../../common/service/secure_storage_service.dart';
 import '../../common/service/session_manager.dart';
 import '../model/auth_request.dart';
@@ -378,13 +379,17 @@ class AuthenticationRepository {
         '${Constants.tag} [AuthenticationRepository] 🔄 Refreshing access token...',
       );
 
-      // Get refresh token from secure storage
+      // Get both access and refresh tokens from secure storage
+      final accessToken = await _secureStorage.getAccessToken();
       final refreshToken = await _secureStorage.getRefreshToken();
       if (refreshToken == null) {
         throw Exception('No refresh token found');
       }
 
-      final request = RefreshRequest(refreshToken: refreshToken);
+      final request = RefreshRequest(
+        refreshToken: refreshToken,
+        accessToken: accessToken,
+      );
       final response = await _authService.refreshToken(request);
 
       if (!response.success) {
@@ -446,15 +451,20 @@ class AuthenticationRepository {
         return false;
       }
 
-      final isExpired = await _secureStorage.isTokenExpired();
-      if (isExpired) {
+      // Validate token by making an API call instead of checking expiry time
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository] 🔍 Validating token with API call...',
+      );
+      final isValid = await _validateTokenWithApi();
+
+      if (!isValid) {
         debugPrint(
-          '${Constants.tag} [AuthenticationRepository] 🔄 Token expired, refreshing...',
+          '${Constants.tag} [AuthenticationRepository] 🔄 Token invalid, refreshing...',
         );
         await refreshAccessToken();
       } else {
         debugPrint(
-          '${Constants.tag} [AuthenticationRepository] ✅ Token still valid',
+          '${Constants.tag} [AuthenticationRepository] ✅ Token is valid',
         );
       }
 
@@ -470,6 +480,23 @@ class AuthenticationRepository {
         '${Constants.tag} [AuthenticationRepository] 🚪 Auto-login failed, triggering complete logout...',
       );
       SessionManager.instance.handleUnauthorized();
+      return false;
+    }
+  }
+
+  /// Validate access token by making an API call to /users/profile
+  /// Returns true if token is valid, false otherwise
+  Future<bool> _validateTokenWithApi() async {
+    try {
+      // Import ApiClient to make a simple GET request
+      // We'll use a lightweight endpoint like /users/profile to validate
+      final apiClient = ApiClient();
+      await apiClient.get<Map<String, dynamic>>('/users/profile');
+      return true;
+    } catch (error) {
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository] ⚠️ Token validation failed: $error',
+      );
       return false;
     }
   }

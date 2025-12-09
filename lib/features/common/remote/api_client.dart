@@ -222,23 +222,8 @@ class _AuthInterceptor extends Interceptor {
       final hasTokens = await _secureStorage.hasValidTokens();
 
       if (hasTokens) {
-        // Only check expiry if we have tokens
-        final isExpired = await _secureStorage.isTokenExpired();
-
-        if (isExpired) {
-          debugPrint(
-            '${Constants.tag} [AuthInterceptor] 🔄 Token expired, refreshing...',
-          );
-
-          // Get refresh token
-          final refreshToken = await _secureStorage.getRefreshToken();
-          if (refreshToken != null) {
-            // Refresh the token
-            await _refreshToken(refreshToken);
-          }
-        }
-
-        // Get the latest access token
+        // Get the access token without checking expiry
+        // Token validation will happen via API calls, not time-based checks
         final token = await _secureStorage.getAccessToken();
 
         if (token != null && token.isNotEmpty) {
@@ -306,10 +291,20 @@ class _AuthInterceptor extends Interceptor {
 
   Future<void> _refreshToken(String refreshToken) async {
     try {
+      // Get current access token for Authorization header
+      final accessToken = await _secureStorage.getAccessToken();
+
+      final headers = {'Content-Type': 'application/json'};
+
+      // Add Authorization header if access token exists
+      if (accessToken != null && accessToken.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $accessToken';
+      }
+
       final dio = Dio(
         BaseOptions(
           baseUrl: '${Env.apiBaseUrl}${Env.apiVersion}',
-          headers: {'Content-Type': 'application/json'},
+          headers: headers,
         ),
       );
 
