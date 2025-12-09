@@ -8,7 +8,6 @@ enum OnboardingStep {
   contactsPermission,
   friendsList,
   welcomeFirstMoment,
-  shareFirstMoment,
   completed,
 }
 
@@ -75,7 +74,9 @@ class OnboardingState {
       inviteCode: inviteCode ?? this.inviteCode,
       birthday: birthday ?? this.birthday,
       username: username ?? this.username,
-      firstName: firstName == _undefined ? this.firstName : firstName as String?,
+      firstName: firstName == _undefined
+          ? this.firstName
+          : firstName as String?,
       profilePicturePath: profilePicturePath == _undefined
           ? this.profilePicturePath
           : profilePicturePath as String?,

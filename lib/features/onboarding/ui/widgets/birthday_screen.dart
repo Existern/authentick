@@ -316,7 +316,7 @@ class _BirthdayScreenState extends ConsumerState<BirthdayScreen> {
                           flex: 2,
                           child: _buildWheelPicker(
                             controller: _yearController,
-                            itemCount: 126, // 1900 to 2025
+                            itemCount: 125, // 1900 to 2024
                             onSelectedItemChanged: (index) {
                               setState(() {
                                 _selectedYear = 1900 + index;
