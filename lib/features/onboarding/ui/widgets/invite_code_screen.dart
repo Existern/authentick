@@ -79,6 +79,7 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
   final FocusNode _focusNode = FocusNode();
   String? _errorMessage;
   bool _isValidating = false;
+  bool _agreedToTerms = false;
 
   @override
   void initState() {
@@ -322,6 +323,86 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
 
                             const Spacer(),
 
+                            // Terms checkbox
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 0,
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: Checkbox(
+                                      value: _agreedToTerms,
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _agreedToTerms = value ?? false;
+                                        });
+                                      },
+                                      activeColor: const Color(0xFF4300FF),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          _agreedToTerms = !_agreedToTerms;
+                                        });
+                                      },
+                                      child: RichText(
+                                        textAlign: TextAlign.left,
+                                        text: TextSpan(
+                                          style: AppTheme.body12.copyWith(
+                                            color: AppColors.mono100,
+                                            height: 1.4,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                          children: [
+                                            const TextSpan(
+                                              text:
+                                                  'By continuing, you agree to Authentick\'s ',
+                                            ),
+                                            TextSpan(
+                                              text: 'EULA',
+                                              style: AppTheme.body12.copyWith(
+                                                color: const Color(0xFF0D47A1),
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            const TextSpan(text: ', '),
+                                            TextSpan(
+                                              text: 'terms of service',
+                                              style: AppTheme.body12.copyWith(
+                                                color: const Color(0xFF0D47A1),
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            const TextSpan(text: ' and '),
+                                            TextSpan(
+                                              text: 'privacy policy',
+                                              style: AppTheme.body12.copyWith(
+                                                color: const Color(0xFF0D47A1),
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            const TextSpan(text: '.'),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(height: 24),
+
                             // Get started button
                             SizedBox(
                               width: double.infinity,
@@ -329,7 +410,8 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
                               child: ElevatedButton(
                                 onPressed:
                                     state.inviteCode.length == 8 &&
-                                        !_isValidating
+                                        !_isValidating &&
+                                        _agreedToTerms
                                     ? _validateAndSubmit
                                     : null,
                                 style: ElevatedButton.styleFrom(
@@ -399,55 +481,6 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                   ),
-                                ),
-                              ),
-                            ),
-
-                            const SizedBox(height: 24),
-
-                            // Terms text
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                              ),
-                              child: RichText(
-                                textAlign: TextAlign.center,
-                                text: TextSpan(
-                                  style: AppTheme.body12.copyWith(
-                                    color: AppColors.mono100,
-                                    height: 1.4,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  children: [
-                                    const TextSpan(
-                                      text:
-                                          'By continuing, you agree to Authentick\'s ',
-                                    ),
-                                    TextSpan(
-                                      text: 'EULA',
-                                      style: AppTheme.body12.copyWith(
-                                        color: const Color(0xFF0D47A1),
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const TextSpan(text: ', '),
-                                    TextSpan(
-                                      text: 'terms of service',
-                                      style: AppTheme.body12.copyWith(
-                                        color: const Color(0xFF0D47A1),
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const TextSpan(text: ' and '),
-                                    TextSpan(
-                                      text: 'privacy policy',
-                                      style: AppTheme.body12.copyWith(
-                                        color: const Color(0xFF0D47A1),
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const TextSpan(text: '.'),
-                                  ],
                                 ),
                               ),
                             ),
