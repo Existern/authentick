@@ -54,11 +54,14 @@ class ApiClient {
     Options? options,
   }) async {
     try {
-      final response = await _dio.get<T>(
+      final response = await _dio.get(
         path,
         queryParameters: queryParameters,
         options: options,
       );
+      if (response.data == null) {
+        throw Exception('Response data is null');
+      }
       return response.data as T;
     } on DioException catch (e) {
       throw _handleError(e);
@@ -72,12 +75,15 @@ class ApiClient {
     Options? options,
   }) async {
     try {
-      final response = await _dio.post<T>(
+      final response = await _dio.post(
         path,
         data: data,
         queryParameters: queryParameters,
         options: options,
       );
+      if (response.data == null) {
+        throw Exception('Response data is null');
+      }
       return response.data as T;
     } on DioException catch (e) {
       throw _handleError(e);
@@ -91,12 +97,15 @@ class ApiClient {
     Options? options,
   }) async {
     try {
-      final response = await _dio.put<T>(
+      final response = await _dio.put(
         path,
         data: data,
         queryParameters: queryParameters,
         options: options,
       );
+      if (response.data == null) {
+        throw Exception('Response data is null');
+      }
       return response.data as T;
     } on DioException catch (e) {
       throw _handleError(e);
@@ -110,12 +119,15 @@ class ApiClient {
     Options? options,
   }) async {
     try {
-      final response = await _dio.patch<T>(
+      final response = await _dio.patch(
         path,
         data: data,
         queryParameters: queryParameters,
         options: options,
       );
+      if (response.data == null) {
+        throw Exception('Response data is null');
+      }
       return response.data as T;
     } on DioException catch (e) {
       throw _handleError(e);
@@ -129,12 +141,15 @@ class ApiClient {
     Options? options,
   }) async {
     try {
-      final response = await _dio.delete<T>(
+      final response = await _dio.delete(
         path,
         data: data,
         queryParameters: queryParameters,
         options: options,
       );
+      if (response.data == null) {
+        throw Exception('Response data is null');
+      }
       return response.data as T;
     } on DioException catch (e) {
       throw _handleError(e);

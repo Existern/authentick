@@ -175,30 +175,34 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                                           color: Colors.grey[300],
                                         ),
                                         child: GestureDetector(
-                                          onTap: profile.profileImageThumbnail !=
-                                                  null &&
-                                              profile.profileImageThumbnail!
-                                                  .isNotEmpty
+                                          onTap:
+                                              profile.profileImageThumbnail !=
+                                                      null &&
+                                                  profile
+                                                      .profileImageThumbnail!
+                                                      .isNotEmpty
                                               ? () {
                                                   Navigator.push(
                                                     context,
                                                     MaterialPageRoute(
                                                       builder: (context) =>
                                                           ProfileImageFullView(
-                                                        profileImage:
-                                                            profile.profileImage,
-                                                        profileImageThumbnail:
-                                                            profile
-                                                                .profileImageThumbnail,
-                                                      ),
+                                                            profileImage: profile
+                                                                .profileImage,
+                                                            profileImageThumbnail:
+                                                                profile
+                                                                    .profileImageThumbnail,
+                                                          ),
                                                     ),
                                                   );
                                                 }
                                               : null,
-                                          child: profile.profileImageThumbnail !=
-                                                  null &&
-                                              profile.profileImageThumbnail!
-                                                  .isNotEmpty
+                                          child:
+                                              profile.profileImageThumbnail !=
+                                                      null &&
+                                                  profile
+                                                      .profileImageThumbnail!
+                                                      .isNotEmpty
                                               ? CachedNetworkImage(
                                                   imageUrl: profile
                                                       .profileImageThumbnail!,
@@ -207,11 +211,11 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                                                       const Center(
                                                         child:
                                                             CircularProgressIndicator(
-                                                          strokeWidth: 2,
-                                                          color: Color(
-                                                            0xFF3620B3,
-                                                          ),
-                                                        ),
+                                                              strokeWidth: 2,
+                                                              color: Color(
+                                                                0xFF3620B3,
+                                                              ),
+                                                            ),
                                                       ),
                                                   errorWidget:
                                                       (context, url, error) =>
@@ -388,7 +392,35 @@ class _MyProfileState extends ConsumerState<MyProfile> {
 
                           return userPostsAsync.when(
                             data: (postsResponse) {
-                              final posts = postsResponse.data.posts;
+                              if (postsResponse.data == null) {
+                                return SizedBox(
+                                  height:
+                                      MediaQuery.of(context).size.height * 0.3,
+                                  child: const Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.error_outline,
+                                          size: 64,
+                                          color: Colors.grey,
+                                        ),
+                                        SizedBox(height: 16),
+                                        Text(
+                                          'No data available',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }
+
+                              final posts = postsResponse.data!.posts;
 
                               if (posts.isEmpty) {
                                 return SizedBox(
@@ -428,11 +460,14 @@ class _MyProfileState extends ConsumerState<MyProfile> {
 
                               // Filter posts with images
                               final postsWithImages = posts
-                                  .where((post) =>
-                                      post.media != null &&
-                                      post.media!.isNotEmpty &&
-                                      post.media!.any(
-                                          (media) => media.mediaType == 'image'))
+                                  .where(
+                                    (post) =>
+                                        post.media != null &&
+                                        post.media!.isNotEmpty &&
+                                        post.media!.any(
+                                          (media) => media.mediaType == 'image',
+                                        ),
+                                  )
                                   .toList();
 
                               return Padding(
@@ -453,7 +488,8 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                                     final post = postsWithImages[index];
                                     final firstImageMedia = post.media!
                                         .where(
-                                            (media) => media.mediaType == 'image')
+                                          (media) => media.mediaType == 'image',
+                                        )
                                         .first;
 
                                     // Calculate height based on aspect ratio if available
@@ -461,8 +497,8 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                                         (firstImageMedia.height != null &&
                                             firstImageMedia.width != null)
                                         ? (firstImageMedia.height! /
-                                                firstImageMedia.width!) *
-                                            180
+                                                  firstImageMedia.width!) *
+                                              180
                                         : ((index % 3 == 0)
                                               ? 250
                                               : (index % 3 == 1)
@@ -476,8 +512,8 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                                           MaterialPageRoute(
                                             builder: (context) =>
                                                 PostDetailScreen(
-                                              postId: post.id,
-                                            ),
+                                                  postId: post.id,
+                                                ),
                                           ),
                                         ).then((deleted) {
                                           // Refresh posts if a post was deleted
@@ -503,7 +539,9 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                                                   child:
                                                       CircularProgressIndicator(
                                                         strokeWidth: 2,
-                                                        color: Color(0xFF3620B3),
+                                                        color: Color(
+                                                          0xFF3620B3,
+                                                        ),
                                                       ),
                                                 ),
                                             errorWidget:

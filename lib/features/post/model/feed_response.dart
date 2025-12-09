@@ -5,10 +5,10 @@ part 'feed_response.g.dart';
 @JsonSerializable(explicitToJson: true)
 class FeedResponse {
   final bool success;
-  final FeedData data;
-  final FeedMeta meta;
+  final FeedData? data;
+  final FeedMeta? meta;
 
-  FeedResponse({required this.success, required this.data, required this.meta});
+  FeedResponse({required this.success, this.data, this.meta});
 
   factory FeedResponse.fromJson(Map<String, dynamic> json) =>
       _$FeedResponseFromJson(json);
@@ -51,7 +51,7 @@ class Post {
   final String createdAt;
   @JsonKey(name: 'updated_at')
   final String updatedAt;
-  final User user;
+  final User? user;
 
   Post({
     required this.id,
@@ -66,7 +66,7 @@ class Post {
     required this.isLiked,
     required this.createdAt,
     required this.updatedAt,
-    required this.user,
+    this.user,
   });
 
   factory Post.fromJson(Map<String, dynamic> json) => _$PostFromJson(json);

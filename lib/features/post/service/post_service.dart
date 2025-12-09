@@ -40,9 +40,7 @@ class PostService {
 
   /// Create a new post
   /// POST /posts
-  Future<CreatePostResponse> createPost(
-    CreatePostRequest request,
-  ) async {
+  Future<CreatePostResponse> createPost(CreatePostRequest request) async {
     try {
       final response = await _apiClient.post<Map<String, dynamic>>(
         '/posts',
@@ -76,8 +74,12 @@ class PostService {
           'duration': duration,
         },
       );
+      print('📥 Feed API Response Type: ${response.runtimeType}');
+      print('📥 Feed API Response: $response');
       return FeedResponse.fromJson(response);
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('❌ Feed API Error: $e');
+      print('❌ Stack Trace: $stackTrace');
       rethrow;
     }
   }
@@ -96,10 +98,7 @@ class PostService {
     try {
       final response = await _apiClient.get<Map<String, dynamic>>(
         '/posts/user/$userId',
-        queryParameters: {
-          'page': page,
-          'limit': limit,
-        },
+        queryParameters: {'page': page, 'limit': limit},
       );
       return FeedResponse.fromJson(response);
     } catch (e) {
