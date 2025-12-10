@@ -276,7 +276,7 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                                   ),
                                 ),
                                 Text(
-                                  '@${profile.username}',
+                                  '@${profile.username ?? 'user'}',
                                   style: const TextStyle(
                                     fontSize: 20,
                                     color: Colors.black,
