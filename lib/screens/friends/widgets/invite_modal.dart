@@ -248,38 +248,37 @@ class InviteModal extends StatelessWidget {
                             width: _inviteImages.length == 3
                                 ? 150
                                 : _inviteImages.length == 2
-                                    ? 110
-                                    : 70,
+                                ? 110
+                                : 70,
                             child: Stack(
                               children: _inviteImages
                                   .asMap()
                                   .entries
                                   .toList()
                                   .reversed
-                                  .map((
-                                entry,
-                              ) {
-                                final index = entry.key;
-                                final imagePath = entry.value;
-                                return Positioned(
-                                  left: index * 40.0,
-                                  child: Container(
-                                    width: 70,
-                                    height: 70,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: Colors.white,
-                                        width: 1.5,
+                                  .map((entry) {
+                                    final index = entry.key;
+                                    final imagePath = entry.value;
+                                    return Positioned(
+                                      left: index * 40.0,
+                                      child: Container(
+                                        width: 70,
+                                        height: 70,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: Colors.white,
+                                            width: 1.5,
+                                          ),
+                                          image: DecorationImage(
+                                            image: AssetImage(imagePath),
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
                                       ),
-                                      image: DecorationImage(
-                                        image: AssetImage(imagePath),
-                                        fit: BoxFit.cover,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
+                                    );
+                                  })
+                                  .toList(),
                             ),
                           ),
                         const SizedBox(height: 24),
@@ -427,13 +426,13 @@ class InviteModal extends StatelessWidget {
                     ],
                   )
                 : imagePath != null
-                    ? Image.asset(
-                        imagePath,
-                        width: 56,
-                        height: 56,
-                        fit: BoxFit.cover,
-                      )
-                    : Icon(icon, color: Colors.white, size: 28),
+                ? Image.asset(
+                    imagePath,
+                    width: 56,
+                    height: 56,
+                    fit: BoxFit.cover,
+                  )
+                : Icon(icon, color: Colors.white, size: 28),
           ),
           const SizedBox(height: 8),
           Text(

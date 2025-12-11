@@ -117,7 +117,8 @@ class _MyHomeState extends ConsumerState<MyHome> {
                           postId: post.id,
                           username: post.user?.username ?? 'User',
                           profileImage: post.user?.profileImage,
-                          postImage: firstMedia?.mediaUrl,
+                          postImage:
+                              firstMedia?.thumbnailUrl ?? firstMedia?.mediaUrl,
                           content: post.content,
                           location: post.metadata?.location,
                           createdAt: post.createdAt,
