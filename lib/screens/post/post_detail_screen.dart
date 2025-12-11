@@ -9,12 +9,18 @@ import '../../extensions/build_context_extension.dart';
 import '../../features/post/repository/post_detail_repository.dart';
 import '../../features/post/repository/post_like_repository.dart';
 import '../../features/post/service/post_service.dart';
+import '../../features/user/repository/user_profile_repository.dart';
 import '../../theme/app_theme.dart';
 
 class PostDetailScreen extends ConsumerStatefulWidget {
   final String postId;
+  final bool showDeleteButton;
 
-  const PostDetailScreen({super.key, required this.postId});
+  const PostDetailScreen({
+    super.key,
+    required this.postId,
+    this.showDeleteButton = false,
+  });
 
   @override
   ConsumerState<PostDetailScreen> createState() => _PostDetailScreenState();
@@ -229,11 +235,14 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
 
             // Initialize and watch like state from postLikeManager
             final likeManager = ref.read(postLikeManagerProvider.notifier);
-            likeManager.initializePost(
-              widget.postId,
-              post.isLiked ?? false,
-              post.likesCount ?? 0,
-            );
+            // Delay initialization to avoid modifying provider during build
+            Future.microtask(() {
+              likeManager.initializePost(
+                widget.postId,
+                post.isLiked ?? false,
+                post.likesCount ?? 0,
+              );
+            });
             final likeState =
                 ref.watch(postLikeManagerProvider)[widget.postId] ??
                 PostLikeState(
@@ -338,34 +347,38 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                   ),
                 ),
 
-                Positioned(
-                  top: 16,
-                  right: 16,
-                  child: GestureDetector(
-                    onTap: _isDeleting ? null : _handleDelete,
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.3),
-                        shape: BoxShape.circle,
-                      ),
-                      child: _isDeleting
-                          ? const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
+                // Show delete button only when enabled AND post is owned by current user
+                if (widget.showDeleteButton &&
+                    ref.watch(userProfileRepositoryProvider).value?.id ==
+                        post.userId)
+                  Positioned(
+                    top: 16,
+                    right: 16,
+                    child: GestureDetector(
+                      onTap: _isDeleting ? null : _handleDelete,
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.3),
+                          shape: BoxShape.circle,
+                        ),
+                        child: _isDeleting
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.delete_outline,
                                 color: Colors.white,
-                                strokeWidth: 2,
+                                size: 24,
                               ),
-                            )
-                          : const Icon(
-                              Icons.delete_outline,
-                              color: Colors.white,
-                              size: 24,
-                            ),
+                      ),
                     ),
                   ),
-                ),
 
                 // Bottom content
                 Positioned(

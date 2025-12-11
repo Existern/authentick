@@ -63,6 +63,19 @@ class UserService {
     }
   }
 
+  /// Get user profile by ID
+  /// GET /users/{userId}/profile
+  Future<UserProfileResponse> getUserProfileById(String userId) async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/users/$userId/profile',
+      );
+      return UserProfileResponse.fromJson(response);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   /// Delete profile or cover image
   /// DELETE /users/image?type=profile
   Future<void> deleteImage(String imageType) async {
