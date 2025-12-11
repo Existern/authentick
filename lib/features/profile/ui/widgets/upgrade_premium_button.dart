@@ -47,8 +47,7 @@ class UpgradePremiumButton extends StatelessWidget {
               const SizedBox(width: 4),
               Text(
                 Languages.premium,
-                style:
-                    AppTheme.title14.copyWith(color: AppColors.mono0),
+                style: AppTheme.title14.copyWith(color: AppColors.mono0),
               ),
             ],
           ),

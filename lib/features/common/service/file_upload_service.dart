@@ -29,9 +29,7 @@ class FileUploadService {
       debugPrint(
         '${Constants.tag} [FileUploadService] 🔄 Uploading file to S3...',
       );
-      debugPrint(
-        '${Constants.tag} [FileUploadService] URL: $presignedUrl',
-      );
+      debugPrint('${Constants.tag} [FileUploadService] URL: $presignedUrl');
       debugPrint(
         '${Constants.tag} [FileUploadService] Content-Type: $contentType',
       );
@@ -87,9 +85,7 @@ class FileUploadService {
         );
 
         if (response.statusCode == 403) {
-          debugPrint(
-            '${Constants.tag} [FileUploadService] ❌ Got 403 error',
-          );
+          debugPrint('${Constants.tag} [FileUploadService] ❌ Got 403 error');
           debugPrint(
             '${Constants.tag} [FileUploadService] Response data: ${response.data}',
           );
@@ -106,30 +102,20 @@ class FileUploadService {
         final response = await dio.put(
           presignedUrl,
           data: await MultipartFile.fromFile(filePath),
-          options: Options(
-            headers: {
-              'Content-Type': contentType,
-            },
-          ),
+          options: Options(headers: {'Content-Type': contentType}),
         );
 
-        debugPrint(
-          '${Constants.tag} [FileUploadService] ✅ Upload successful',
-        );
+        debugPrint('${Constants.tag} [FileUploadService] ✅ Upload successful');
         debugPrint(
           '${Constants.tag} [FileUploadService] Status: ${response.statusCode}',
         );
       }
     } catch (error, stackTrace) {
-      debugPrint(
-        '${Constants.tag} [FileUploadService] ❌ UPLOAD FAILED ❌',
-      );
+      debugPrint('${Constants.tag} [FileUploadService] ❌ UPLOAD FAILED ❌');
       debugPrint(
         '${Constants.tag} [FileUploadService] Error Type: ${error.runtimeType}',
       );
-      debugPrint(
-        '${Constants.tag} [FileUploadService] Error Details: $error',
-      );
+      debugPrint('${Constants.tag} [FileUploadService] Error Details: $error');
       debugPrint('${Constants.tag} [FileUploadService] Stack Trace:');
       debugPrint('$stackTrace');
       rethrow;

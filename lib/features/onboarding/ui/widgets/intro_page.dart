@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-
-
 class IntroPage extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -28,8 +26,8 @@ class IntroPage extends StatelessWidget {
                     center: Alignment.center,
                     radius: 0.8,
                     colors: [
-                     const Color(0xFFE4CAFF).withValues(alpha: 0.6),
-                     const Color(0xFFE4CAFF).withValues(alpha: 0.3),
+                      const Color(0xFFE4CAFF).withValues(alpha: 0.6),
+                      const Color(0xFFE4CAFF).withValues(alpha: 0.3),
                     ],
                     stops: const [0.0, 1.0],
                   ),
@@ -40,12 +38,15 @@ class IntroPage extends StatelessWidget {
                     imagePath,
                     fit: BoxFit.fitWidth,
                     alignment: Alignment.topCenter,
-                    frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-                      if (wasSynchronouslyLoaded || frame != null) {
-                        return child;
-                      }
-                      return const Center(child: CircularProgressIndicator());
-                    },
+                    frameBuilder:
+                        (context, child, frame, wasSynchronouslyLoaded) {
+                          if (wasSynchronouslyLoaded || frame != null) {
+                            return child;
+                          }
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        },
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
                         color: Colors.grey[200],
@@ -130,7 +131,10 @@ class IntroPage extends StatelessWidget {
 
   List<TextSpan> _buildSubtitleSpans(String text) {
     // Check if text contains "No uploads. No edits." or "No Uploads. No edits."
-    final boldPattern = RegExp(r'No [uU]ploads?\. No edits\.', caseSensitive: false);
+    final boldPattern = RegExp(
+      r'No [uU]ploads?\. No edits\.',
+      caseSensitive: false,
+    );
     final match = boldPattern.firstMatch(text);
 
     if (match != null) {

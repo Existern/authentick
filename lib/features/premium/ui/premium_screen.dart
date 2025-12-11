@@ -109,11 +109,13 @@ class PremiumScreen extends ConsumerWidget {
                         child: Column(
                           spacing: 16,
                           children: benefits
-                              .map((benefit) => BenefitItem(
-                                    icon: benefit.icon,
-                                    title: benefit.title,
-                                    description: benefit.description,
-                                  ))
+                              .map(
+                                (benefit) => BenefitItem(
+                                  icon: benefit.icon,
+                                  title: benefit.title,
+                                  description: benefit.description,
+                                ),
+                              )
                               .toList(),
                         ),
                       ),
@@ -149,9 +151,7 @@ class PremiumScreen extends ConsumerWidget {
                       const SizedBox(height: 8),
                       Text(
                         Languages.subscriptionInfo,
-                        style: AppTheme.body14.copyWith(
-                          color: AppColors.mono0,
-                        ),
+                        style: AppTheme.body14.copyWith(color: AppColors.mono0),
                         textAlign: TextAlign.justify,
                       ),
                       const SizedBox(height: 8),
@@ -200,9 +200,7 @@ class PremiumScreen extends ConsumerWidget {
                         .restorePurchases(),
                     child: Text(
                       Languages.restorePurchases,
-                      style: AppTheme.title14.copyWith(
-                        color: AppColors.mono0,
-                      ),
+                      style: AppTheme.title14.copyWith(color: AppColors.mono0),
                     ),
                   ),
                 ],

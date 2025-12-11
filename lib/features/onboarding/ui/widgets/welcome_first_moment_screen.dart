@@ -181,9 +181,10 @@ class WelcomeFirstMomentScreen extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 10.0),
                     child: MasonryGridView.builder(
                       physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverSimpleGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                      ),
+                      gridDelegate:
+                          const SliverSimpleGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                          ),
                       mainAxisSpacing: 8,
                       crossAxisSpacing: 8,
                       itemCount: 6,
@@ -192,8 +193,8 @@ class WelcomeFirstMomentScreen extends ConsumerWidget {
                         final double height = (index % 3 == 0)
                             ? 250
                             : (index % 3 == 1)
-                                ? 180
-                                : 220;
+                            ? 180
+                            : 220;
 
                         // Image paths for the grid
                         final images = [
@@ -209,9 +210,7 @@ class WelcomeFirstMomentScreen extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(12),
                           child: Container(
                             height: height,
-                            decoration: BoxDecoration(
-                              color: Colors.grey[200],
-                            ),
+                            decoration: BoxDecoration(color: Colors.grey[200]),
                             child: Image.asset(
                               images[index],
                               fit: BoxFit.cover,
@@ -223,48 +222,48 @@ class WelcomeFirstMomentScreen extends ConsumerWidget {
                   ),
                 ),
 
-            // Capture button
-            Padding(
-              padding: const EdgeInsets.all(32.0),
-              child: SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    // Navigate to create post screen
-                    await Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => CreatePostScreen(
-                          isOnboarding: true,
-                          onComplete: () {
-                            // When post is created, go back and continue onboarding
-                            Navigator.of(context).pop();
-                            ref
-                                .read(onboardingViewModelProvider.notifier)
-                                .captureFirstMoment();
-                          },
+                // Capture button
+                Padding(
+                  padding: const EdgeInsets.all(32.0),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        // Navigate to create post screen
+                        await Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => CreatePostScreen(
+                              isOnboarding: true,
+                              onComplete: () {
+                                // When post is created, go back and continue onboarding
+                                Navigator.of(context).pop();
+                                ref
+                                    .read(onboardingViewModelProvider.notifier)
+                                    .captureFirstMoment();
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF3620B3),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'Capture your first moment',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
                         ),
                       ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF3620B3),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    'Capture your first moment',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
                     ),
                   ),
                 ),
-              ),
-            ),
               ],
             ),
           ),

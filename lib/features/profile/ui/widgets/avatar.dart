@@ -10,10 +10,7 @@ import '../../../../theme/app_colors.dart';
 class Avatar extends StatelessWidget {
   final String? url;
 
-  const Avatar({
-    super.key,
-    this.url,
-  });
+  const Avatar({super.key, this.url});
 
   @override
   Widget build(BuildContext context) {
@@ -23,8 +20,8 @@ class Avatar extends StatelessWidget {
       backgroundImage: AssetImage(Assets.avatar),
       foregroundImage: url != null
           ? (url.isUrl
-              ? CachedNetworkImageProvider(url.orEmpty())
-              : FileImage(File(url!)))
+                ? CachedNetworkImageProvider(url.orEmpty())
+                : FileImage(File(url!)))
           : null,
     );
   }

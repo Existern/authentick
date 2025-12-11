@@ -14,18 +14,11 @@ class Postpage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: const [
-            Icon(
-              Icons.photo_camera,
-              size: 64,
-              color: Color(0xFF3620B3),
-            ),
+            Icon(Icons.photo_camera, size: 64, color: Color(0xFF3620B3)),
             SizedBox(height: 16),
             Text(
               'Tap the + button to create a post',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
           ],
         ),

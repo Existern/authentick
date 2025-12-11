@@ -72,11 +72,7 @@ class ProfileService {
       await dio.put(
         presignedUrl,
         data: fileBytes, // Send raw bytes, NOT MultipartFile
-        options: Options(
-          headers: {
-            'Content-Type': contentType,
-          },
-        ),
+        options: Options(headers: {'Content-Type': contentType}),
       );
     } catch (e) {
       rethrow;

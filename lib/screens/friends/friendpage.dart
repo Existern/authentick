@@ -9,6 +9,8 @@ import '../../features/connections/view_model/pending_connections_view_model.dar
 import '../../features/connections/view_model/friends_view_model.dart';
 import '../../features/connections/view_model/followers_view_model.dart';
 import '../../features/connections/view_model/following_view_model.dart';
+import '../../features/user/repository/user_profile_repository.dart';
+import 'widgets/invite_modal.dart';
 
 class Friendpage extends ConsumerStatefulWidget {
   const Friendpage({super.key});
@@ -158,6 +160,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
     final friendsAsync = ref.watch(friendsViewModelProvider);
     final followersAsync = ref.watch(followersViewModelProvider);
     final followingAsync = ref.watch(followingViewModelProvider);
+    final userProfileAsync = ref.watch(userProfileRepositoryProvider);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -177,7 +180,32 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                   ),
                   GestureDetector(
                     onTap: () {
-                      showCustomNotification('Invite feature coming soon!');
+                      userProfileAsync.whenData((profile) {
+                        if (profile != null) {
+                          final inviteCode = profile.inviteCode ?? '';
+                          final maxUses = profile.inviteCodeMaxUses ?? 3;
+                          final currentUses =
+                              profile.inviteCodeCurrentUses ?? 0;
+                          final invitesLeft = maxUses - currentUses;
+
+                          showModalBottomSheet(
+                            context: context,
+                            backgroundColor: Colors.transparent,
+                            isScrollControlled: true,
+                            builder: (context) => InviteModal(
+                              inviteCode: inviteCode,
+                              invitesLeft: invitesLeft,
+                              maxInvites: maxUses,
+                              currentUses: currentUses,
+                            ),
+                          );
+                        } else {
+                          showCustomNotification(
+                            'Unable to load invite data',
+                            isError: true,
+                          );
+                        }
+                      });
                     },
                     child: Row(
                       children: [

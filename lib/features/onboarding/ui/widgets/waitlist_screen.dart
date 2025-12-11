@@ -42,10 +42,14 @@ class _WaitlistScreenState extends ConsumerState<WaitlistScreen> {
 
       String? email = authResponse?.data.user.email;
 
-      debugPrint('${Constants.tag} [WaitlistScreen] Retrieved email from auth response: $email');
+      debugPrint(
+        '${Constants.tag} [WaitlistScreen] Retrieved email from auth response: $email',
+      );
 
       if (email == null || email.isEmpty) {
-        debugPrint('${Constants.tag} [WaitlistScreen] No email found in auth response');
+        debugPrint(
+          '${Constants.tag} [WaitlistScreen] No email found in auth response',
+        );
 
         if (!mounted) return;
 
@@ -56,10 +60,14 @@ class _WaitlistScreenState extends ConsumerState<WaitlistScreen> {
         return;
       }
 
-      debugPrint('${Constants.tag} [WaitlistScreen] Submitting email to waitlist: $email');
+      debugPrint(
+        '${Constants.tag} [WaitlistScreen] Submitting email to waitlist: $email',
+      );
 
       final service = ref.read(waitlistServiceProvider);
-      final response = await service.joinWaitlist(WaitlistRequest(email: email));
+      final response = await service.joinWaitlist(
+        WaitlistRequest(email: email),
+      );
 
       if (!mounted) return;
 
@@ -69,9 +77,13 @@ class _WaitlistScreenState extends ConsumerState<WaitlistScreen> {
         _alreadyExists = response.data.alreadyExists;
       });
 
-      debugPrint('${Constants.tag} [WaitlistScreen] Already exists: $_alreadyExists');
+      debugPrint(
+        '${Constants.tag} [WaitlistScreen] Already exists: $_alreadyExists',
+      );
     } catch (e) {
-      debugPrint('${Constants.tag} [WaitlistScreen] Error joining waitlist: $e');
+      debugPrint(
+        '${Constants.tag} [WaitlistScreen] Error joining waitlist: $e',
+      );
 
       if (!mounted) return;
 
@@ -96,71 +108,74 @@ class _WaitlistScreenState extends ConsumerState<WaitlistScreen> {
         }
       },
       child: Scaffold(
-      body: Stack(
-        children: [
-          // Full background image
-          Positioned.fill(
-            child: Image.asset('assets/images/waitlist.jpg', fit: BoxFit.cover),
-          ),
+        body: Stack(
+          children: [
+            // Full background image
+            Positioned.fill(
+              child: Image.asset(
+                'assets/images/waitlist.jpg',
+                fit: BoxFit.cover,
+              ),
+            ),
 
-          // White gradient overlay at bottom
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              height: MediaQuery.of(context).size.height * 0.35,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.white.withValues(alpha: 0.0),
-                    Colors.white.withValues(alpha: 0.85),
-                    Colors.white.withValues(alpha: 0.98),
-                  ],
-                  stops: const [0.0, 0.5, 1.0],
+            // White gradient overlay at bottom
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                height: MediaQuery.of(context).size.height * 0.35,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withValues(alpha: 0.0),
+                      Colors.white.withValues(alpha: 0.85),
+                      Colors.white.withValues(alpha: 0.98),
+                    ],
+                    stops: const [0.0, 0.5, 1.0],
+                  ),
                 ),
               ),
             ),
-          ),
 
-          // Content
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24.0,
-                vertical: 16.0,
-              ),
-              child: Column(
-                children: [
-                  // Header: Centered logo
-                  SizedBox(
-                    height: 40,
-                    child: Align(
-                      alignment: Alignment.center,
-                      child: SvgPicture.asset(
-                        'assets/images/authentick_logo.svg',
-                        width: 30,
-                        height: 30,
+            // Content
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
+                  vertical: 16.0,
+                ),
+                child: Column(
+                  children: [
+                    // Header: Centered logo
+                    SizedBox(
+                      height: 40,
+                      child: Align(
+                        alignment: Alignment.center,
+                        child: SvgPicture.asset(
+                          'assets/images/authentick_logo.svg',
+                          width: 30,
+                          height: 30,
+                        ),
                       ),
                     ),
-                  ),
 
-                  const Spacer(),
+                    const Spacer(),
 
-                  // Bottom content
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 40),
-                    child: _buildContent(),
-                  ),
-                ],
+                    // Bottom content
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 40),
+                      child: _buildContent(),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
     );
   }
 
@@ -185,11 +200,7 @@ class _WaitlistScreenState extends ConsumerState<WaitlistScreen> {
     if (_errorMessage != null) {
       return Column(
         children: [
-          const Icon(
-            Icons.error_outline,
-            color: Colors.red,
-            size: 48,
-          ),
+          const Icon(Icons.error_outline, color: Colors.red, size: 48),
           const SizedBox(height: 16),
           Text(
             _errorMessage!,

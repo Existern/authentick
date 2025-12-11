@@ -17,11 +17,7 @@ class OtpScreen extends ConsumerStatefulWidget {
   final String email;
   final bool isRegister;
 
-  const OtpScreen({
-    super.key,
-    required this.email,
-    required this.isRegister,
-  });
+  const OtpScreen({super.key, required this.email, required this.isRegister});
 
   @override
   ConsumerState createState() => _OtpScreenState();
@@ -81,14 +77,8 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                       semanticsLabel: 'OTP',
                     ),
                   ),
-                  Text(
-                    'otp_enter_title'.tr(),
-                    style: AppTheme.title20,
-                  ),
-                  Text(
-                    'otp_enter_description'.tr(),
-                    style: AppTheme.body16,
-                  ),
+                  Text('otp_enter_title'.tr(), style: AppTheme.title20),
+                  Text('otp_enter_description'.tr(), style: AppTheme.body16),
                   const SizedBox(height: 16),
                   Center(
                     child: Pinput(
@@ -120,16 +110,14 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                             ? () async {
                                 otpController.clear();
                                 await ref
-                                    .read(authenticationViewModelProvider
-                                        .notifier)
+                                    .read(
+                                      authenticationViewModelProvider.notifier,
+                                    )
                                     .signInWithMagicLink(widget.email);
                                 startTimer();
                               }
                             : null,
-                        child: Text(
-                          'resend_otp'.tr(),
-                          style: AppTheme.title12,
-                        ),
+                        child: Text('resend_otp'.tr(), style: AppTheme.title12),
                       ),
                     ],
                   ),
@@ -159,11 +147,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                 ],
               ),
             ),
-            Positioned(
-              top: 16,
-              left: 16,
-              child: CommonBackButton(),
-            ),
+            Positioned(top: 16, left: 16, child: CommonBackButton()),
           ],
         ),
       ),

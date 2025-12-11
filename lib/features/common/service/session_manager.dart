@@ -46,9 +46,7 @@ class SessionManager {
       // Navigate to register/login screen
       _navigateToLogin();
     } catch (e, stackTrace) {
-      debugPrint(
-        '${Constants.tag} [SessionManager] ❌ Error during logout: $e',
-      );
+      debugPrint('${Constants.tag} [SessionManager] ❌ Error during logout: $e');
       debugPrint('$stackTrace');
     } finally {
       _isLoggingOut = false;
@@ -80,9 +78,7 @@ class SessionManager {
     await prefs.remove('profile');
     await prefs.remove('user_profile_cache');
 
-    debugPrint(
-      '${Constants.tag} [SessionManager] 🗑️ All storage cleared',
-    );
+    debugPrint('${Constants.tag} [SessionManager] 🗑️ All storage cleared');
   }
 
   /// Navigate to login screen
@@ -90,10 +86,7 @@ class SessionManager {
     final navigator = navigatorKey.currentState;
     if (navigator != null) {
       // Clear the navigation stack and go to register screen
-      navigator.pushNamedAndRemoveUntil(
-        Routes.register,
-        (route) => false,
-      );
+      navigator.pushNamedAndRemoveUntil(Routes.register, (route) => false);
     } else {
       debugPrint(
         '${Constants.tag} [SessionManager] ⚠️ Navigator not available',
@@ -101,4 +94,3 @@ class SessionManager {
     }
   }
 }
-

@@ -3,15 +3,9 @@ class PresignedUploadRequest {
   final String contentType;
   final String imageType;
 
-  PresignedUploadRequest({
-    required this.contentType,
-    required this.imageType,
-  });
+  PresignedUploadRequest({required this.contentType, required this.imageType});
 
   Map<String, dynamic> toJson() {
-    return {
-      'content_type': contentType,
-      'image_type': imageType,
-    };
+    return {'content_type': contentType, 'image_type': imageType};
   }
 }

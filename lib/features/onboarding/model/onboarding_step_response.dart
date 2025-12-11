@@ -2,10 +2,7 @@ class OnboardingStepResponse {
   final bool success;
   final OnboardingData data;
 
-  OnboardingStepResponse({
-    required this.success,
-    required this.data,
-  });
+  OnboardingStepResponse({required this.success, required this.data});
 
   factory OnboardingStepResponse.fromJson(Map<String, dynamic> json) {
     return OnboardingStepResponse(
@@ -35,7 +32,9 @@ class OnboardingData {
       completed: json['completed'] as bool? ?? false,
       completedAt: json['completed_at'] as String?,
       steps: stepsList
-          .map((item) => OnboardingStepInfo.fromJson(item as Map<String, dynamic>))
+          .map(
+            (item) => OnboardingStepInfo.fromJson(item as Map<String, dynamic>),
+          )
           .toList(),
     );
   }

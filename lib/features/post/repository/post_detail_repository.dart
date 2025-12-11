@@ -6,11 +6,7 @@ import '../service/post_service.dart';
 part 'post_detail_repository.g.dart';
 
 @riverpod
-Future<PostDetailResponse> postDetail(
-  Ref ref, {
-  required String postId,
-}) async {
+Future<PostDetailResponse> postDetail(Ref ref, {required String postId}) async {
   final postService = ref.watch(postServiceProvider);
   return await postService.getPostById(postId: postId);
 }
-

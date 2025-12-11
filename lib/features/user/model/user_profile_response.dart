@@ -57,6 +57,12 @@ class UserProfileData {
   final String? updatedAt;
   @JsonKey(name: 'last_login_at')
   final String? lastLoginAt;
+  @JsonKey(name: 'invite_code')
+  final String? inviteCode;
+  @JsonKey(name: 'invite_code_max_uses')
+  final int? inviteCodeMaxUses;
+  @JsonKey(name: 'invite_code_current_uses')
+  final int? inviteCodeCurrentUses;
 
   UserProfileData({
     required this.id,
@@ -80,6 +86,9 @@ class UserProfileData {
     this.createdAt,
     this.updatedAt,
     this.lastLoginAt,
+    this.inviteCode,
+    this.inviteCodeMaxUses,
+    this.inviteCodeCurrentUses,
   });
 
   factory UserProfileData.fromJson(Map<String, dynamic> json) =>

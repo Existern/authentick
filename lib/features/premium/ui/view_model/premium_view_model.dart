@@ -1,4 +1,3 @@
-
 import 'package:hugeicons/hugeicons.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';

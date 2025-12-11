@@ -14,7 +14,8 @@ class Languages {
   static String offline = 'offline'.tr();
   static String unexpectedErrorOccurred = 'unexpected_error_occurred'.tr();
   static String validatorRequiredField = 'validator_required_field'.tr();
-  static String validatorInvalidEmailFormat = 'validator_invalid_email_format'.tr();
+  static String validatorInvalidEmailFormat = 'validator_invalid_email_format'
+      .tr();
 
   // Auth
   static String welcome = 'welcome'.tr();

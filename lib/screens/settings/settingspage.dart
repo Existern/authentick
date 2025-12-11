@@ -55,7 +55,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         username: handleController.text.trim(),
       );
 
-      await ref.read(userProfileRepositoryProvider.notifier).updateProfile(request);
+      await ref
+          .read(userProfileRepositoryProvider.notifier)
+          .updateProfile(request);
 
       if (mounted) {
         setState(() {
@@ -240,7 +242,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.error_outline, color: Colors.red, size: 20),
+                      const Icon(
+                        Icons.error_outline,
+                        color: Colors.red,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -255,9 +261,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               profileAsync.when(
                 data: (profile) {
                   if (profile == null) {
-                    return const Center(
-                      child: Text('Unable to load profile'),
-                    );
+                    return const Center(child: Text('Unable to load profile'));
                   }
 
                   // Load data only once when profile is available
@@ -298,15 +302,17 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 loading: () => const Center(
                   child: Padding(
                     padding: EdgeInsets.all(40.0),
-                    child: CircularProgressIndicator(
-                      color: Color(0xFF3620B3),
-                    ),
+                    child: CircularProgressIndicator(color: Color(0xFF3620B3)),
                   ),
                 ),
                 error: (error, stack) => Center(
                   child: Column(
                     children: [
-                      const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                      const Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.red,
+                      ),
                       const SizedBox(height: 8),
                       Text('Error loading profile: $error'),
                     ],
@@ -393,7 +399,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
               ),
               focusedBorder: OutlineInputBorder(
-                borderSide: const BorderSide(color: Color(0xFF3620B3), width: 1.5),
+                borderSide: const BorderSide(
+                  color: Color(0xFF3620B3),
+                  width: 1.5,
+                ),
                 borderRadius: BorderRadius.circular(12),
               ),
               disabledBorder: OutlineInputBorder(

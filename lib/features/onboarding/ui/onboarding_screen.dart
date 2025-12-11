@@ -84,9 +84,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   Future<void> _saveNameAndContinue(BuildContext context) async {
     try {
-      await ref.read(profileViewModelProvider.notifier).updateProfile(
-            name: _nameController.text.trim(),
-          );
+      await ref
+          .read(profileViewModelProvider.notifier)
+          .updateProfile(name: _nameController.text.trim());
       if (context.mounted) {
         context.pushReplacement(Routes.main);
       }

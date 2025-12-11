@@ -52,9 +52,7 @@ class _ProfilePictureScreenState extends ConsumerState<ProfilePictureScreen> {
           });
 
           // Complete the onboarding flow
-          ref
-              .read(onboardingViewModelProvider.notifier)
-              .snapProfilePicture();
+          ref.read(onboardingViewModelProvider.notifier).snapProfilePicture();
         } catch (e) {
           if (!mounted) return;
 
@@ -93,10 +91,7 @@ class _ProfilePictureScreenState extends ConsumerState<ProfilePictureScreen> {
         fit: StackFit.expand,
         children: [
           // Background image
-          Image.asset(
-            'assets/images/cameraman.jpg',
-            fit: BoxFit.cover,
-          ),
+          Image.asset('assets/images/cameraman.jpg', fit: BoxFit.cover),
 
           // White gradient from bottom
           Container(
@@ -104,11 +99,7 @@ class _ProfilePictureScreenState extends ConsumerState<ProfilePictureScreen> {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [
-                  Colors.transparent,
-                  Colors.white,
-                  Colors.white,
-                ],
+                colors: [Colors.transparent, Colors.white, Colors.white],
                 stops: const [0.0, 0.82, 1.0],
               ),
             ),
@@ -188,10 +179,14 @@ class _ProfilePictureScreenState extends ConsumerState<ProfilePictureScreen> {
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton(
-                      onPressed: _isUploading ? null : () => _openCamera(context),
+                      onPressed: _isUploading
+                          ? null
+                          : () => _openCamera(context),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF3620B3),
-                        disabledBackgroundColor: const Color(0xFF3620B3).withValues(alpha: 0.5),
+                        disabledBackgroundColor: const Color(
+                          0xFF3620B3,
+                        ).withValues(alpha: 0.5),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),

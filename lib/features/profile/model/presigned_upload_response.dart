@@ -23,7 +23,8 @@ class PresignedUploadData {
   final String imageType;
   final String imageUrl;
   final String message;
-  final String? presignedUrl; // Nullable - only present in presigned-upload-url response
+  final String?
+  presignedUrl; // Nullable - only present in presigned-upload-url response
 
   PresignedUploadData({
     required this.imageType,
@@ -47,11 +48,7 @@ class ResponseMeta {
   final String? timestamp;
   final Pagination? pagination;
 
-  ResponseMeta({
-    this.requestId,
-    this.timestamp,
-    this.pagination,
-  });
+  ResponseMeta({this.requestId, this.timestamp, this.pagination});
 
   factory ResponseMeta.fromJson(Map<String, dynamic> json) {
     return ResponseMeta(

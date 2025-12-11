@@ -2,13 +2,9 @@
 class ConfirmUploadRequest {
   final String imageUrl;
 
-  ConfirmUploadRequest({
-    required this.imageUrl,
-  });
+  ConfirmUploadRequest({required this.imageUrl});
 
   Map<String, dynamic> toJson() {
-    return {
-      'image_url': imageUrl,
-    };
+    return {'image_url': imageUrl};
   }
 }

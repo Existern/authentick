@@ -9,10 +9,7 @@ class PendingConnectionsData {
   @JsonKey(name: 'total_count')
   final int totalCount;
 
-  PendingConnectionsData({
-    required this.connections,
-    required this.totalCount,
-  });
+  PendingConnectionsData({required this.connections, required this.totalCount});
 
   factory PendingConnectionsData.fromJson(Map<String, dynamic> json) =>
       _$PendingConnectionsDataFromJson(json);

@@ -65,10 +65,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                       semanticsLabel: 'Sign in',
                     ),
                   ),
-                  Text(
-                    'sign_in'.tr(),
-                    style: AppTheme.title32,
-                  ),
+                  Text('sign_in'.tr(), style: AppTheme.title32),
                   const SizedBox(height: 24),
                   CommonTextFormField(
                     label: 'Email',
@@ -100,11 +97,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                 ],
               ),
             ),
-            Positioned(
-              top: 16,
-              left: 16,
-              child: CommonBackButton(),
-            ),
+            Positioned(top: 16, left: 16, child: CommonBackButton()),
           ],
         ),
       ),
