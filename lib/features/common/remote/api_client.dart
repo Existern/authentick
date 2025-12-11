@@ -54,11 +54,14 @@ class ApiClient {
     Options? options,
   }) async {
     try {
-      final response = await _dio.get<T>(
+      final response = await _dio.get(
         path,
         queryParameters: queryParameters,
         options: options,
       );
+      if (response.data == null) {
+        throw Exception('Response data is null');
+      }
       return response.data as T;
     } on DioException catch (e) {
       throw _handleError(e);
@@ -72,12 +75,15 @@ class ApiClient {
     Options? options,
   }) async {
     try {
-      final response = await _dio.post<T>(
+      final response = await _dio.post(
         path,
         data: data,
         queryParameters: queryParameters,
         options: options,
       );
+      if (response.data == null) {
+        throw Exception('Response data is null');
+      }
       return response.data as T;
     } on DioException catch (e) {
       throw _handleError(e);
@@ -91,12 +97,15 @@ class ApiClient {
     Options? options,
   }) async {
     try {
-      final response = await _dio.put<T>(
+      final response = await _dio.put(
         path,
         data: data,
         queryParameters: queryParameters,
         options: options,
       );
+      if (response.data == null) {
+        throw Exception('Response data is null');
+      }
       return response.data as T;
     } on DioException catch (e) {
       throw _handleError(e);
@@ -110,12 +119,15 @@ class ApiClient {
     Options? options,
   }) async {
     try {
-      final response = await _dio.patch<T>(
+      final response = await _dio.patch(
         path,
         data: data,
         queryParameters: queryParameters,
         options: options,
       );
+      if (response.data == null) {
+        throw Exception('Response data is null');
+      }
       return response.data as T;
     } on DioException catch (e) {
       throw _handleError(e);
@@ -129,12 +141,15 @@ class ApiClient {
     Options? options,
   }) async {
     try {
-      final response = await _dio.delete<T>(
+      final response = await _dio.delete(
         path,
         data: data,
         queryParameters: queryParameters,
         options: options,
       );
+      if (response.data == null) {
+        throw Exception('Response data is null');
+      }
       return response.data as T;
     } on DioException catch (e) {
       throw _handleError(e);
@@ -222,23 +237,8 @@ class _AuthInterceptor extends Interceptor {
       final hasTokens = await _secureStorage.hasValidTokens();
 
       if (hasTokens) {
-        // Only check expiry if we have tokens
-        final isExpired = await _secureStorage.isTokenExpired();
-
-        if (isExpired) {
-          debugPrint(
-            '${Constants.tag} [AuthInterceptor] 🔄 Token expired, refreshing...',
-          );
-
-          // Get refresh token
-          final refreshToken = await _secureStorage.getRefreshToken();
-          if (refreshToken != null) {
-            // Refresh the token
-            await _refreshToken(refreshToken);
-          }
-        }
-
-        // Get the latest access token
+        // Get the access token without checking expiry
+        // Token validation will happen via API calls, not time-based checks
         final token = await _secureStorage.getAccessToken();
 
         if (token != null && token.isNotEmpty) {
@@ -306,10 +306,20 @@ class _AuthInterceptor extends Interceptor {
 
   Future<void> _refreshToken(String refreshToken) async {
     try {
+      // Get current access token for Authorization header
+      final accessToken = await _secureStorage.getAccessToken();
+
+      final headers = {'Content-Type': 'application/json'};
+
+      // Add Authorization header if access token exists
+      if (accessToken != null && accessToken.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $accessToken';
+      }
+
       final dio = Dio(
         BaseOptions(
           baseUrl: '${Env.apiBaseUrl}${Env.apiVersion}',
-          headers: {'Content-Type': 'application/json'},
+          headers: headers,
         ),
       );
 

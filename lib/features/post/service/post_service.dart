@@ -5,6 +5,7 @@ import '../model/create_post_request.dart';
 import '../model/create_post_response.dart';
 import '../model/feed_response.dart';
 import '../model/like_response.dart';
+import '../model/post_detail_response.dart';
 import '../model/presigned_media_urls_request.dart';
 import '../model/presigned_media_urls_response.dart';
 
@@ -39,9 +40,7 @@ class PostService {
 
   /// Create a new post
   /// POST /posts
-  Future<CreatePostResponse> createPost(
-    CreatePostRequest request,
-  ) async {
+  Future<CreatePostResponse> createPost(CreatePostRequest request) async {
     try {
       final response = await _apiClient.post<Map<String, dynamic>>(
         '/posts',
@@ -75,8 +74,12 @@ class PostService {
           'duration': duration,
         },
       );
+      print('📥 Feed API Response Type: ${response.runtimeType}');
+      print('📥 Feed API Response: $response');
       return FeedResponse.fromJson(response);
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('❌ Feed API Error: $e');
+      print('❌ Stack Trace: $stackTrace');
       rethrow;
     }
   }
@@ -95,10 +98,7 @@ class PostService {
     try {
       final response = await _apiClient.get<Map<String, dynamic>>(
         '/posts/user/$userId',
-        queryParameters: {
-          'page': page,
-          'limit': limit,
-        },
+        queryParameters: {'page': page, 'limit': limit},
       );
       return FeedResponse.fromJson(response);
     } catch (e) {
@@ -129,6 +129,36 @@ class PostService {
     try {
       final response = await _apiClient.delete<Map<String, dynamic>>(
         '/posts/$postId/like',
+      );
+      return LikeResponse.fromJson(response);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Get a specific post by ID
+  /// GET /posts/{id}
+  /// Parameters:
+  /// - postId: Post ID
+  Future<PostDetailResponse> getPostById({required String postId}) async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/posts/$postId',
+      );
+      return PostDetailResponse.fromJson(response);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Delete a post
+  /// DELETE /posts/{id}
+  /// Parameters:
+  /// - postId: Post ID
+  Future<LikeResponse> deletePost({required String postId}) async {
+    try {
+      final response = await _apiClient.delete<Map<String, dynamic>>(
+        '/posts/$postId',
       );
       return LikeResponse.fromJson(response);
     } catch (e) {

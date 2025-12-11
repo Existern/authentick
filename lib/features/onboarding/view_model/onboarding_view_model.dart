@@ -117,11 +117,6 @@ class OnboardingViewModel extends _$OnboardingViewModel {
         '${Constants.tag} [OnboardingViewModel] ✅ Setting current step to: $targetStep',
       );
 
-      // Restore share moment state if needed
-      if (targetStep == OnboardingStep.shareFirstMoment) {
-        await _restoreShareMomentState();
-      }
-
       state = state.copyWith(
         currentStep: targetStep,
         completedSteps: completedSteps,
@@ -144,59 +139,6 @@ class OnboardingViewModel extends _$OnboardingViewModel {
     debugPrint(
       '${Constants.tag} [OnboardingViewModel] ========================================',
     );
-  }
-
-  Future<void> _restoreShareMomentState() async {
-    try {
-      debugPrint(
-        '${Constants.tag} [OnboardingViewModel] Restoring share moment state...',
-      );
-      final authRepo = ref.read(authenticationRepositoryProvider);
-      final user = await authRepo.getUserData();
-
-      if (user == null) {
-        debugPrint(
-          '${Constants.tag} [OnboardingViewModel] ❌ No user data found',
-        );
-        return;
-      }
-
-      final postService = ref.read(postServiceProvider);
-      final response = await postService.getUserPosts(
-        userId: user.id,
-        limit: 1,
-      );
-
-      if (response.success && response.data.posts.isNotEmpty) {
-        final post = response.data.posts.first;
-        final mediaUrl = post.media?.firstOrNull?.mediaUrl;
-
-        if (mediaUrl != null) {
-          debugPrint(
-            '${Constants.tag} [OnboardingViewModel] ✅ Restored post data',
-          );
-
-          String? formattedTime;
-          try {
-            final createdAtUtc = DateTime.parse(post.createdAt);
-            final createdAtLocal = createdAtUtc.toLocal();
-            formattedTime = DateFormat('h:mm a').format(createdAtLocal);
-          } catch (e) {
-            formattedTime = null;
-          }
-
-          state = state.copyWith(
-            firstPostMediaUrl: mediaUrl,
-            firstPostLocation: post.metadata?.location,
-            firstPostTime: formattedTime,
-          );
-        }
-      }
-    } catch (e) {
-      debugPrint(
-        '${Constants.tag} [OnboardingViewModel] ❌ Error restoring share moment state: $e',
-      );
-    }
   }
 
   /// Find the first pending step
@@ -237,8 +179,6 @@ class OnboardingViewModel extends _$OnboardingViewModel {
         return OnboardingStep.connectFriends;
       case 'capture_first_moment':
         return OnboardingStep.welcomeFirstMoment;
-      case 'share_first_moment':
-        return OnboardingStep.shareFirstMoment;
       default:
         debugPrint(
           '${Constants.tag} [OnboardingViewModel] Unknown API step: $apiStepName',
@@ -266,8 +206,6 @@ class OnboardingViewModel extends _$OnboardingViewModel {
         return 'find_friends'; // All friend-related steps map to find_friends
       case OnboardingStep.welcomeFirstMoment:
         return 'capture_first_moment';
-      case OnboardingStep.shareFirstMoment:
-        return 'share_first_moment';
       default:
         return null;
     }
@@ -295,7 +233,6 @@ class OnboardingViewModel extends _$OnboardingViewModel {
       OnboardingStep.contactsPermission,
       OnboardingStep.friendsList,
       OnboardingStep.welcomeFirstMoment,
-      OnboardingStep.shareFirstMoment,
       OnboardingStep.completed,
     ];
 
@@ -538,12 +475,22 @@ class OnboardingViewModel extends _$OnboardingViewModel {
 
   Future<void> captureFirstMoment() async {
     // Mark that user captured their first moment
-    // Navigate to share screen (normal flow, not skip-completed logic)
+    // Just mark as completed locally and move to next step
+    // No need to send 'complete' action to backend - not supported
+
+    // Mark as completed locally
+    final updatedCompletedSteps = Set<String>.from(state.completedSteps)
+      ..add('capture_first_moment');
+
     state = state.copyWith(
       hasCapturedFirstMoment: true,
-      currentStep: OnboardingStep.shareFirstMoment,
+      completedSteps: updatedCompletedSteps,
     );
-    await _saveCurrentStep(OnboardingStep.shareFirstMoment);
+
+    // Navigate to next step
+    final nextStep = _getNextStep(OnboardingStep.welcomeFirstMoment);
+    state = state.copyWith(currentStep: nextStep);
+    await _saveCurrentStep(nextStep);
   }
 
   Future<void> skipFirstMoment() async {
@@ -561,22 +508,9 @@ class OnboardingViewModel extends _$OnboardingViewModel {
       // Continue anyway - don't block user flow
     }
 
-    // Also skip share_first_moment since user can't share without capturing
-    try {
-      await service.updateOnboardingStep(
-        OnboardingStepRequest(step: 'share_first_moment'),
-      );
-    } catch (e) {
-      debugPrint(
-        '${Constants.tag} [OnboardingViewModel] Error skipping share first moment: $e',
-      );
-      // Continue anyway - don't block user flow
-    }
-
-    // Mark both as completed locally so future navigation skips them
+    // Mark as completed locally so future navigation skips it
     final updatedCompletedSteps = Set<String>.from(state.completedSteps)
-      ..add('capture_first_moment')
-      ..add('share_first_moment');
+      ..add('capture_first_moment');
 
     // Update state with completedSteps FIRST
     state = state.copyWith(
@@ -585,59 +519,7 @@ class OnboardingViewModel extends _$OnboardingViewModel {
     );
 
     // Now _getNextStep will use the updated completedSteps
-    final nextStep = _getNextStep(OnboardingStep.shareFirstMoment);
-    state = state.copyWith(currentStep: nextStep);
-    await _saveCurrentStep(nextStep);
-  }
-
-  Future<void> completeShareMoment() async {
-    try {
-      final service = ref.read(onboardingServiceProvider);
-      await service.updateOnboardingStep(
-        OnboardingStepRequest(step: 'share_first_moment', action: 'complete'),
-      );
-    } catch (e) {
-      debugPrint(
-        '${Constants.tag} [OnboardingViewModel] Error completing share moment: $e',
-      );
-      // Continue anyway - don't block user flow
-    }
-
-    // Mark as completed locally
-    final updatedCompletedSteps = Set<String>.from(state.completedSteps)
-      ..add('share_first_moment');
-
-    // Update state with completedSteps FIRST
-    state = state.copyWith(completedSteps: updatedCompletedSteps);
-
-    // Now _getNextStep will use the updated completedSteps
-    final nextStep = _getNextStep(OnboardingStep.shareFirstMoment);
-    state = state.copyWith(currentStep: nextStep);
-    await _saveCurrentStep(nextStep);
-  }
-
-  Future<void> skipShareMoment() async {
-    try {
-      final service = ref.read(onboardingServiceProvider);
-      await service.updateOnboardingStep(
-        OnboardingStepRequest(step: 'share_first_moment'),
-      );
-    } catch (e) {
-      debugPrint(
-        '${Constants.tag} [OnboardingViewModel] Error skipping share moment: $e',
-      );
-      // Continue anyway - don't block user flow
-    }
-
-    // Mark as completed locally so future navigation skips it
-    final updatedCompletedSteps = Set<String>.from(state.completedSteps)
-      ..add('share_first_moment');
-
-    // Update state with completedSteps FIRST
-    state = state.copyWith(completedSteps: updatedCompletedSteps);
-
-    // Now _getNextStep will use the updated completedSteps
-    final nextStep = _getNextStep(OnboardingStep.shareFirstMoment);
+    final nextStep = _getNextStep(OnboardingStep.welcomeFirstMoment);
     state = state.copyWith(currentStep: nextStep);
     await _saveCurrentStep(nextStep);
   }
@@ -703,7 +585,7 @@ class OnboardingViewModel extends _$OnboardingViewModel {
         debugPrint(
           '${Constants.tag} [OnboardingViewModel] ❌ Contacts permission denied',
         );
-        
+
         // Call API to skip find_friends step
         try {
           final service = ref.read(onboardingServiceProvider);
@@ -734,7 +616,7 @@ class OnboardingViewModel extends _$OnboardingViewModel {
       debugPrint(
         '${Constants.tag} [OnboardingViewModel] ❗ Error requesting contacts permission: $error',
       );
-      
+
       // Call API to skip find_friends step
       try {
         final service = ref.read(onboardingServiceProvider);
@@ -892,11 +774,6 @@ class OnboardingViewModel extends _$OnboardingViewModel {
         break;
       case OnboardingStep.welcomeFirstMoment:
         state = currentState.copyWith(currentStep: OnboardingStep.friendsList);
-        break;
-      case OnboardingStep.shareFirstMoment:
-        state = currentState.copyWith(
-          currentStep: OnboardingStep.welcomeFirstMoment,
-        );
         break;
       default:
         break;

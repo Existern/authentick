@@ -698,7 +698,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
   Widget _buildFriendCard(ConnectionUser user) {
     // Get the connected friend user
     final displayName = user.fullName;
-    final username = '@${user.username}';
+    final username = '@${user.username ?? 'user'}';
     final profileImage = user.profileImage;
 
     return Container(
@@ -764,7 +764,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
   Widget _buildFollowerCard(ConnectionUser user) {
     // Get the follower user
     final displayName = user.fullName;
-    final username = '@${user.username}';
+    final username = '@${user.username ?? 'user'}';
     final profileImage = user.profileImage;
 
     return Container(
@@ -830,7 +830,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
   Widget _buildFollowingCard(ConnectionUser user) {
     // Get the user being followed
     final displayName = user.fullName;
-    final username = '@${user.username}';
+    final username = '@${user.username ?? 'user'}';
     final profileImage = user.profileImage;
 
     return Container(

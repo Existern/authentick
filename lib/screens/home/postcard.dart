@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_mvvm_riverpod/extensions/build_context_extension.dart';
 import 'package:flutter_mvvm_riverpod/features/post/service/post_service.dart';
+import 'package:flutter_mvvm_riverpod/features/post/repository/post_like_repository.dart';
 import 'package:flutter_mvvm_riverpod/theme/app_theme.dart';
 
 class PostCard extends ConsumerStatefulWidget {
@@ -37,30 +38,21 @@ class PostCard extends ConsumerStatefulWidget {
 }
 
 class _PostCardState extends ConsumerState<PostCard> {
-  late bool isLiked;
-  late int currentLikesCount;
   bool isProcessing = false;
 
   @override
   void initState() {
     super.initState();
-    isLiked = widget.initialIsLiked;
-    currentLikesCount = widget.likesCount;
-  }
-
-  @override
-  void didUpdateWidget(PostCard oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // Sync with latest data from feed if not currently processing
-    if (!isProcessing && oldWidget.postId == widget.postId) {
-      if (oldWidget.likesCount != widget.likesCount ||
-          oldWidget.initialIsLiked != widget.initialIsLiked) {
-        setState(() {
-          isLiked = widget.initialIsLiked;
-          currentLikesCount = widget.likesCount;
-        });
-      }
-    }
+    // Initialize the post state in the global manager
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref
+          .read(postLikeManagerProvider.notifier)
+          .initializePost(
+            widget.postId,
+            widget.initialIsLiked,
+            widget.likesCount,
+          );
+    });
   }
 
   String _formatTimeAgo(String dateTimeStr) {
@@ -187,20 +179,26 @@ class _PostCardState extends ConsumerState<PostCard> {
   Future<void> _handleLikeToggle() async {
     if (isProcessing) return;
 
+    final likeManager = ref.read(postLikeManagerProvider.notifier);
+    final currentState = ref.read(postLikeManagerProvider)[widget.postId];
+
+    if (currentState == null) return;
+
+    // Store previous state for potential revert
+    final previousIsLiked = currentState.isLiked;
+    final previousLikesCount = currentState.likesCount;
+
     setState(() {
       isProcessing = true;
-      // Optimistic update
-      final wasLiked = isLiked;
-      isLiked = !wasLiked;
-      currentLikesCount = wasLiked
-          ? (currentLikesCount - 1).clamp(0, double.infinity).toInt()
-          : currentLikesCount + 1;
     });
+
+    // Optimistic update in global state
+    likeManager.toggleLike(widget.postId);
 
     try {
       final postService = ref.read(postServiceProvider);
-      
-      if (isLiked) {
+
+      if (!previousIsLiked) {
         await postService.likePost(postId: widget.postId);
       } else {
         await postService.unlikePost(postId: widget.postId);
@@ -208,25 +206,35 @@ class _PostCardState extends ConsumerState<PostCard> {
     } catch (e) {
       // Revert optimistic update on error
       if (mounted) {
-        setState(() {
-          isLiked = !isLiked;
-          currentLikesCount = widget.likesCount;
-          isProcessing = false;
-        });
+        likeManager.revertLike(
+          widget.postId,
+          previousIsLiked,
+          previousLikesCount,
+        );
         context.showErrorSnackBar('Failed to update like. Please try again.');
       }
-      return;
-    }
-
-    if (mounted) {
-      setState(() {
-        isProcessing = false;
-      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          isProcessing = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Watch the global state to rebuild when likes change
+    final allLikeStates = ref.watch(postLikeManagerProvider);
+    final likeState =
+        allLikeStates[widget.postId] ??
+        PostLikeState(
+          isLiked: widget.initialIsLiked,
+          likesCount: widget.likesCount,
+        );
+    final isLiked = likeState.isLiked;
+    final currentLikesCount = likeState.likesCount;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

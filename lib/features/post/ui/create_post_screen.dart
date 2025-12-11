@@ -410,262 +410,277 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      resizeToAvoidBottomInset: true,
       body: _selectedImage == null
           ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                // Header
-                SafeArea(
-                  bottom: false,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 12.0,
-                    ),
-                    child: Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(
-                            Icons.arrow_back,
-                            color: Colors.black87,
-                          ),
-                          onPressed: () => Navigator.of(context).pop(),
-                        ),
-                        const Spacer(),
-                        const Text(
-                          'New moment',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const Spacer(),
-                        const SizedBox(width: 48), // Balance the back button
-                      ],
-                    ),
-                  ),
+          : SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: MediaQuery.of(context).size.height,
                 ),
-
-                // Image - Natural aspect ratio container
-                Container(
-                  width: double.infinity,
-                  child: Stack(
+                child: IntrinsicHeight(
+                  child: Column(
                     children: [
-                      Image.file(
-                        File(_selectedImage!.path),
-                        width: double.infinity,
-                        fit: BoxFit.fitWidth,
+                      // Header
+                      SafeArea(
+                        bottom: false,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                            vertical: 12.0,
+                          ),
+                          child: Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.arrow_back,
+                                  color: Colors.black87,
+                                ),
+                                onPressed: () => Navigator.of(context).pop(),
+                              ),
+                              const Spacer(),
+                              const Text(
+                                'New moment',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              const Spacer(),
+                              const SizedBox(
+                                width: 48,
+                              ), // Balance the back button
+                            ],
+                          ),
+                        ),
                       ),
-                      // Location overlay on image (centered at bottom) - Auto-detected location
-                      if ((_location != null &&
-                              _locationPrivacyLevel !=
-                                  LocationPrivacyLevel.none) ||
-                          _isLocationLoading)
-                        Positioned(
-                          bottom: 16,
+
+                      // Image - Natural aspect ratio container
+                      Container(
+                        width: double.infinity,
+                        child: Stack(
+                          children: [
+                            Image.file(
+                              File(_selectedImage!.path),
+                              width: double.infinity,
+                              fit: BoxFit.fitWidth,
+                            ),
+                            // Location overlay on image (centered at bottom) - Auto-detected location
+                            if ((_location != null &&
+                                    _locationPrivacyLevel !=
+                                        LocationPrivacyLevel.none) ||
+                                _isLocationLoading)
+                              Positioned(
+                                bottom: 16,
+                                left: 16,
+                                right: 16,
+                                child: Center(
+                                  child: GestureDetector(
+                                    onTap: _isLocationLoading
+                                        ? null
+                                        : _showLocationPrivacyDialog,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 8,
+                                      ),
+                                      constraints: BoxConstraints(
+                                        maxWidth:
+                                            MediaQuery.of(context).size.width *
+                                            0.9,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.7,
+                                        ),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          if (_isLocationLoading)
+                                            const SizedBox(
+                                              width: 16,
+                                              height: 16,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<
+                                                      Color
+                                                    >(Colors.white),
+                                              ),
+                                            )
+                                          else
+                                            Icon(
+                                              _getLocationIcon(),
+                                              color: Colors.white,
+                                              size: 16,
+                                            ),
+                                          const SizedBox(width: 6),
+                                          Flexible(
+                                            child: Text(
+                                              _isLocationLoading
+                                                  ? 'Getting location...'
+                                                  : _location!,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w500,
+                                                height: 1.2,
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 2,
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ),
+                                          if (!_isLocationLoading)
+                                            const SizedBox(width: 4),
+                                          if (!_isLocationLoading)
+                                            const Icon(
+                                              Icons.edit,
+                                              color: Colors.white70,
+                                              size: 12,
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                            // Add location button when no location is shared
+                            if (_placemark != null &&
+                                _locationPrivacyLevel ==
+                                    LocationPrivacyLevel.none &&
+                                !_isLocationLoading)
+                              Positioned(
+                                bottom: 16,
+                                right: 16,
+                                child: GestureDetector(
+                                  onTap: _showLocationPrivacyDialog,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.7,
+                                      ),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: const Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.add_location_alt,
+                                          color: Colors.white,
+                                          size: 16,
+                                        ),
+                                        SizedBox(width: 4),
+                                        Text(
+                                          'Add location',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+
+                      // Caption - Flexible height
+                      Container(
+                        color: Colors.white,
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // Caption input
+                            TextField(
+                              controller: _captionController,
+                              textAlign: TextAlign.center,
+                              decoration: const InputDecoration(
+                                hintText: 'Add a caption...',
+                                border: InputBorder.none,
+                                hintStyle: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                color: Colors.black87,
+                              ),
+                              maxLines: null,
+                              minLines: 1,
+                              maxLength: 500,
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Privacy selector - Fixed above button
+                      Container(
+                        color: Colors.white,
+                        child: PrivacySelector(
+                          currentPrivacy: _privacy,
+                          onPrivacyChanged: (privacy) {
+                            setState(() {
+                              _privacy = privacy;
+                            });
+                          },
+                        ),
+                      ),
+
+                      // Share button at the bottom
+                      Container(
+                        color: Colors.white,
+                        padding: EdgeInsets.only(
                           left: 16,
                           right: 16,
-                          child: Center(
-                            child: GestureDetector(
-                              onTap: _isLocationLoading
-                                  ? null
-                                  : _showLocationPrivacyDialog,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                                constraints: BoxConstraints(
-                                  maxWidth:
-                                      MediaQuery.of(context).size.width * 0.9,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.7),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    if (_isLocationLoading)
-                                      const SizedBox(
-                                        width: 16,
-                                        height: 16,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                                Colors.white,
-                                              ),
-                                        ),
-                                      )
-                                    else
-                                      Icon(
-                                        _getLocationIcon(),
-                                        color: Colors.white,
-                                        size: 16,
-                                      ),
-                                    const SizedBox(width: 6),
-                                    Flexible(
-                                      child: Text(
-                                        _isLocationLoading
-                                            ? 'Getting location...'
-                                            : _location!,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w500,
-                                          height: 1.2,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 2,
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                    if (!_isLocationLoading)
-                                      const SizedBox(width: 4),
-                                    if (!_isLocationLoading)
-                                      const Icon(
-                                        Icons.edit,
-                                        color: Colors.white70,
-                                        size: 12,
-                                      ),
-                                  ],
-                                ),
+                          top: 8,
+                          bottom: MediaQuery.of(context).padding.bottom + 16,
+                        ),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _submitPost,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF3620B3),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                          ),
-                        ),
-
-                      // Add location button when no location is shared
-                      if (_placemark != null &&
-                          _locationPrivacyLevel == LocationPrivacyLevel.none &&
-                          !_isLocationLoading)
-                        Positioned(
-                          bottom: 16,
-                          right: 16,
-                          child: GestureDetector(
-                            onTap: _showLocationPrivacyDialog,
-                            child: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.7),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.add_location_alt,
-                                    color: Colors.white,
-                                    size: 16,
-                                  ),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'Add location',
+                            child: _isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Share this moment',
                                     style: TextStyle(
                                       color: Colors.white,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w500,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
-                                ],
-                              ),
-                            ),
                           ),
                         ),
+                      ),
                     ],
                   ),
                 ),
-
-                // Caption - Scrollable
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Container(
-                      color: Colors.white,
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          // Caption input
-                          TextField(
-                            controller: _captionController,
-                            textAlign: TextAlign.center,
-                            decoration: const InputDecoration(
-                              hintText: 'Add a caption...',
-                              border: InputBorder.none,
-                              hintStyle: TextStyle(
-                                color: Colors.grey,
-                                fontSize: 16,
-                              ),
-                            ),
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Colors.black87,
-                            ),
-                            maxLines: 2,
-                            minLines: 1,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Privacy selector - Fixed above button
-                Container(
-                  color: Colors.white,
-                  child: PrivacySelector(
-                    currentPrivacy: _privacy,
-                    onPrivacyChanged: (privacy) {
-                      setState(() {
-                        _privacy = privacy;
-                      });
-                    },
-                  ),
-                ),
-
-                // Share button at the bottom
-                Container(
-                  color: Colors.white,
-                  padding: EdgeInsets.only(
-                    left: 16,
-                    right: 16,
-                    top: 8,
-                    bottom: MediaQuery.of(context).padding.bottom + 16,
-                  ),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _submitPost,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF3620B3),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : const Text(
-                              'Share this moment',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
     );
   }

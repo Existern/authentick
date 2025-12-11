@@ -63,7 +63,27 @@ class _MyHomeState extends ConsumerState<MyHome> {
             Expanded(
               child: feedAsync.when(
                 data: (feedResponse) {
-                  final posts = feedResponse.data.posts;
+                  if (feedResponse.data == null) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            size: 64,
+                            color: Colors.grey,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No feed data available',
+                            style: TextStyle(fontSize: 18, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  final posts = feedResponse.data!.posts;
 
                   if (posts.isEmpty) {
                     return Center(
@@ -95,8 +115,8 @@ class _MyHomeState extends ConsumerState<MyHome> {
 
                         return PostCard(
                           postId: post.id,
-                          username: post.user.username ?? 'User',
-                          profileImage: post.user.profileImage,
+                          username: post.user?.username ?? 'User',
+                          profileImage: post.user?.profileImage,
                           postImage: firstMedia?.mediaUrl,
                           content: post.content,
                           location: post.metadata?.location,

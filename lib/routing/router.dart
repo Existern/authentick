@@ -19,6 +19,7 @@ import '../features/profile/model/profile.dart';
 import '../features/profile/ui/account_info_screen.dart';
 import '../features/profile/ui/appearances_screen.dart';
 import '../features/profile/ui/languages_screen.dart';
+import '../screens/post/post_detail_screen.dart';
 import 'routes.dart';
 
 enum SlideDirection { right, left, up, down }
@@ -184,6 +185,13 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: Routes.waitlist,
       pageBuilder: (context, state) => state.slidePage(const WaitlistScreen()),
+    ),
+    GoRoute(
+      path: Routes.postDetail,
+      pageBuilder: (context, state) {
+        final postId = state.pathParameters['postId']!;
+        return state.slidePage(PostDetailScreen(postId: postId));
+      },
     ),
   ],
 );

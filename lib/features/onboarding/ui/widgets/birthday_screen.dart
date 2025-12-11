@@ -8,40 +8,9 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../extensions/build_context_extension.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../authentication/repository/authentication_repository.dart';
 import '../../../profile/repository/profile_repository.dart';
 import '../../view_model/onboarding_view_model.dart';
-
-// Custom formatter for birthday: DD MM YYYY format
-class BirthdayFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    // Remove any non-numeric characters
-    String text = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
-
-    // Limit to 8 digits (DDMMYYYY)
-    if (text.length > 8) {
-      text = text.substring(0, 8);
-    }
-
-    // Add spaces after DD and MM
-    String formatted = '';
-    if (text.length > 4) {
-      formatted = '${text.substring(0, 2)} ${text.substring(2, 4)} ${text.substring(4)}';
-    } else if (text.length > 2) {
-      formatted = '${text.substring(0, 2)} ${text.substring(2)}';
-    } else {
-      formatted = text;
-    }
-
-    return TextEditingValue(
-      text: formatted,
-      selection: TextSelection.collapsed(offset: formatted.length),
-    );
-  }
-}
 
 class BirthdayScreen extends ConsumerStatefulWidget {
   const BirthdayScreen({super.key});
@@ -51,33 +20,82 @@ class BirthdayScreen extends ConsumerStatefulWidget {
 }
 
 class _BirthdayScreenState extends ConsumerState<BirthdayScreen> {
-  final TextEditingController _birthdayController = TextEditingController();
   String? _errorMessage;
   bool _isUpdating = false;
+
+  // Date picker state
+  int _selectedDay = 1;
+  int _selectedMonth = 1; // January
+  int _selectedYear = 2007;
+
+  final List<String> _months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+
+  // Initialize controllers inline
+  final FixedExtentScrollController _dayController =
+      FixedExtentScrollController(initialItem: 0);
+  final FixedExtentScrollController _monthController =
+      FixedExtentScrollController(initialItem: 0);
+  final FixedExtentScrollController _yearController =
+      FixedExtentScrollController(initialItem: 107); // 2007 - 1900
 
   @override
   void initState() {
     super.initState();
-    _birthdayController.addListener(_onBirthdayChanged);
+    // Save current step so user returns to birthday screen on app restart
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authRepo = ref.read(authenticationRepositoryProvider);
+      authRepo.saveCurrentOnboardingStep('birthday');
+      _updateBirthday();
+    });
   }
 
   @override
   void dispose() {
-    _birthdayController.removeListener(_onBirthdayChanged);
-    _birthdayController.dispose();
+    _dayController.dispose();
+    _monthController.dispose();
+    _yearController.dispose();
     super.dispose();
   }
 
-  void _onBirthdayChanged() {
-    // Store the raw birthday without spaces
-    final rawBirthday = _birthdayController.text.replaceAll(' ', '');
-    ref.read(onboardingViewModelProvider.notifier).updateBirthday(rawBirthday);
+  void _updateBirthday() {
+    // Format: DDMMYYYY
+    final day = _selectedDay.toString().padLeft(2, '0');
+    final month = _selectedMonth.toString().padLeft(2, '0');
+    final year = _selectedYear.toString();
+    final birthday = '$day$month$year';
 
-    // Clear error message when user types
+    ref.read(onboardingViewModelProvider.notifier).updateBirthday(birthday);
+
+    // Clear error message when selection changes
     if (_errorMessage != null) {
       setState(() {
         _errorMessage = null;
       });
+    }
+  }
+
+  int _getDaysInMonth(int month, int year) {
+    if (month == 2) {
+      // February
+      bool isLeapYear = (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+      return isLeapYear ? 29 : 28;
+    } else if ([4, 6, 9, 11].contains(month)) {
+      return 30;
+    } else {
+      return 31;
     }
   }
 
@@ -90,8 +108,8 @@ class _BirthdayScreenState extends ConsumerState<BirthdayScreen> {
   }
 
   Future<void> _submitBirthday() async {
-    final rawBirthday = _birthdayController.text.replaceAll(' ', '');
-    if (rawBirthday.length != 8) return;
+    final state = ref.read(onboardingViewModelProvider);
+    if (state.birthday.length != 8) return;
 
     setState(() {
       _isUpdating = true;
@@ -100,7 +118,7 @@ class _BirthdayScreenState extends ConsumerState<BirthdayScreen> {
 
     try {
       // Convert DDMMYYYY to YYYY-MM-DD
-      final apiDateFormat = _convertToApiFormat(rawBirthday);
+      final apiDateFormat = _convertToApiFormat(state.birthday);
 
       final repository = ref.read(profileRepositoryProvider);
       await repository.updateProfile(dateOfBirth: apiDateFormat);
@@ -244,31 +262,84 @@ class _BirthdayScreenState extends ConsumerState<BirthdayScreen> {
                     textAlign: TextAlign.center,
                   ),
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 48),
 
-                  // Birthday input
-                  TextField(
-                    controller: _birthdayController,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 38,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.mono100,
-                      letterSpacing: 2.0,
+                  // Date picker wheels
+                  SizedBox(
+                    height: 200,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Day picker
+                        Expanded(
+                          child: _buildWheelPicker(
+                            controller: _dayController,
+                            itemCount: _getDaysInMonth(
+                              _selectedMonth,
+                              _selectedYear,
+                            ),
+                            onSelectedItemChanged: (index) {
+                              setState(() {
+                                _selectedDay = index + 1;
+                              });
+                              _updateBirthday();
+                            },
+                            itemBuilder: (index) => (index + 1).toString(),
+                          ),
+                        ),
+                        // Month picker
+                        Expanded(
+                          flex: 2,
+                          child: _buildWheelPicker(
+                            controller: _monthController,
+                            itemCount: 12,
+                            onSelectedItemChanged: (index) {
+                              setState(() {
+                                _selectedMonth = index + 1;
+                                // Adjust day if it exceeds the new month's max days
+                                int maxDays = _getDaysInMonth(
+                                  _selectedMonth,
+                                  _selectedYear,
+                                );
+                                if (_selectedDay > maxDays) {
+                                  _selectedDay = maxDays;
+                                  _dayController.jumpToItem(_selectedDay - 1);
+                                }
+                              });
+                              _updateBirthday();
+                            },
+                            itemBuilder: (index) => _months[index],
+                          ),
+                        ),
+                        // Year picker
+                        Expanded(
+                          flex: 2,
+                          child: _buildWheelPicker(
+                            controller: _yearController,
+                            itemCount: 125, // 1900 to 2024
+                            onSelectedItemChanged: (index) {
+                              setState(() {
+                                _selectedYear = 1900 + index;
+                                // Adjust day if it's Feb 29 and not a leap year
+                                int maxDays = _getDaysInMonth(
+                                  _selectedMonth,
+                                  _selectedYear,
+                                );
+                                if (_selectedDay > maxDays) {
+                                  _selectedDay = maxDays;
+                                  _dayController.jumpToItem(_selectedDay - 1);
+                                }
+                              });
+                              _updateBirthday();
+                            },
+                            itemBuilder: (index) => (1900 + index).toString(),
+                          ),
+                        ),
+                      ],
                     ),
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      hintText: 'DD MM YYYY',
-                      hintStyle: TextStyle(
-                        fontSize: 38,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.mono40,
-                        letterSpacing: 2.0,
-                      ),
-                    ),
-                    inputFormatters: [BirthdayFormatter()],
-                    keyboardType: TextInputType.number,
                   ),
+
+                  const SizedBox(height: 16),
 
                   // Error message
                   if (_errorMessage != null) ...[
@@ -296,9 +367,7 @@ class _BirthdayScreenState extends ConsumerState<BirthdayScreen> {
                     width: double.infinity,
                     height: 54,
                     child: ElevatedButton(
-                      onPressed: state.birthday.length == 8 && !_isUpdating
-                          ? _submitBirthday
-                          : null,
+                      onPressed: !_isUpdating ? _submitBirthday : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF4300FF),
                         foregroundColor: Colors.white,
@@ -335,6 +404,52 @@ class _BirthdayScreenState extends ConsumerState<BirthdayScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildWheelPicker({
+    required FixedExtentScrollController controller,
+    required int itemCount,
+    required ValueChanged<int> onSelectedItemChanged,
+    required String Function(int) itemBuilder,
+  }) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // Selection indicator
+        Container(
+          height: 50,
+          decoration: BoxDecoration(
+            color: const Color(0xFF4300FF).withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+        // Wheel picker
+        ListWheelScrollView.useDelegate(
+          controller: controller,
+          itemExtent: 50,
+          perspective: 0.003,
+          diameterRatio: 1.5,
+          physics: const FixedExtentScrollPhysics(),
+          onSelectedItemChanged: onSelectedItemChanged,
+          childDelegate: ListWheelChildBuilderDelegate(
+            builder: (context, index) {
+              if (index < 0 || index >= itemCount) return null;
+              return Center(
+                child: Text(
+                  itemBuilder(index),
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.mono100,
+                  ),
+                ),
+              );
+            },
+            childCount: itemCount,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -29,10 +29,7 @@ class AccountTypeScreen extends ConsumerWidget {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFFF8F7FF),
-            Color(0xFFEDE9FF),
-          ],
+          colors: [Color(0xFFF8F7FF), Color(0xFFEDE9FF)],
         ),
       ),
       child: SafeArea(
@@ -67,34 +64,30 @@ class AccountTypeScreen extends ConsumerWidget {
                     ],
                   ),
                   const Spacer(),
-                  const SizedBox(width: 48), 
+                  const SizedBox(width: 48),
                 ],
               ),
-              
+
               const SizedBox(height: 40),
-              
+
               // Title
               Text(
                 'Choose an account',
-                style: AppTheme.title24.copyWith(
-                  color: AppColors.mono100,
-                ),
+                style: AppTheme.title24.copyWith(color: AppColors.mono100),
                 textAlign: TextAlign.center,
               ),
-              
+
               const SizedBox(height: 8),
-              
+
               // Subtitle
               Text(
                 'to continue to Authentick',
-                style: AppTheme.body16.copyWith(
-                  color: AppColors.mono80,
-                ),
+                style: AppTheme.body16.copyWith(color: AppColors.mono80),
                 textAlign: TextAlign.center,
               ),
-              
+
               const SizedBox(height: 40),
-              
+
               // Account type options
               Expanded(
                 child: Column(
@@ -104,76 +97,49 @@ class AccountTypeScreen extends ConsumerWidget {
                       title: 'Personal Account',
                       subtitle: 'For personal use',
                       icon: Icons.person_outline,
-                      isSelected: state.selectedAccountType == AccountType.personal,
-                      onTap: () => viewModel.selectAccountType(AccountType.personal),
+                      isSelected:
+                          state.selectedAccountType == AccountType.personal,
+                      onTap: () =>
+                          viewModel.selectAccountType(AccountType.personal),
                     ),
-                    
+
                     const SizedBox(height: 16),
-                    
+
                     _AccountTypeOption(
                       type: AccountType.business,
                       title: 'Business Account',
                       subtitle: 'For business use',
                       icon: Icons.business_outlined,
-                      isSelected: state.selectedAccountType == AccountType.business,
-                      onTap: () => viewModel.selectAccountType(AccountType.business),
+                      isSelected:
+                          state.selectedAccountType == AccountType.business,
+                      onTap: () =>
+                          viewModel.selectAccountType(AccountType.business),
                     ),
-                    
+
                     const SizedBox(height: 16),
-                    
+
                     _AccountTypeOption(
                       type: AccountType.creator,
                       title: 'Creator Account',
                       subtitle: 'Use another account',
                       icon: Icons.star_outline,
-                      isSelected: state.selectedAccountType == AccountType.creator,
-                      onTap: () => viewModel.selectAccountType(AccountType.creator),
+                      isSelected:
+                          state.selectedAccountType == AccountType.creator,
+                      onTap: () =>
+                          viewModel.selectAccountType(AccountType.creator),
                     ),
                   ],
                 ),
               ),
-              
+
               // Continue button
               PrimaryButton(
                 text: 'Continue',
                 onPressed: viewModel.completeOnboarding,
                 isEnable: state.selectedAccountType != null,
               ),
-              
+
               const SizedBox(height: 32),
-              
-              // Terms text
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: RichText(
-                  textAlign: TextAlign.center,
-                  text: TextSpan(
-                    style: AppTheme.body12.copyWith(
-                      color: AppColors.mono60,
-                      height: 1.4,
-                    ),
-                    children: [
-                      const TextSpan(text: 'By continuing, you agree to Authentick\'s '),
-                      TextSpan(
-                        text: 'terms of service',
-                        style: AppTheme.body12.copyWith(
-                          color: AppColors.blueberry100,
-                          decoration: TextDecoration.underline,
-                        ),
-                      ),
-                      const TextSpan(text: ' and '),
-                      TextSpan(
-                        text: 'privacy policy',
-                        style: AppTheme.body12.copyWith(
-                          color: AppColors.blueberry100,
-                          decoration: TextDecoration.underline,
-                        ),
-                      ),
-                      const TextSpan(text: '.'),
-                    ],
-                  ),
-                ),
-              ),
             ],
           ),
         ),
@@ -228,16 +194,12 @@ class _AccountTypeOption extends StatelessWidget {
                 color: isSelected ? AppColors.blueberry100 : AppColors.mono0,
               ),
               child: isSelected
-                  ? const Icon(
-                      Icons.check,
-                      color: AppColors.mono0,
-                      size: 16,
-                    )
+                  ? const Icon(Icons.check, color: AppColors.mono0, size: 16)
                   : null,
             ),
-            
+
             const SizedBox(width: 16),
-            
+
             // Icon
             Container(
               width: 48,
@@ -252,9 +214,9 @@ class _AccountTypeOption extends StatelessWidget {
                 size: 24,
               ),
             ),
-            
+
             const SizedBox(width: 16),
-            
+
             // Text content
             Expanded(
               child: Column(
@@ -262,16 +224,12 @@ class _AccountTypeOption extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: AppTheme.title16.copyWith(
-                      color: AppColors.mono100,
-                    ),
+                    style: AppTheme.title16.copyWith(color: AppColors.mono100),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: AppTheme.body14.copyWith(
-                      color: AppColors.mono60,
-                    ),
+                    style: AppTheme.body14.copyWith(color: AppColors.mono60),
                   ),
                 ],
               ),
