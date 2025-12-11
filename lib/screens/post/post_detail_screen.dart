@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 
 import '../../extensions/build_context_extension.dart';
 import '../../features/post/repository/post_detail_repository.dart';
+import '../../features/post/repository/post_like_repository.dart';
 import '../../features/post/service/post_service.dart';
 import '../../theme/app_theme.dart';
 
@@ -153,12 +154,28 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
     }
   }
 
-  Future<void> _handleLikeToggle(bool currentIsLiked) async {
+  Future<void> _handleLikeToggle(
+    bool currentIsLiked,
+    int currentLikesCount,
+  ) async {
     if (_isLiking) return;
 
     setState(() {
       _isLiking = true;
     });
+
+    // Store previous state for potential revert
+    final previousIsLiked = currentIsLiked;
+    final previousLikesCount = currentLikesCount;
+
+    // Optimistic update via postLikeManager
+    final likeManager = ref.read(postLikeManagerProvider.notifier);
+    likeManager.initializePost(
+      widget.postId,
+      currentIsLiked,
+      currentLikesCount,
+    );
+    likeManager.toggleLike(widget.postId);
 
     try {
       final postService = ref.read(postServiceProvider);
@@ -169,9 +186,15 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
         await postService.likePost(postId: widget.postId);
       }
 
-      // Refresh the post data
-      ref.invalidate(postDetailProvider(postId: widget.postId));
+      // Successfully updated - no need to refetch, optimistic update is already applied
     } catch (e) {
+      // Revert the optimistic update on error
+      likeManager.revertLike(
+        widget.postId,
+        previousIsLiked,
+        previousLikesCount,
+      );
+
       if (mounted) {
         context.showErrorSnackBar('Failed to update like. Please try again.');
       }
@@ -203,6 +226,20 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                 post.user?.firstName != null && post.user?.lastName != null
                 ? '${post.user?.firstName} ${post.user?.lastName}'
                 : post.user?.username ?? 'User';
+
+            // Initialize and watch like state from postLikeManager
+            final likeManager = ref.read(postLikeManagerProvider.notifier);
+            likeManager.initializePost(
+              widget.postId,
+              post.isLiked ?? false,
+              post.likesCount ?? 0,
+            );
+            final likeState =
+                ref.watch(postLikeManagerProvider)[widget.postId] ??
+                PostLikeState(
+                  isLiked: post.isLiked ?? false,
+                  likesCount: post.likesCount ?? 0,
+                );
 
             return Stack(
               children: [
@@ -492,7 +529,8 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                               onTap: _isLiking
                                   ? null
                                   : () => _handleLikeToggle(
-                                      post.isLiked ?? false,
+                                      likeState.isLiked,
+                                      likeState.likesCount,
                                     ),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
@@ -516,7 +554,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                                             ),
                                           )
                                         : SvgPicture.asset(
-                                            (post.isLiked ?? false)
+                                            likeState.isLiked
                                                 ? 'assets/images/liked_star.svg'
                                                 : 'assets/images/star.svg',
                                             width: 20,
@@ -524,7 +562,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                                           ),
                                     const SizedBox(width: 6),
                                     Text(
-                                      _formatLikeCount(post.likesCount ?? 0),
+                                      _formatLikeCount(likeState.likesCount),
                                       style: AppTheme.body14.copyWith(
                                         color: Colors.white,
                                         fontWeight: FontWeight.w500,

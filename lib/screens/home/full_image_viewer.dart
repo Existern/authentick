@@ -24,9 +24,7 @@ class FullImageViewer extends ConsumerWidget {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
-              child: CircularProgressIndicator(
-                color: Colors.white,
-              ),
+              child: CircularProgressIndicator(color: Colors.white),
             );
           }
 
@@ -43,26 +41,20 @@ class FullImageViewer extends ConsumerWidget {
                   const SizedBox(height: 16),
                   Text(
                     'Failed to load image',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                    ),
+                    style: const TextStyle(color: Colors.white, fontSize: 16),
                   ),
                 ],
               ),
             );
           }
 
-          if (!snapshot.hasData || 
-              snapshot.data?.data.media == null || 
+          if (!snapshot.hasData ||
+              snapshot.data?.data.media == null ||
               snapshot.data!.data.media!.isEmpty) {
             return const Center(
               child: Text(
                 'No image available',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                ),
+                style: TextStyle(color: Colors.white, fontSize: 16),
               ),
             );
           }
@@ -77,9 +69,7 @@ class FullImageViewer extends ConsumerWidget {
                 imageUrl: mediaUrl,
                 fit: BoxFit.contain,
                 placeholder: (context, url) => const Center(
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                  ),
+                  child: CircularProgressIndicator(color: Colors.white),
                 ),
                 errorWidget: (context, url, error) => const Center(
                   child: Icon(

@@ -3,6 +3,7 @@ import 'package:flutter_mvvm_riverpod/features/profile/repository/profile_reposi
 import 'package:flutter_mvvm_riverpod/features/user/model/update_profile_request.dart';
 import 'package:flutter_mvvm_riverpod/features/user/repository/user_profile_repository.dart';
 import 'package:flutter_mvvm_riverpod/features/post/repository/user_posts_repository.dart';
+import 'package:flutter_mvvm_riverpod/features/post/repository/post_like_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
@@ -469,6 +470,9 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                                         ),
                                   )
                                   .toList();
+
+                              // Watch the postLikeManager to rebuild when likes change
+                              ref.watch(postLikeManagerProvider);
 
                               return Padding(
                                 padding: const EdgeInsets.symmetric(
