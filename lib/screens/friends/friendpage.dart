@@ -19,6 +19,24 @@ class Friendpage extends ConsumerStatefulWidget {
 
 class _FriendpageState extends ConsumerState<Friendpage> {
   String selectedTab = 'Friend requests';
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.toLowerCase();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   void showCustomNotification(String message, {bool isError = false}) {
     final overlay = Overlay.of(context);
@@ -184,6 +202,9 @@ class _FriendpageState extends ConsumerState<Friendpage> {
               ),
             ),
 
+            // Search Bar
+            _buildSearchBar(),
+
             // Tabs
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -256,6 +277,55 @@ class _FriendpageState extends ConsumerState<Friendpage> {
     );
   }
 
+  Widget _buildSearchBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: TextField(
+        controller: _searchController,
+        style: const TextStyle(color: Colors.black87, fontSize: 16),
+        decoration: InputDecoration(
+          hintText: 'Search for people',
+          hintStyle: const TextStyle(color: Color(0xFF9E9E9E), fontSize: 16),
+          prefixIcon: const Icon(
+            Icons.search,
+            color: Color(0xFF757575),
+            size: 24,
+          ),
+          suffixIcon: _searchQuery.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(
+                    Icons.clear,
+                    color: Color(0xFF757575),
+                    size: 20,
+                  ),
+                  onPressed: () {
+                    _searchController.clear();
+                  },
+                )
+              : null,
+          filled: true,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFE0E0E0), width: 1),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFE0E0E0), width: 1),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFF3620B3), width: 1.5),
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildContent(
     AsyncValue<List<ConnectionRequest>> pendingConnectionsAsync,
     AsyncValue<List<ConnectionUser>> friendsAsync,
@@ -265,20 +335,39 @@ class _FriendpageState extends ConsumerState<Friendpage> {
     if (selectedTab == 'Friend requests') {
       return pendingConnectionsAsync.when(
         data: (connections) {
-          if (connections.isEmpty) {
+          // Filter based on search query
+          final filteredConnections = _searchQuery.isEmpty
+              ? connections
+              : connections.where((connection) {
+                  final user = connection.requesterUser;
+                  if (user == null) return false;
+
+                  final fullName = user.fullName.toLowerCase();
+                  final username = (user.username ?? '').toLowerCase();
+
+                  return fullName.contains(_searchQuery) ||
+                      username.contains(_searchQuery);
+                }).toList();
+
+          if (filteredConnections.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    Icons.person_add_disabled,
+                    _searchQuery.isEmpty
+                        ? Icons.person_add_disabled
+                        : Icons.search_off,
                     size: 64,
                     color: Colors.grey[400],
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'No pending friend requests',
+                    _searchQuery.isEmpty
+                        ? 'No pending friend requests'
+                        : 'No results found for "$_searchQuery"',
                     style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                    textAlign: TextAlign.center,
                   ),
                 ],
               ),
@@ -293,9 +382,9 @@ class _FriendpageState extends ConsumerState<Friendpage> {
             },
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: connections.length,
+              itemCount: filteredConnections.length,
               itemBuilder: (context, index) {
-                final connection = connections[index];
+                final connection = filteredConnections[index];
                 return _buildConnectionCard(connection);
               },
             ),
@@ -333,16 +422,36 @@ class _FriendpageState extends ConsumerState<Friendpage> {
     if (selectedTab == 'Friends') {
       return friendsAsync.when(
         data: (connections) {
-          if (connections.isEmpty) {
+          // Filter based on search query
+          final filteredConnections = _searchQuery.isEmpty
+              ? connections
+              : connections.where((user) {
+                  final fullName = user.fullName.toLowerCase();
+                  final username = (user.username ?? '').toLowerCase();
+
+                  return fullName.contains(_searchQuery) ||
+                      username.contains(_searchQuery);
+                }).toList();
+
+          if (filteredConnections.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.people_outline, size: 64, color: Colors.grey[400]),
+                  Icon(
+                    _searchQuery.isEmpty
+                        ? Icons.people_outline
+                        : Icons.search_off,
+                    size: 64,
+                    color: Colors.grey[400],
+                  ),
                   const SizedBox(height: 16),
                   Text(
-                    'No friends yet',
+                    _searchQuery.isEmpty
+                        ? 'No friends yet'
+                        : 'No results found for "$_searchQuery"',
                     style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                    textAlign: TextAlign.center,
                   ),
                 ],
               ),
@@ -355,9 +464,9 @@ class _FriendpageState extends ConsumerState<Friendpage> {
             },
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: connections.length,
+              itemCount: filteredConnections.length,
               itemBuilder: (context, index) {
-                final user = connections[index];
+                final user = filteredConnections[index];
                 return _buildFriendCard(user);
               },
             ),
@@ -393,20 +502,36 @@ class _FriendpageState extends ConsumerState<Friendpage> {
     if (selectedTab == 'Following') {
       return followingAsync.when(
         data: (connections) {
-          if (connections.isEmpty) {
+          // Filter based on search query
+          final filteredConnections = _searchQuery.isEmpty
+              ? connections
+              : connections.where((user) {
+                  final fullName = user.fullName.toLowerCase();
+                  final username = (user.username ?? '').toLowerCase();
+
+                  return fullName.contains(_searchQuery) ||
+                      username.contains(_searchQuery);
+                }).toList();
+
+          if (filteredConnections.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    Icons.visibility_outlined,
+                    _searchQuery.isEmpty
+                        ? Icons.visibility_outlined
+                        : Icons.search_off,
                     size: 64,
                     color: Colors.grey[400],
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Not following anyone yet',
+                    _searchQuery.isEmpty
+                        ? 'Not following anyone yet'
+                        : 'No results found for "$_searchQuery"',
                     style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                    textAlign: TextAlign.center,
                   ),
                 ],
               ),
@@ -419,9 +544,9 @@ class _FriendpageState extends ConsumerState<Friendpage> {
             },
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: connections.length,
+              itemCount: filteredConnections.length,
               itemBuilder: (context, index) {
-                final user = connections[index];
+                final user = filteredConnections[index];
                 return _buildFollowingCard(user);
               },
             ),
@@ -457,16 +582,36 @@ class _FriendpageState extends ConsumerState<Friendpage> {
     if (selectedTab == 'Followers') {
       return followersAsync.when(
         data: (connections) {
-          if (connections.isEmpty) {
+          // Filter based on search query
+          final filteredConnections = _searchQuery.isEmpty
+              ? connections
+              : connections.where((user) {
+                  final fullName = user.fullName.toLowerCase();
+                  final username = (user.username ?? '').toLowerCase();
+
+                  return fullName.contains(_searchQuery) ||
+                      username.contains(_searchQuery);
+                }).toList();
+
+          if (filteredConnections.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.group_outlined, size: 64, color: Colors.grey[400]),
+                  Icon(
+                    _searchQuery.isEmpty
+                        ? Icons.group_outlined
+                        : Icons.search_off,
+                    size: 64,
+                    color: Colors.grey[400],
+                  ),
                   const SizedBox(height: 16),
                   Text(
-                    'No followers yet',
+                    _searchQuery.isEmpty
+                        ? 'No followers yet'
+                        : 'No results found for "$_searchQuery"',
                     style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                    textAlign: TextAlign.center,
                   ),
                 ],
               ),
@@ -479,9 +624,9 @@ class _FriendpageState extends ConsumerState<Friendpage> {
             },
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: connections.length,
+              itemCount: filteredConnections.length,
               itemBuilder: (context, index) {
-                final user = connections[index];
+                final user = filteredConnections[index];
                 return _buildFollowerCard(user);
               },
             ),
