@@ -13,7 +13,6 @@ import 'package:flutter_mvvm_riverpod/features/post/repository/user_posts_reposi
 import 'package:flutter_mvvm_riverpod/features/user/repository/user_profile_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
 class BottomNavScreen extends ConsumerStatefulWidget {
   const BottomNavScreen({super.key});
 
@@ -79,7 +78,10 @@ class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
                 },
                 items: const [
                   BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
-                  BottomNavigationBarItem(icon: Icon(Icons.location_on), label: ''),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.location_on),
+                    label: '',
+                  ),
                   BottomNavigationBarItem(icon: SizedBox.shrink(), label: ''),
                   BottomNavigationBarItem(icon: Icon(Icons.people), label: ''),
                   BottomNavigationBarItem(icon: Icon(Icons.person), label: ''),
@@ -95,16 +97,17 @@ class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
                 // Navigate to create post screen
                 final result = await Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => const CreatePostScreen(
-                      isOnboarding: false,
-                    ),
+                    builder: (context) =>
+                        const CreatePostScreen(isOnboarding: false),
                   ),
                 );
 
                 // After returning from create post, refresh feeds
                 if (result == true && mounted) {
                   // Get current user ID to refresh their posts
-                  final currentProfile = ref.read(userProfileRepositoryProvider).value;
+                  final currentProfile = ref
+                      .read(userProfileRepositoryProvider)
+                      .value;
 
                   // Refresh the feed to show new posts
                   ref.invalidate(feedProvider);
@@ -114,7 +117,9 @@ class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
                   if (currentProfile != null) {
                     // Using invalidate() to mark as needing refresh
                     // The profile page will automatically refetch when viewing
-                    ref.invalidate(userPostsProvider(userId: currentProfile.id));
+                    ref.invalidate(
+                      userPostsProvider(userId: currentProfile.id),
+                    );
                   }
 
                   // Navigate to home tab to see the new post

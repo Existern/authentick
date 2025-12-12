@@ -3,15 +3,14 @@ class PresignedMediaUrlsResponse {
   final bool success;
   final PresignedMediaUrlsData data;
 
-  PresignedMediaUrlsResponse({
-    required this.success,
-    required this.data,
-  });
+  PresignedMediaUrlsResponse({required this.success, required this.data});
 
   factory PresignedMediaUrlsResponse.fromJson(Map<String, dynamic> json) {
     return PresignedMediaUrlsResponse(
       success: json['success'] as bool? ?? false,
-      data: PresignedMediaUrlsData.fromJson(json['data'] as Map<String, dynamic>),
+      data: PresignedMediaUrlsData.fromJson(
+        json['data'] as Map<String, dynamic>,
+      ),
     );
   }
 }
@@ -19,9 +18,7 @@ class PresignedMediaUrlsResponse {
 class PresignedMediaUrlsData {
   final List<MediaUrlInfo> mediaUrls;
 
-  PresignedMediaUrlsData({
-    required this.mediaUrls,
-  });
+  PresignedMediaUrlsData({required this.mediaUrls});
 
   factory PresignedMediaUrlsData.fromJson(Map<String, dynamic> json) {
     final mediaUrlsList = json['media_urls'] as List<dynamic>? ?? [];

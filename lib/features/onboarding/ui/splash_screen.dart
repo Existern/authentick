@@ -170,7 +170,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
         // Count terminal steps (completed or skipped)
         final terminalSteps = onboardingData.steps
-            .where((step) => step.status == 'completed' || step.status == 'skipped')
+            .where(
+              (step) => step.status == 'completed' || step.status == 'skipped',
+            )
             .length;
         final pendingSteps = onboardingData.steps
             .where((step) => step.status == 'pending')

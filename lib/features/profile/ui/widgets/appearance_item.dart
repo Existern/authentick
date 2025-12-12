@@ -48,10 +48,7 @@ class AppearanceItem extends ConsumerWidget {
               child: Container(
                 height: 60,
                 alignment: Alignment.centerLeft,
-                child: Text(
-                  text,
-                  style: AppTheme.body16,
-                ),
+                child: Text(text, style: AppTheme.body16),
               ),
             ),
             // ignore: deprecated_member_use
@@ -65,7 +62,7 @@ class AppearanceItem extends ConsumerWidget {
                 ref.read(appThemeModeProvider.notifier).updateMode(value);
               },
               fillColor: WidgetStateProperty.resolveWith(
-                    (states) => states.contains(WidgetState.selected)
+                (states) => states.contains(WidgetState.selected)
                     ? AppColors.blueberry100
                     : context.secondaryTextColor,
               ),

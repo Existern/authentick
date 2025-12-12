@@ -56,4 +56,3 @@ enum FriendshipStatus {
   @JsonValue('removed')
   removed,
 }
-

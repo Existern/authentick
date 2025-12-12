@@ -1,86 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_mvvm_riverpod/features/profile/repository/profile_repository.dart';
-import 'package:flutter_mvvm_riverpod/features/user/model/update_profile_request.dart';
-import 'package:flutter_mvvm_riverpod/features/user/repository/user_profile_repository.dart';
+import 'package:flutter_mvvm_riverpod/features/user/repository/other_user_profile_repository.dart';
 import 'package:flutter_mvvm_riverpod/features/post/repository/user_posts_repository.dart';
 import 'package:flutter_mvvm_riverpod/features/post/repository/post_like_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import 'package:flutter_mvvm_riverpod/screens/settings/settingspage.dart';
 import 'package:flutter_mvvm_riverpod/screens/profile/profile_image_full_view.dart';
 import 'package:flutter_mvvm_riverpod/screens/post/post_detail_screen.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
-class MyProfile extends ConsumerStatefulWidget {
-  const MyProfile({super.key});
+class UserProfileScreen extends ConsumerWidget {
+  final String userId;
+  final String? initialUsername;
+
+  const UserProfileScreen({
+    super.key,
+    required this.userId,
+    this.initialUsername,
+  });
 
   @override
-  ConsumerState<MyProfile> createState() => _MyProfileState();
-}
-
-class _MyProfileState extends ConsumerState<MyProfile> {
-  bool _isUploadingImage = false;
-  final ImagePicker _picker = ImagePicker();
-
-  Future<void> _handleProfileImageUpdate() async {
-    try {
-      // Open camera to capture photo
-      final XFile? photo = await _picker.pickImage(
-        source: ImageSource.camera,
-        imageQuality: 85,
-      );
-
-      if (photo == null) return;
-
-      setState(() {
-        _isUploadingImage = true;
-      });
-
-      // Upload using the same flow as onboarding
-      final profileRepo = ref.read(profileRepositoryProvider);
-      final imageUrl = await profileRepo.uploadProfilePicture(
-        photo.path,
-        'image/jpeg',
-      );
-
-      // Update user profile with new image URL
-      await ref
-          .read(userProfileRepositoryProvider.notifier)
-          .updateProfile(UpdateProfileRequest(profileImage: imageUrl));
-
-      if (mounted) {
-        setState(() {
-          _isUploadingImage = false;
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profile image updated successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isUploadingImage = false;
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to update profile image: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final profileAsync = ref.watch(userProfileRepositoryProvider);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profileAsync = ref.watch(otherUserProfileProvider(userId: userId));
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -88,7 +29,7 @@ class _MyProfileState extends ConsumerState<MyProfile> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 🔹 Header Row
+            // Header Row with back button
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 12.0,
@@ -97,43 +38,30 @@ class _MyProfileState extends ConsumerState<MyProfile> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  IconButton(
+                    icon: const Icon(
+                      Icons.arrow_back,
+                      color: Color(0xFF5A5A72),
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                  ),
                   SvgPicture.asset(
                     'assets/images/authentick_logo.svg',
                     width: 40,
                     height: 30,
                     fit: BoxFit.cover,
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const SettingsPage(),
-                        ),
-                      );
-                    },
-                    child: const Icon(
-                      Icons.settings_outlined,
-                      size: 28,
-                      color: Color(0xFF5A5A72),
-                    ),
-                  ),
+                  const SizedBox(width: 48), // Balance the back button
                 ],
               ),
             ),
 
-            // Wrap entire content in RefreshIndicator
+            // Content
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () async {
-                  // Refresh both profile and posts
-                  ref.invalidate(userProfileRepositoryProvider);
-                  final profile = await ref.read(
-                    userProfileRepositoryProvider.future,
-                  );
-                  if (profile != null) {
-                    ref.invalidate(userPostsProvider(userId: profile.id));
-                  }
+                  ref.invalidate(otherUserProfileProvider(userId: userId));
+                  ref.invalidate(userPostsProvider(userId: userId));
                 },
                 color: const Color(0xFF3620B3),
                 child: SingleChildScrollView(
@@ -144,132 +72,102 @@ class _MyProfileState extends ConsumerState<MyProfile> {
 
                       // Profile Section
                       profileAsync.when(
-                        data: (profile) {
-                          if (profile == null) {
-                            return const Center(
-                              child: Padding(
-                                padding: EdgeInsets.all(20.0),
-                                child: Text('Unable to load profile'),
-                              ),
-                            );
-                          }
+                        data: (profileResponse) {
+                          final profile = profileResponse.data;
 
                           return Center(
                             child: Column(
                               children: [
-                                Stack(
-                                  clipBehavior: Clip.none,
-                                  children: [
-                                    ClipRRect(
+                                // Profile Image (no edit button)
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Container(
+                                    height: 120,
+                                    width: 120,
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: const Color(0xFF3620B3),
+                                        width: 3,
+                                      ),
                                       borderRadius: BorderRadius.circular(16),
-                                      child: Container(
-                                        height: 120,
-                                        width: 120,
-                                        decoration: BoxDecoration(
-                                          border: Border.all(
-                                            color: const Color(0xFF3620B3),
-                                            width: 3,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            16,
-                                          ),
-                                          color: Colors.grey[300],
-                                        ),
-                                        child: GestureDetector(
-                                          onTap:
-                                              profile.profileImageThumbnail !=
+                                      color: Colors.grey[300],
+                                    ),
+                                    child: GestureDetector(
+                                      onTap:
+                                          (profile.profileImage != null &&
+                                                  profile
+                                                      .profileImage!
+                                                      .isNotEmpty) ||
+                                              (profile.profileImageThumbnail !=
                                                       null &&
                                                   profile
                                                       .profileImageThumbnail!
-                                                      .isNotEmpty
-                                              ? () {
-                                                  Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          ProfileImageFullView(
-                                                            profileImage: profile
-                                                                .profileImage,
-                                                            profileImageThumbnail:
-                                                                profile
-                                                                    .profileImageThumbnail,
-                                                          ),
-                                                    ),
-                                                  );
-                                                }
-                                              : null,
-                                          child:
-                                              profile.profileImageThumbnail !=
+                                                      .isNotEmpty)
+                                          ? () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      ProfileImageFullView(
+                                                        profileImage: profile
+                                                            .profileImage,
+                                                        profileImageThumbnail:
+                                                            profile
+                                                                .profileImageThumbnail,
+                                                        isCurrentUser: false,
+                                                      ),
+                                                ),
+                                              );
+                                            }
+                                          : null,
+                                      child:
+                                          (profile.profileImageThumbnail !=
                                                       null &&
                                                   profile
                                                       .profileImageThumbnail!
-                                                      .isNotEmpty
-                                              ? CachedNetworkImage(
-                                                  imageUrl: profile
-                                                      .profileImageThumbnail!,
-                                                  fit: BoxFit.cover,
-                                                  placeholder: (context, url) =>
-                                                      const Center(
-                                                        child:
-                                                            CircularProgressIndicator(
-                                                              strokeWidth: 2,
-                                                              color: Color(
-                                                                0xFF3620B3,
-                                                              ),
-                                                            ),
-                                                      ),
-                                                  errorWidget:
-                                                      (context, url, error) =>
-                                                          const Icon(
-                                                            Icons.person,
-                                                            size: 60,
-                                                            color: Colors.grey,
+                                                      .isNotEmpty) ||
+                                              (profile.profileImage != null &&
+                                                  profile
+                                                      .profileImage!
+                                                      .isNotEmpty)
+                                          ? CachedNetworkImage(
+                                              imageUrl:
+                                                  profile
+                                                      .profileImageThumbnail ??
+                                                  profile.profileImage!,
+                                              fit: BoxFit.cover,
+                                              placeholder: (context, url) =>
+                                                  const Center(
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                          strokeWidth: 2,
+                                                          color: Color(
+                                                            0xFF3620B3,
                                                           ),
-                                                )
-                                              : const Icon(
-                                                  Icons.person,
-                                                  size: 60,
-                                                  color: Colors.grey,
-                                                ),
-                                        ),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      bottom: 0,
-                                      right: 0,
-                                      child: GestureDetector(
-                                        onTap: _isUploadingImage
-                                            ? null
-                                            : _handleProfileImageUpdate,
-                                        child: Container(
-                                          padding: const EdgeInsets.all(6),
-                                          decoration: const BoxDecoration(
-                                            color: Color(0xFF3620B3),
-                                            shape: BoxShape.rectangle,
-                                          ),
-                                          child: _isUploadingImage
-                                              ? const SizedBox(
-                                                  width: 18,
-                                                  height: 18,
-                                                  child:
-                                                      CircularProgressIndicator(
-                                                        strokeWidth: 2,
-                                                        color: Colors.white,
+                                                        ),
+                                                  ),
+                                              errorWidget:
+                                                  (context, url, error) =>
+                                                      const Icon(
+                                                        Icons.person,
+                                                        size: 60,
+                                                        color: Colors.grey,
                                                       ),
-                                                )
-                                              : const Icon(
-                                                  Icons.edit,
-                                                  color: Colors.white,
-                                                  size: 18,
-                                                ),
-                                        ),
-                                      ),
+                                            )
+                                          : const Icon(
+                                              Icons.person,
+                                              size: 60,
+                                              color: Colors.grey,
+                                            ),
                                     ),
-                                  ],
+                                  ),
                                 ),
                                 const SizedBox(height: 10),
                                 Text(
-                                  profile.fullName,
+                                  profile.firstName != null &&
+                                          profile.lastName != null
+                                      ? '${profile.firstName} ${profile.lastName}'
+                                      : profile.username ?? 'User',
                                   style: const TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
@@ -307,15 +205,39 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                                       children: [
                                         const Icon(
                                           Icons.location_on,
-                                          size: 14,
-                                          color: Colors.grey,
+                                          size: 16,
+                                          color: Colors.black54,
                                         ),
                                         const SizedBox(width: 4),
                                         Text(
                                           profile.location!,
                                           style: const TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.grey,
+                                            fontSize: 14,
+                                            color: Colors.black54,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                if (profile.isVerified == true)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 8.0),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.verified,
+                                          size: 18,
+                                          color: Colors.blue[700],
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'Verified',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.blue[700],
+                                            fontWeight: FontWeight.w500,
                                           ),
                                         ),
                                       ],
@@ -335,21 +257,25 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                         ),
                         error: (error, stack) => Center(
                           child: Padding(
-                            padding: const EdgeInsets.all(20.0),
+                            padding: const EdgeInsets.all(40.0),
                             child: Column(
-                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 const Icon(
                                   Icons.error_outline,
-                                  size: 48,
+                                  size: 64,
                                   color: Colors.red,
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 16),
                                 const Text(
                                   'Failed to load profile',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                  ),
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: 8),
                                 Text(
                                   error.toString(),
                                   style: const TextStyle(
@@ -362,7 +288,7 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                                 ElevatedButton(
                                   onPressed: () {
                                     ref.invalidate(
-                                      userProfileRepositoryProvider,
+                                      otherUserProfileProvider(userId: userId),
                                     );
                                   },
                                   style: ElevatedButton.styleFrom(
@@ -381,12 +307,8 @@ class _MyProfileState extends ConsumerState<MyProfile> {
 
                       // Posts Section
                       profileAsync.when(
-                        data: (profile) {
-                          if (profile == null) {
-                            return const SizedBox();
-                          }
-
-                          final profileId = profile.id;
+                        data: (profileResponse) {
+                          final profileId = profileResponse.data.id;
                           final userPostsAsync = ref.watch(
                             userPostsProvider(userId: profileId),
                           );
@@ -442,14 +364,6 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                                           'No posts yet',
                                           style: TextStyle(
                                             fontSize: 18,
-                                            color: Colors.grey,
-                                          ),
-                                        ),
-                                        SizedBox(height: 8),
-                                        Text(
-                                          'Pull down to refresh',
-                                          style: TextStyle(
-                                            fontSize: 14,
                                             color: Colors.grey,
                                           ),
                                         ),
@@ -517,19 +431,9 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                                             builder: (context) =>
                                                 PostDetailScreen(
                                                   postId: post.id,
-                                                  showDeleteButton: true,
                                                 ),
                                           ),
-                                        ).then((deleted) {
-                                          // Refresh posts if a post was deleted
-                                          if (deleted == true && mounted) {
-                                            ref.invalidate(
-                                              userPostsProvider(
-                                                userId: profileId,
-                                              ),
-                                            );
-                                          }
-                                        });
+                                        );
                                       },
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(12),

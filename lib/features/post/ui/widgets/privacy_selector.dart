@@ -30,7 +30,10 @@ class PrivacySelector extends StatelessWidget {
     final RenderBox button = context.findRenderObject() as RenderBox;
     final RenderBox overlay =
         Overlay.of(context).context.findRenderObject() as RenderBox;
-    final Offset buttonPosition = button.localToGlobal(Offset.zero, ancestor: overlay);
+    final Offset buttonPosition = button.localToGlobal(
+      Offset.zero,
+      ancestor: overlay,
+    );
     final screenWidth = MediaQuery.of(context).size.width;
 
     // Position the menu ABOVE the selector with full width
@@ -47,25 +50,16 @@ class PrivacySelector extends StatelessWidget {
     showMenu<PostPrivacy>(
       context: context,
       position: position,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 8,
-      constraints: BoxConstraints(
-        minWidth: screenWidth,
-        maxWidth: screenWidth,
-      ),
+      constraints: BoxConstraints(minWidth: screenWidth, maxWidth: screenWidth),
       items: [
         PopupMenuItem<PostPrivacy>(
           value: PostPrivacy.friends,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
-              Icon(
-                Icons.people,
-                size: 24,
-                color: Colors.black87,
-              ),
+              Icon(Icons.people, size: 24, color: Colors.black87),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -82,10 +76,7 @@ class PrivacySelector extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       'Shared with all your friends',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     ),
                   ],
                 ),
@@ -98,11 +89,7 @@ class PrivacySelector extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
-              Icon(
-                Icons.public,
-                size: 24,
-                color: Colors.black87,
-              ),
+              Icon(Icons.public, size: 24, color: Colors.black87),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -119,10 +106,7 @@ class PrivacySelector extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       'Shared with all your friends',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     ),
                   ],
                 ),
@@ -145,9 +129,7 @@ class PrivacySelector extends StatelessWidget {
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-        ),
+        decoration: BoxDecoration(color: Colors.white),
         child: Row(
           children: [
             Icon(
@@ -171,19 +153,12 @@ class PrivacySelector extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     _getPrivacyDescription(currentPrivacy),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   ),
                 ],
               ),
             ),
-            Icon(
-              Icons.keyboard_arrow_down,
-              size: 24,
-              color: Colors.black87,
-            ),
+            Icon(Icons.keyboard_arrow_down, size: 24, color: Colors.black87),
           ],
         ),
       ),

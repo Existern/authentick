@@ -96,10 +96,7 @@ class ResponseMeta {
   final String? requestId;
   final String? timestamp;
 
-  ResponseMeta({
-    this.requestId,
-    this.timestamp,
-  });
+  ResponseMeta({this.requestId, this.timestamp});
 
   factory ResponseMeta.fromJson(Map<String, dynamic> json) {
     return ResponseMeta(

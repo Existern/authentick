@@ -96,10 +96,7 @@ class HeroListScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          context.tr(_getGreeting()),
-          style: AppTheme.title32,
-        ),
+        title: Text(context.tr(_getGreeting()), style: AppTheme.title32),
         automaticallyImplyLeading: false,
         backgroundColor: context.primaryBackgroundColor,
         foregroundColor: context.primaryTextColor,

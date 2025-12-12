@@ -93,7 +93,6 @@ class MainApp extends ConsumerWidget {
   }
 }
 
-
 // import 'package:flutter/material.dart';
 // import 'package:flutter_mvvm_riverpod/screens/bottomnav/bottomnav.dart';
 
@@ -111,11 +110,10 @@ class MainApp extends ConsumerWidget {
 //       title: 'Flutter Demo',
 //       debugShowCheckedModeBanner: false,
 //       theme: ThemeData(
-      
+
 //         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
 //       ),
 //       home:  BottomNavScreen(),
 //     );
 //   }
 // }
-

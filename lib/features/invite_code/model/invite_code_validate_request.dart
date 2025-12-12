@@ -2,13 +2,9 @@
 class InviteCodeValidateRequest {
   final String code;
 
-  InviteCodeValidateRequest({
-    required this.code,
-  });
+  InviteCodeValidateRequest({required this.code});
 
   Map<String, dynamic> toJson() {
-    return {
-      'code': code,
-    };
+    return {'code': code};
   }
 }

@@ -11,11 +11,13 @@ import 'package:flutter_mvvm_riverpod/extensions/build_context_extension.dart';
 class ProfileImageFullView extends ConsumerStatefulWidget {
   final String? profileImage;
   final String? profileImageThumbnail;
+  final bool isCurrentUser;
 
   const ProfileImageFullView({
     super.key,
     this.profileImage,
     this.profileImageThumbnail,
+    this.isCurrentUser = true,
   });
 
   @override
@@ -241,46 +243,14 @@ class _ProfileImageFullViewState extends ConsumerState<ProfileImageFullView> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    // Edit button
-                    ElevatedButton.icon(
-                      onPressed: _isUploadingImage || _isRemovingImage
-                          ? null
-                          : _handleEditImage,
-                      icon: _isUploadingImage
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Icon(Icons.edit, size: 20),
-                      label: Text(
-                        'Edit',
-                        style: AppTheme.body14.copyWith(color: Colors.white),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF3620B3),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 12,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    ),
-
-                    // Remove button
-                    if (widget.profileImage != null &&
-                        widget.profileImage!.isNotEmpty)
+                    // Only show edit and remove buttons for current user
+                    if (widget.isCurrentUser) ...[
+                      // Edit button
                       ElevatedButton.icon(
                         onPressed: _isUploadingImage || _isRemovingImage
                             ? null
-                            : _handleRemoveImage,
-                        icon: _isRemovingImage
+                            : _handleEditImage,
+                        icon: _isUploadingImage
                             ? const SizedBox(
                                 width: 16,
                                 height: 16,
@@ -289,13 +259,13 @@ class _ProfileImageFullViewState extends ConsumerState<ProfileImageFullView> {
                                   color: Colors.white,
                                 ),
                               )
-                            : const Icon(Icons.delete_outline, size: 20),
+                            : const Icon(Icons.edit, size: 20),
                         label: Text(
-                          'Remove',
+                          'Edit',
                           style: AppTheme.body14.copyWith(color: Colors.white),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
+                          backgroundColor: const Color(0xFF3620B3),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 24,
@@ -306,6 +276,43 @@ class _ProfileImageFullViewState extends ConsumerState<ProfileImageFullView> {
                           ),
                         ),
                       ),
+
+                      // Remove button
+                      if (widget.profileImage != null &&
+                          widget.profileImage!.isNotEmpty)
+                        ElevatedButton.icon(
+                          onPressed: _isUploadingImage || _isRemovingImage
+                              ? null
+                              : _handleRemoveImage,
+                          icon: _isRemovingImage
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.delete_outline, size: 20),
+                          label: Text(
+                            'Remove',
+                            style: AppTheme.body14.copyWith(
+                              color: Colors.white,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                    ],
                   ],
                 ),
               ),

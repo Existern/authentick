@@ -2,10 +2,7 @@ class WaitlistResponse {
   final bool success;
   final WaitlistData data;
 
-  WaitlistResponse({
-    required this.success,
-    required this.data,
-  });
+  WaitlistResponse({required this.success, required this.data});
 
   factory WaitlistResponse.fromJson(Map<String, dynamic> json) {
     return WaitlistResponse(

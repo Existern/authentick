@@ -25,10 +25,7 @@ class InviteCodeData {
   final String type;
   final bool valid;
 
-  InviteCodeData({
-    required this.type,
-    required this.valid,
-  });
+  InviteCodeData({required this.type, required this.valid});
 
   factory InviteCodeData.fromJson(Map<String, dynamic> json) {
     return InviteCodeData(
@@ -43,11 +40,7 @@ class ResponseMeta {
   final String? timestamp;
   final Pagination? pagination;
 
-  ResponseMeta({
-    this.requestId,
-    this.timestamp,
-    this.pagination,
-  });
+  ResponseMeta({this.requestId, this.timestamp, this.pagination});
 
   factory ResponseMeta.fromJson(Map<String, dynamic> json) {
     return ResponseMeta(

@@ -18,10 +18,7 @@ class SignInWithGoogle extends ConsumerWidget {
       icon: SizedBox(
         width: 32,
         height: 32,
-        child: SvgPicture.asset(
-          Assets.googleLogo,
-          fit: BoxFit.contain,
-        ),
+        child: SvgPicture.asset(Assets.googleLogo, fit: BoxFit.contain),
       ),
       text: Platform.isIOS ? 'google'.tr() : 'sign_in_with_google'.tr(),
       onPressed: () =>

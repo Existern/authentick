@@ -61,20 +61,14 @@ class PostRepository {
 
       // Step 1: Get presigned URL using new endpoint
       final presignedRequest = PresignedMediaUrlsRequest(
-        files: [
-          MediaFileInfo(
-            contentType: contentType,
-            filename: filename,
-          ),
-        ],
+        files: [MediaFileInfo(contentType: contentType, filename: filename)],
       );
 
-      final presignedResponse =
-          await _postService.getPresignedMediaUrls(presignedRequest);
-
-      debugPrint(
-        '${Constants.tag} [PostRepository] ✅ Got presigned URL',
+      final presignedResponse = await _postService.getPresignedMediaUrls(
+        presignedRequest,
       );
+
+      debugPrint('${Constants.tag} [PostRepository] ✅ Got presigned URL');
 
       final mediaUrlInfo = presignedResponse.data.mediaUrls.first;
 
@@ -84,9 +78,7 @@ class PostRepository {
         imagePath,
       );
 
-      debugPrint(
-        '${Constants.tag} [PostRepository] ✅ Image uploaded to S3',
-      );
+      debugPrint('${Constants.tag} [PostRepository] ✅ Image uploaded to S3');
 
       // Step 3: Create post
       final visibility = privacy == PostPrivacy.friends ? 'friends' : 'public';
@@ -101,7 +93,8 @@ class PostRepository {
         height: height,
       );
 
-      final metadata = (location != null || latitude != null || longitude != null)
+      final metadata =
+          (location != null || latitude != null || longitude != null)
           ? PostMetadata(
               location: location,
               latitude: latitude,
@@ -117,7 +110,9 @@ class PostRepository {
         visibility: visibility,
       );
 
-      final createPostResponse = await _postService.createPost(createPostRequest);
+      final createPostResponse = await _postService.createPost(
+        createPostRequest,
+      );
 
       debugPrint(
         '${Constants.tag} [PostRepository] ✅ Post created successfully',
@@ -128,15 +123,11 @@ class PostRepository {
 
       return createPostResponse;
     } catch (error, stackTrace) {
-      debugPrint(
-        '${Constants.tag} [PostRepository] ❌ POST CREATION FAILED ❌',
-      );
+      debugPrint('${Constants.tag} [PostRepository] ❌ POST CREATION FAILED ❌');
       debugPrint(
         '${Constants.tag} [PostRepository] Error Type: ${error.runtimeType}',
       );
-      debugPrint(
-        '${Constants.tag} [PostRepository] Error Details: $error',
-      );
+      debugPrint('${Constants.tag} [PostRepository] Error Details: $error');
       debugPrint('${Constants.tag} [PostRepository] Stack Trace:');
       debugPrint('$stackTrace');
       rethrow;

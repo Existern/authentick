@@ -40,7 +40,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   double? _longitude;
   Placemark? _placemark; // Store placemark for privacy options
   LocationPrivacyLevel _locationPrivacyLevel = LocationPrivacyLevel.exact;
-  PostPrivacy _privacy = PostPrivacy.friends;
+  PostPrivacy _privacy = PostPrivacy.everyone;
 
   @override
   void initState() {

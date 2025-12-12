@@ -19,9 +19,7 @@ class ProfileSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -87,7 +85,10 @@ class ProfileSection extends StatelessWidget {
                 borderSide: BorderSide(color: Colors.grey.shade400),
               ),
               focusedBorder: OutlineInputBorder(
-                borderSide: const BorderSide(color: Color(0xFF3620B3), width: 2),
+                borderSide: const BorderSide(
+                  color: Color(0xFF3620B3),
+                  width: 2,
+                ),
                 borderRadius: BorderRadius.circular(8),
               ),
               disabledBorder: OutlineInputBorder(

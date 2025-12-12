@@ -2,9 +2,7 @@
 class AuthRequest {
   final String? googleToken;
 
-  AuthRequest({
-    this.googleToken,
-  });
+  AuthRequest({this.googleToken});
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = {};

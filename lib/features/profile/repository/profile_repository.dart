@@ -44,9 +44,7 @@ class ProfileRepository {
     String? invitedByCode,
   }) async {
     try {
-      debugPrint(
-        '${Constants.tag} [ProfileRepository] 🔄 Updating profile...',
-      );
+      debugPrint('${Constants.tag} [ProfileRepository] 🔄 Updating profile...');
 
       if (dateOfBirth != null) {
         debugPrint(
@@ -70,9 +68,7 @@ class ProfileRepository {
 
       final response = await _profileService.updateProfile(request);
 
-      debugPrint(
-        '${Constants.tag} [ProfileRepository] 📦 Response received',
-      );
+      debugPrint('${Constants.tag} [ProfileRepository] 📦 Response received');
       debugPrint(
         '${Constants.tag} [ProfileRepository] Success: ${response.success}',
       );
@@ -88,15 +84,11 @@ class ProfileRepository {
 
       return response;
     } catch (error, stackTrace) {
-      debugPrint(
-        '${Constants.tag} [ProfileRepository] ❌ EXCEPTION CAUGHT ❌',
-      );
+      debugPrint('${Constants.tag} [ProfileRepository] ❌ EXCEPTION CAUGHT ❌');
       debugPrint(
         '${Constants.tag} [ProfileRepository] Error Type: ${error.runtimeType}',
       );
-      debugPrint(
-        '${Constants.tag} [ProfileRepository] Error Details: $error',
-      );
+      debugPrint('${Constants.tag} [ProfileRepository] Error Details: $error');
       debugPrint('${Constants.tag} [ProfileRepository] Stack Trace:');
       debugPrint('$stackTrace');
       rethrow;
@@ -170,9 +162,7 @@ class ProfileRepository {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_showPremiumKey, false);
 
-      debugPrint(
-        '${Constants.tag} [ProfileRepository] Premium flag set',
-      );
+      debugPrint('${Constants.tag} [ProfileRepository] Premium flag set');
     } catch (error) {
       debugPrint(
         '${Constants.tag} [ProfileRepository] Error setting premium flag: $error',
@@ -199,12 +189,11 @@ class ProfileRepository {
         imageType: 'profile',
       );
 
-      final presignedResponse =
-          await _profileService.getPresignedUploadUrl(presignedRequest);
-
-      debugPrint(
-        '${Constants.tag} [ProfileRepository] ✅ Got presigned URL',
+      final presignedResponse = await _profileService.getPresignedUploadUrl(
+        presignedRequest,
       );
+
+      debugPrint('${Constants.tag} [ProfileRepository] ✅ Got presigned URL');
       debugPrint(
         '${Constants.tag} [ProfileRepository] Image URL: ${presignedResponse.data.imageUrl}',
       );
@@ -220,9 +209,7 @@ class ProfileRepository {
         contentType,
       );
 
-      debugPrint(
-        '${Constants.tag} [ProfileRepository] ✅ Image uploaded to S3',
-      );
+      debugPrint('${Constants.tag} [ProfileRepository] ✅ Image uploaded to S3');
 
       // Step 3: Confirm upload
       final confirmRequest = ConfirmUploadRequest(
@@ -234,24 +221,18 @@ class ProfileRepository {
         'profile',
       );
 
-      debugPrint(
-        '${Constants.tag} [ProfileRepository] ✅ Upload confirmed',
-      );
+      debugPrint('${Constants.tag} [ProfileRepository] ✅ Upload confirmed');
       debugPrint(
         '${Constants.tag} [ProfileRepository] Final Image URL: ${confirmResponse.data.imageUrl}',
       );
 
       return confirmResponse.data.imageUrl;
     } catch (error, stackTrace) {
-      debugPrint(
-        '${Constants.tag} [ProfileRepository] ❌ UPLOAD FAILED ❌',
-      );
+      debugPrint('${Constants.tag} [ProfileRepository] ❌ UPLOAD FAILED ❌');
       debugPrint(
         '${Constants.tag} [ProfileRepository] Error Type: ${error.runtimeType}',
       );
-      debugPrint(
-        '${Constants.tag} [ProfileRepository] Error Details: $error',
-      );
+      debugPrint('${Constants.tag} [ProfileRepository] Error Details: $error');
       debugPrint('${Constants.tag} [ProfileRepository] Stack Trace:');
       debugPrint('$stackTrace');
       rethrow;

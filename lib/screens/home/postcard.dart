@@ -6,9 +6,12 @@ import 'package:flutter_mvvm_riverpod/extensions/build_context_extension.dart';
 import 'package:flutter_mvvm_riverpod/features/post/service/post_service.dart';
 import 'package:flutter_mvvm_riverpod/features/post/repository/post_like_repository.dart';
 import 'package:flutter_mvvm_riverpod/theme/app_theme.dart';
+import 'package:flutter_mvvm_riverpod/screens/home/full_image_viewer.dart';
+import 'package:flutter_mvvm_riverpod/screens/profile/user_profile_screen.dart';
 
 class PostCard extends ConsumerStatefulWidget {
   final String postId;
+  final String userId;
   final String username;
   final String? profileImage;
   final String? postImage;
@@ -22,6 +25,7 @@ class PostCard extends ConsumerStatefulWidget {
   const PostCard({
     super.key,
     required this.postId,
+    required this.userId,
     required this.username,
     this.profileImage,
     this.postImage,
@@ -244,46 +248,59 @@ class _PostCardState extends ConsumerState<PostCard> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: Row(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        color: Colors.grey[300],
-                        image: widget.profileImage != null
-                            ? DecorationImage(
-                                image: CachedNetworkImageProvider(
-                                  widget.profileImage!,
-                                ),
-                                fit: BoxFit.cover,
-                              )
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => UserProfileScreen(
+                          userId: widget.userId,
+                          initialUsername: widget.username,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.grey[300],
+                          image: widget.profileImage != null
+                              ? DecorationImage(
+                                  image: CachedNetworkImageProvider(
+                                    widget.profileImage!,
+                                  ),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
+                        ),
+                        child: widget.profileImage == null
+                            ? const Icon(Icons.person, color: Colors.grey)
                             : null,
                       ),
-                      child: widget.profileImage == null
-                          ? const Icon(Icons.person, color: Colors.grey)
-                          : null,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.username,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: Colors.black87,
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.username,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Colors.black87,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          _buildLocationTimeText(),
-                        ],
+                            _buildLocationTimeText(),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -291,32 +308,42 @@ class _PostCardState extends ConsumerState<PostCard> {
         ),
 
         if (widget.postImage != null)
-          ClipRRect(
-            borderRadius: BorderRadius.circular(0),
-            child: CachedNetworkImage(
-              imageUrl: widget.postImage!,
-              width: double.infinity,
-              fit: BoxFit.fitWidth,
-              placeholder: (context, url) => Container(
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => FullImageViewer(postId: widget.postId),
+                ),
+              );
+            },
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(0),
+              child: CachedNetworkImage(
+                imageUrl: widget.postImage!,
                 width: double.infinity,
-                height: 300,
-                color: Colors.grey[300],
-                child: const Center(
-                  child: CircularProgressIndicator(
-                    color: Color(0xFF3620B3),
-                    strokeWidth: 2,
+                fit: BoxFit.fitWidth,
+                placeholder: (context, url) => Container(
+                  width: double.infinity,
+                  height: 300,
+                  color: Colors.grey[300],
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      color: Color(0xFF3620B3),
+                      strokeWidth: 2,
+                    ),
                   ),
                 ),
-              ),
-              errorWidget: (context, url, error) => Container(
-                width: double.infinity,
-                height: 300,
-                color: Colors.grey[300],
-                child: const Center(
-                  child: Icon(
-                    Icons.error_outline,
-                    color: Colors.grey,
-                    size: 48,
+                errorWidget: (context, url, error) => Container(
+                  width: double.infinity,
+                  height: 300,
+                  color: Colors.grey[300],
+                  child: const Center(
+                    child: Icon(
+                      Icons.error_outline,
+                      color: Colors.grey,
+                      size: 48,
+                    ),
                   ),
                 ),
               ),
