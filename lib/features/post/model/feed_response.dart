@@ -88,8 +88,8 @@ class MediaItem {
   final int? fileSize;
   final int? width;
   final int? height;
-  @JsonKey(name: 'thumbnail_url')
-  final String? thumbnailUrl;
+  @JsonKey(name: 'preview_url')
+  final String? previewUrl;
   final int? duration;
 
   MediaItem({
@@ -101,7 +101,7 @@ class MediaItem {
     this.fileSize,
     this.width,
     this.height,
-    this.thumbnailUrl,
+    this.previewUrl,
     this.duration,
   });
 

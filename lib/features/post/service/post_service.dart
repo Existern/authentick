@@ -58,13 +58,13 @@ class PostService {
   /// - filter: Feed filter type (friends, following, everyone) - defaults to 'everyone'
   /// - page: Page number - defaults to 1
   /// - limit: Items per page - defaults to 20
-  /// - thumbnailsOnly: Return only thumbnail URLs - defaults to true
+  /// - mediaMode: Media mode for media URLs ('preview' or 'full') - defaults to 'preview'
   Future<FeedResponse> getFeed({
     String filter = 'all',
     int page = 1,
     int limit = 20,
     String duration = '1w',
-    bool thumbnailsOnly = true,
+    String mediaMode = 'preview',
   }) async {
     try {
       final response = await _apiClient.get<Map<String, dynamic>>(
@@ -74,7 +74,7 @@ class PostService {
           'page': page,
           'limit': limit,
           'duration': duration,
-          'thumbnails_only': thumbnailsOnly,
+          'media_mode': mediaMode,
         },
       );
       print('📥 Feed API Response Type: ${response.runtimeType}');
