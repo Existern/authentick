@@ -12,7 +12,7 @@ Future<FeedResponse> feed(
   int page = 1,
   int limit = 20,
   String duration = '1w',
-  bool thumbnailsOnly = true,
+  String mediaMode = 'preview',
 }) async {
   final postService = ref.watch(postServiceProvider);
   return await postService.getFeed(
@@ -20,6 +20,6 @@ Future<FeedResponse> feed(
     page: page,
     limit: limit,
     duration: duration,
-    thumbnailsOnly: thumbnailsOnly,
+    mediaMode: mediaMode,
   );
 }
