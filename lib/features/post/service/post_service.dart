@@ -93,15 +93,21 @@ class PostService {
   /// - userId: User ID
   /// - page: Page number - defaults to 1
   /// - limit: Items per page - defaults to 20
+  /// - mediaMode: Media mode for media URLs ('preview' or 'full') - defaults to 'preview'
   Future<FeedResponse> getUserPosts({
     required String userId,
     int page = 1,
     int limit = 20,
+    String mediaMode = 'preview',
   }) async {
     try {
       final response = await _apiClient.get<Map<String, dynamic>>(
         '/posts/user/$userId',
-        queryParameters: {'page': page, 'limit': limit},
+        queryParameters: {
+          'page': page,
+          'limit': limit,
+          'media_mode': mediaMode,
+        },
       );
       return FeedResponse.fromJson(response);
     } catch (e) {

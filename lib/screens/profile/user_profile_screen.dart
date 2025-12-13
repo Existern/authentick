@@ -441,7 +441,9 @@ class UserProfileScreen extends ConsumerWidget {
                                           height: height,
                                           color: Colors.grey[200],
                                           child: CachedNetworkImage(
-                                            imageUrl: firstImageMedia.mediaUrl,
+                                            imageUrl:
+                                                firstImageMedia.previewUrl ??
+                                                firstImageMedia.mediaUrl,
                                             fit: BoxFit.cover,
                                             placeholder: (context, url) =>
                                                 const Center(
