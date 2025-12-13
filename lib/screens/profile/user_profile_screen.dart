@@ -361,7 +361,7 @@ class UserProfileScreen extends ConsumerWidget {
                                         ),
                                         SizedBox(height: 16),
                                         Text(
-                                          'No posts yet',
+                                          'No moments yet',
                                           style: TextStyle(
                                             fontSize: 18,
                                             color: Colors.grey,

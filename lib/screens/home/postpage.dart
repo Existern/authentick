@@ -93,7 +93,7 @@ class _MyHomeState extends ConsumerState<MyHome> {
                           Icon(Icons.post_add, size: 64, color: Colors.grey),
                           const SizedBox(height: 16),
                           Text(
-                            'No posts yet',
+                            'No moments yet',
                             style: TextStyle(fontSize: 18, color: Colors.grey),
                           ),
                         ],
