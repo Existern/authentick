@@ -23,6 +23,27 @@ class MyProfile extends ConsumerStatefulWidget {
 class _MyProfileState extends ConsumerState<MyProfile> {
   bool _isUploadingImage = false;
   final ImagePicker _picker = ImagePicker();
+  bool _hasTriedRefresh = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Trigger profile fetch on first load if needed
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _ensureProfileLoaded();
+    });
+  }
+
+  Future<void> _ensureProfileLoaded() async {
+    final profileState = ref.read(userProfileRepositoryProvider);
+    
+    // If profile data is null and not currently loading, trigger refresh
+    if (profileState.value == null && !profileState.isLoading && !_hasTriedRefresh) {
+      _hasTriedRefresh = true;
+      // Fetch from API
+      await ref.read(userProfileRepositoryProvider.notifier).refresh();
+    }
+  }
 
   Future<void> _handleProfileImageUpdate() async {
     try {
@@ -145,11 +166,24 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                       // Profile Section
                       profileAsync.when(
                         data: (profile) {
+                          // If profile is null, trigger refresh and show loading
                           if (profile == null) {
+                            // Trigger refresh in next frame
+                            if (!_hasTriedRefresh) {
+                              _hasTriedRefresh = true;
+                              Future.microtask(() {
+                                ref
+                                    .read(userProfileRepositoryProvider.notifier)
+                                    .refresh();
+                              });
+                            }
+                            
                             return const Center(
                               child: Padding(
                                 padding: EdgeInsets.all(20.0),
-                                child: Text('Unable to load profile'),
+                                child: CircularProgressIndicator(
+                                  color: Color(0xFF3620B3),
+                                ),
                               ),
                             );
                           }

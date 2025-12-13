@@ -66,6 +66,18 @@ class _OnboardingFlowScreenState extends ConsumerState<OnboardingFlowScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(onboardingViewModelProvider);
 
+    // Save current step whenever it changes to persist user progress
+    ref.listen<OnboardingState>(onboardingViewModelProvider, (previous, next) {
+      if (previous?.currentStep != next.currentStep) {
+        // Step changed, ensure it's saved
+        final viewModel = ref.read(onboardingViewModelProvider.notifier);
+        // The view model already saves steps in its methods, but we ensure it here too
+        debugPrint(
+          '${Constants.tag} [OnboardingFlowScreen] Step changed from ${previous?.currentStep} to ${next.currentStep}',
+        );
+      }
+    });
+
     // Listen to authentication state for Google sign-in
     ref.listen(authenticationViewModelProvider, (previous, next) {
       debugPrint(

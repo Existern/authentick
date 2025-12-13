@@ -28,6 +28,7 @@ class OnboardingViewModel extends _$OnboardingViewModel {
   Future<void> initializeFromAuthResponse(
     auth.AuthResponse authResponse,
   ) async {
+    final authRepo = ref.read(authenticationRepositoryProvider);
     final onboarding = authResponse.data.onboarding;
 
     if (onboarding == null) {
@@ -35,7 +36,9 @@ class OnboardingViewModel extends _$OnboardingViewModel {
       debugPrint(
         '${Constants.tag} [OnboardingViewModel] No onboarding data, starting from intro',
       );
-      state = const OnboardingState();
+      // Check if there's a saved intro page index
+      final savedIntroPageIndex = await authRepo.getIntroPageIndex();
+      state = OnboardingState(introPageIndex: savedIntroPageIndex ?? 0);
       await _saveCurrentStep(OnboardingStep.intro);
       return;
     }
@@ -77,38 +80,41 @@ class OnboardingViewModel extends _$OnboardingViewModel {
       '${Constants.tag} [OnboardingViewModel] Terminal count: ${completedSteps.length}/${onboarding.steps.length}',
     );
 
-    // Check if there's a saved current step (from last session)
-    final authRepo = ref.read(authenticationRepositoryProvider);
-    final savedStepName = await authRepo.getCurrentOnboardingStep();
-    debugPrint(
-      '${Constants.tag} [OnboardingViewModel] Saved step from storage: $savedStepName',
-    );
+    // Check if any steps have been completed or skipped
+    final hasStartedOnboarding = completedSteps.isNotEmpty;
 
     OnboardingStep? targetStep;
 
-    if (savedStepName != null) {
-      // Try to map saved step to enum
-      targetStep = _mapApiStepToLocal(savedStepName);
+    if (!hasStartedOnboarding) {
+      // User hasn't started any steps yet, show intro screens first
       debugPrint(
-        '${Constants.tag} [OnboardingViewModel] Mapped saved step: $savedStepName -> $targetStep',
+        '${Constants.tag} [OnboardingViewModel] No steps completed yet, starting from intro',
       );
-
-      if (targetStep == null) {
-        debugPrint(
-          '${Constants.tag} [OnboardingViewModel] ⚠️ WARNING: Saved step "$savedStepName" could not be mapped to local enum!',
-        );
+      // Check if there's a saved intro page index
+      final savedStepName = await authRepo.getCurrentOnboardingStep();
+      if (savedStepName == 'intro') {
+        // User was in intro, continue from there
+        targetStep = OnboardingStep.intro;
+      } else {
+        // Start fresh from intro
+        targetStep = OnboardingStep.intro;
+        await _saveCurrentStep(OnboardingStep.intro);
       }
-    }
-
-    // If no saved step or invalid, find the first incomplete step from API
-    if (targetStep == null) {
+    } else {
+      // User has started onboarding, always use API to find the first incomplete step
+      // This ensures we skip already completed steps even if local storage has old data
       debugPrint(
-        '${Constants.tag} [OnboardingViewModel] No valid saved step, finding first incomplete step from API...',
+        '${Constants.tag} [OnboardingViewModel] Steps already completed, finding first incomplete step from API...',
       );
       targetStep = _findFirstIncompleteStep(onboarding.steps);
       debugPrint(
         '${Constants.tag} [OnboardingViewModel] First incomplete step from API: $targetStep',
       );
+
+      // Save this step to local storage to keep it in sync
+      if (targetStep != null) {
+        await _saveCurrentStep(targetStep);
+      }
     }
 
     if (targetStep != null) {
@@ -117,9 +123,19 @@ class OnboardingViewModel extends _$OnboardingViewModel {
         '${Constants.tag} [OnboardingViewModel] ✅ Setting current step to: $targetStep',
       );
 
+      // Restore intro page index if we're on intro step
+      int? introPageIndex;
+      if (targetStep == OnboardingStep.intro) {
+        introPageIndex = await authRepo.getIntroPageIndex();
+        debugPrint(
+          '${Constants.tag} [OnboardingViewModel] Restored intro page index: $introPageIndex',
+        );
+      }
+
       state = state.copyWith(
         currentStep: targetStep,
         completedSteps: completedSteps,
+        introPageIndex: introPageIndex ?? 0,
       );
       await _saveCurrentStep(targetStep);
     } else {
@@ -167,6 +183,8 @@ class OnboardingViewModel extends _$OnboardingViewModel {
   /// Map API step names to local OnboardingStep enum
   OnboardingStep? _mapApiStepToLocal(String apiStepName) {
     switch (apiStepName) {
+      case 'intro':
+        return OnboardingStep.intro;
       case 'invite_code_verified':
         return OnboardingStep.inviteCode;
       case 'date_of_birth_added':
@@ -264,32 +282,54 @@ class OnboardingViewModel extends _$OnboardingViewModel {
 
   Future<void> nextIntroPage() async {
     final currentState = state;
-    if (currentState.introPageIndex < 1) {
+    if (currentState.introPageIndex < 2) {
       state = currentState.copyWith(
         introPageIndex: currentState.introPageIndex + 1,
       );
+      // Save intro step with updated page index
+      await _saveCurrentStep(OnboardingStep.intro);
+      final authRepo = ref.read(authenticationRepositoryProvider);
+      await authRepo.saveIntroPageIndex(currentState.introPageIndex + 1);
     } else {
       state = currentState.copyWith(currentStep: OnboardingStep.inviteCode);
       await _saveCurrentStep(OnboardingStep.inviteCode);
+      // Clear intro page index when moving to next step
+      final authRepo = ref.read(authenticationRepositoryProvider);
+      await authRepo.saveIntroPageIndex(0);
     }
   }
 
-  void previousIntroPage() {
+  Future<void> previousIntroPage() async {
     final currentState = state;
     if (currentState.introPageIndex > 0) {
       state = currentState.copyWith(
         introPageIndex: currentState.introPageIndex - 1,
       );
+      // Save intro step with updated page index
+      await _saveCurrentStep(OnboardingStep.intro);
+      final authRepo = ref.read(authenticationRepositoryProvider);
+      await authRepo.saveIntroPageIndex(currentState.introPageIndex - 1);
     }
   }
 
-  void setIntroPage(int index) {
+  Future<void> setIntroPage(int index) async {
     state = state.copyWith(introPageIndex: index);
+    // Save intro step with page index to persist user's progress
+    await _saveCurrentStep(OnboardingStep.intro);
+    // Also save the intro page index separately
+    final authRepo = ref.read(authenticationRepositoryProvider);
+    await authRepo.saveIntroPageIndex(index);
   }
 
   Future<void> skipIntro() async {
     state = state.copyWith(currentStep: OnboardingStep.inviteCode);
     await _saveCurrentStep(OnboardingStep.inviteCode);
+  }
+
+  /// Clear saved onboarding step (used when user goes back on intro screens)
+  Future<void> clearSavedStep() async {
+    final authRepo = ref.read(authenticationRepositoryProvider);
+    await authRepo.clearCurrentOnboardingStep();
   }
 
   void updateInviteCode(String code) {
@@ -486,6 +526,10 @@ class OnboardingViewModel extends _$OnboardingViewModel {
       hasCapturedFirstMoment: true,
       completedSteps: updatedCompletedSteps,
     );
+
+    // Set flag to show first moment popup after onboarding
+    final authRepo = ref.read(authenticationRepositoryProvider);
+    await authRepo.setShouldShowFirstMomentPopup(true);
 
     // Navigate to next step
     final nextStep = _getNextStep(OnboardingStep.welcomeFirstMoment);

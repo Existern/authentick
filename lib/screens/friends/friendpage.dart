@@ -23,6 +23,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
   String selectedTab = 'Friend requests';
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  bool _hasTriedRefresh = false;
 
   @override
   void initState() {
@@ -32,6 +33,22 @@ class _FriendpageState extends ConsumerState<Friendpage> {
         _searchQuery = _searchController.text.toLowerCase();
       });
     });
+    
+    // Trigger profile fetch on first load if needed
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _ensureProfileLoaded();
+    });
+  }
+
+  Future<void> _ensureProfileLoaded() async {
+    final profileState = ref.read(userProfileRepositoryProvider);
+    
+    // If profile data is null and not currently loading, trigger refresh
+    if (profileState.value == null && !profileState.isLoading && !_hasTriedRefresh) {
+      _hasTriedRefresh = true;
+      // Fetch from API
+      await ref.read(userProfileRepositoryProvider.notifier).refresh();
+    }
   }
 
   @override

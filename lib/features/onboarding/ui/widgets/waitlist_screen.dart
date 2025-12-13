@@ -23,8 +23,10 @@ class _WaitlistScreenState extends ConsumerState<WaitlistScreen> {
   @override
   void initState() {
     super.initState();
-    // Automatically submit on screen load
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // Save waitlist state when screen is initialized
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final authRepo = ref.read(authenticationRepositoryProvider);
+      await authRepo.saveCurrentOnboardingStep('waitlist');
       _submitToWaitlist();
     });
   }
