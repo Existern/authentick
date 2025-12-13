@@ -36,9 +36,11 @@ class _MyProfileState extends ConsumerState<MyProfile> {
 
   Future<void> _ensureProfileLoaded() async {
     final profileState = ref.read(userProfileRepositoryProvider);
-    
+
     // If profile data is null and not currently loading, trigger refresh
-    if (profileState.value == null && !profileState.isLoading && !_hasTriedRefresh) {
+    if (profileState.value == null &&
+        !profileState.isLoading &&
+        !_hasTriedRefresh) {
       _hasTriedRefresh = true;
       // Fetch from API
       await ref.read(userProfileRepositoryProvider.notifier).refresh();
@@ -173,11 +175,13 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                               _hasTriedRefresh = true;
                               Future.microtask(() {
                                 ref
-                                    .read(userProfileRepositoryProvider.notifier)
+                                    .read(
+                                      userProfileRepositoryProvider.notifier,
+                                    )
                                     .refresh();
                               });
                             }
-                            
+
                             return const Center(
                               child: Padding(
                                 padding: EdgeInsets.all(20.0),
