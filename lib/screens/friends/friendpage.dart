@@ -1085,44 +1085,70 @@ class _FriendpageState extends ConsumerState<Friendpage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          // Profile Image
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              color: Colors.grey[300],
-              image: profileImage != null
-                  ? DecorationImage(
-                      image: CachedNetworkImageProvider(profileImage),
-                      fit: BoxFit.cover,
-                    )
+          // Profile Image - Clickable
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => UserProfileScreen(
+                    userId: requestUser.id,
+                    initialUsername: requestUser.username,
+                  ),
+                ),
+              );
+            },
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.grey[300],
+                image: profileImage != null
+                    ? DecorationImage(
+                        image: CachedNetworkImageProvider(profileImage),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+              ),
+              child: profileImage == null
+                  ? Icon(Icons.person, size: 30, color: Colors.grey[600])
                   : null,
             ),
-            child: profileImage == null
-                ? Icon(Icons.person, size: 30, color: Colors.grey[600])
-                : null,
           ),
           const SizedBox(width: 12),
 
-          // Name and Username
+          // Name and Username - Clickable
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  displayName,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => UserProfileScreen(
+                      userId: requestUser.id,
+                      initialUsername: requestUser.username,
+                    ),
                   ),
-                ),
-                Text(
-                  username,
-                  style: const TextStyle(fontSize: 14, color: Colors.grey),
-                ),
-              ],
+                );
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    displayName,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    username,
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                ],
+              ),
             ),
           ),
 
@@ -1216,44 +1242,70 @@ class _FriendpageState extends ConsumerState<Friendpage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          // Profile Image
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              color: Colors.grey[300],
-              image: profileImage != null
-                  ? DecorationImage(
-                      image: CachedNetworkImageProvider(profileImage),
-                      fit: BoxFit.cover,
-                    )
+          // Profile Image - Clickable
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => UserProfileScreen(
+                    userId: user.id,
+                    initialUsername: user.username,
+                  ),
+                ),
+              );
+            },
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.grey[300],
+                image: profileImage != null
+                    ? DecorationImage(
+                        image: CachedNetworkImageProvider(profileImage),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+              ),
+              child: profileImage == null
+                  ? Icon(Icons.person, size: 30, color: Colors.grey[600])
                   : null,
             ),
-            child: profileImage == null
-                ? Icon(Icons.person, size: 30, color: Colors.grey[600])
-                : null,
           ),
           const SizedBox(width: 12),
 
-          // Name and Username
+          // Name and Username - Clickable
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  displayName,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => UserProfileScreen(
+                      userId: user.id,
+                      initialUsername: user.username,
+                    ),
                   ),
-                ),
-                Text(
-                  username,
-                  style: const TextStyle(fontSize: 14, color: Colors.grey),
-                ),
-              ],
+                );
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    displayName,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    username,
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                ],
+              ),
             ),
           ),
 
@@ -1283,44 +1335,70 @@ class _FriendpageState extends ConsumerState<Friendpage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          // Profile Image
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              color: Colors.grey[300],
-              image: profileImage != null
-                  ? DecorationImage(
-                      image: CachedNetworkImageProvider(profileImage),
-                      fit: BoxFit.cover,
-                    )
+          // Profile Image - Clickable
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => UserProfileScreen(
+                    userId: user.id,
+                    initialUsername: user.username,
+                  ),
+                ),
+              );
+            },
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.grey[300],
+                image: profileImage != null
+                    ? DecorationImage(
+                        image: CachedNetworkImageProvider(profileImage),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+              ),
+              child: profileImage == null
+                  ? Icon(Icons.person, size: 30, color: Colors.grey[600])
                   : null,
             ),
-            child: profileImage == null
-                ? Icon(Icons.person, size: 30, color: Colors.grey[600])
-                : null,
           ),
           const SizedBox(width: 12),
 
-          // Name and Username
+          // Name and Username - Clickable
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  displayName,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => UserProfileScreen(
+                      userId: user.id,
+                      initialUsername: user.username,
+                    ),
                   ),
-                ),
-                Text(
-                  username,
-                  style: const TextStyle(fontSize: 14, color: Colors.grey),
-                ),
-              ],
+                );
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    displayName,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    username,
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                ],
+              ),
             ),
           ),
 
@@ -1350,44 +1428,70 @@ class _FriendpageState extends ConsumerState<Friendpage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          // Profile Image
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              color: Colors.grey[300],
-              image: profileImage != null
-                  ? DecorationImage(
-                      image: CachedNetworkImageProvider(profileImage),
-                      fit: BoxFit.cover,
-                    )
+          // Profile Image - Clickable
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => UserProfileScreen(
+                    userId: user.id,
+                    initialUsername: user.username,
+                  ),
+                ),
+              );
+            },
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.grey[300],
+                image: profileImage != null
+                    ? DecorationImage(
+                        image: CachedNetworkImageProvider(profileImage),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+              ),
+              child: profileImage == null
+                  ? Icon(Icons.person, size: 30, color: Colors.grey[600])
                   : null,
             ),
-            child: profileImage == null
-                ? Icon(Icons.person, size: 30, color: Colors.grey[600])
-                : null,
           ),
           const SizedBox(width: 12),
 
-          // Name and Username
+          // Name and Username - Clickable
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  displayName,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => UserProfileScreen(
+                      userId: user.id,
+                      initialUsername: user.username,
+                    ),
                   ),
-                ),
-                Text(
-                  username,
-                  style: const TextStyle(fontSize: 14, color: Colors.grey),
-                ),
-              ],
+                );
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    displayName,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    username,
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                ],
+              ),
             ),
           ),
 
