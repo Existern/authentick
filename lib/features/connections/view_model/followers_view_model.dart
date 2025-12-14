@@ -12,13 +12,10 @@ class FollowersViewModel extends _$FollowersViewModel {
   @override
   Future<List<ConnectionUser>> build() async {
     // Watch the shared connections provider and extract followers
-    final connectionsAsync = ref.watch(connectionsViewModelProvider);
-    return connectionsAsync.when(
-      data: (response) => response.followers,
-      loading: () => throw const AsyncLoading<List<ConnectionUser>>(),
-      error: (error, stack) =>
-          throw AsyncError<List<ConnectionUser>>(error, stack),
+    final connectionsResponse = await ref.watch(
+      connectionsViewModelProvider.future,
     );
+    return connectionsResponse.followers;
   }
 
   /// Refresh followers list by refreshing the shared connections provider
