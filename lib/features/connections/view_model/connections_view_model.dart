@@ -26,4 +26,20 @@ class ConnectionsViewModel extends _$ConnectionsViewModel {
       return await _fetchConnections();
     });
   }
+
+  /// Remove a friendship
+  Future<void> removeFriendship(String friendUserId) async {
+    final repository = ref.read(connectionRepositoryProvider);
+    await repository.removeFriendship(friendUserId);
+    // Refresh connections data after removing friend
+    await refresh();
+  }
+
+  /// Unfollow a user
+  Future<void> unfollowUser(String userId) async {
+    final repository = ref.read(connectionRepositoryProvider);
+    await repository.unfollowUser(userId);
+    // Refresh connections data after unfollowing
+    await refresh();
+  }
 }

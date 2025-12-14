@@ -8,6 +8,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../features/connections/model/connection_request.dart';
 import '../../features/connections/model/connection_user.dart';
 import '../../features/connections/model/discover_user.dart';
+import '../../features/connections/view_model/connections_view_model.dart';
 import '../../features/connections/view_model/pending_connections_view_model.dart';
 import '../../features/connections/view_model/friends_view_model.dart';
 import '../../features/connections/view_model/followers_view_model.dart';
@@ -1160,7 +1161,11 @@ class _FriendpageState extends ConsumerState<Friendpage> {
               height: 20,
             ),
             onPressed: () {
-              _showOptionsMenu(context, username);
+              _showOptionsMenu(
+                context,
+                requestUser,
+                tabContext: 'Friend requests',
+              );
             },
           ),
 
@@ -1207,6 +1212,8 @@ class _FriendpageState extends ConsumerState<Friendpage> {
               await ref
                   .read(pendingConnectionsViewModelProvider.notifier)
                   .acceptConnection(connectionRequest.id);
+              // Refresh connections data to update friends, followers, following lists
+              await ref.read(connectionsViewModelProvider.notifier).refresh();
               if (mounted) {
                 showCustomNotification('Friend request accepted');
               }
@@ -1317,7 +1324,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
               height: 20,
             ),
             onPressed: () {
-              _showOptionsMenu(context, user.username ?? 'User');
+              _showOptionsMenu(context, user, tabContext: 'Friends');
             },
           ),
         ],
@@ -1410,7 +1417,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
               height: 20,
             ),
             onPressed: () {
-              _showOptionsMenu(context, user.username ?? 'User');
+              _showOptionsMenu(context, user, tabContext: 'Followers');
             },
           ),
         ],
@@ -1503,7 +1510,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
               height: 20,
             ),
             onPressed: () {
-              _showOptionsMenu(context, user.username ?? 'User');
+              _showOptionsMenu(context, user, tabContext: 'Following');
             },
           ),
         ],
@@ -1511,7 +1518,12 @@ class _FriendpageState extends ConsumerState<Friendpage> {
     );
   }
 
-  void _showOptionsMenu(BuildContext context, String username) {
+  void _showOptionsMenu(
+    BuildContext context,
+    ConnectionUser user, {
+    String? tabContext,
+  }) {
+    final username = user.username ?? 'User';
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -1570,86 +1582,128 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                 ),
                 onTap: () {
                   Navigator.pop(context);
-                  showCustomNotification('Opening $username\'s profile');
-                },
-              ),
-            ),
-
-            // Block User
-            Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 8,
-                ),
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.block, color: Colors.red, size: 24),
-                ),
-                title: const Text(
-                  'Block User',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black87,
-                  ),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  showCustomNotification(
-                    '$username has been blocked',
-                    isError: true,
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => UserProfileScreen(
+                        userId: user.id,
+                        initialUsername: user.username,
+                      ),
+                    ),
                   );
                 },
               ),
             ),
 
-            // Report User
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
+            // Remove Friend (only in Friends tab)
+            if (tabContext == 'Friends')
+              Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 8,
+                  ),
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.person_remove,
+                      color: Colors.orange,
+                      size: 24,
+                    ),
+                  ),
+                  title: const Text(
+                    'Remove Friend',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    try {
+                      await ref
+                          .read(connectionsViewModelProvider.notifier)
+                          .removeFriendship(user.id);
+                      if (mounted) {
+                        showCustomNotification(
+                          'Removed $username from friends',
+                        );
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        showCustomNotification(
+                          'Failed to remove friend',
+                          isError: true,
+                        );
+                      }
+                    }
+                  },
+                ),
               ),
-              child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 8,
+
+            // Unfollow (only in Following tab)
+            if (tabContext == 'Following')
+              Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 8,
                   ),
-                  child: const Icon(
-                    Icons.report,
-                    color: Colors.orange,
-                    size: 24,
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.person_remove,
+                      color: Colors.orange,
+                      size: 24,
+                    ),
                   ),
+                  title: const Text(
+                    'Unfollow',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    try {
+                      await ref
+                          .read(connectionsViewModelProvider.notifier)
+                          .unfollowUser(user.id);
+                      if (mounted) {
+                        showCustomNotification('Unfollowed $username');
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        showCustomNotification(
+                          'Failed to unfollow',
+                          isError: true,
+                        );
+                      }
+                    }
+                  },
                 ),
-                title: const Text(
-                  'Report User',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black87,
-                  ),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  showCustomNotification('Report submitted');
-                },
               ),
-            ),
 
             // Bottom padding for safe area
             SizedBox(height: MediaQuery.of(context).padding.bottom + 20),

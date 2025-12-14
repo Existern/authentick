@@ -193,6 +193,50 @@ class ConnectionRepository {
     }
   }
 
+  /// Remove a friendship
+  Future<void> removeFriendship(String friendUserId) async {
+    try {
+      debugPrint(
+        '${Constants.tag} [ConnectionRepository] 🔄 Removing friendship: $friendUserId',
+      );
+
+      await _connectionService.removeFriendship(friendUserId);
+
+      debugPrint(
+        '${Constants.tag} [ConnectionRepository] ✅ Friendship removed',
+      );
+    } catch (error, stackTrace) {
+      debugPrint(
+        '${Constants.tag} [ConnectionRepository] ❌ Failed to remove friendship',
+      );
+      debugPrint('${Constants.tag} [ConnectionRepository] Error: $error');
+      debugPrint('${Constants.tag} [ConnectionRepository] Stack Trace:');
+      debugPrint('$stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Unfollow a user
+  Future<void> unfollowUser(String userId) async {
+    try {
+      debugPrint(
+        '${Constants.tag} [ConnectionRepository] 🔄 Unfollowing user: $userId',
+      );
+
+      await _connectionService.unfollowUser(userId);
+
+      debugPrint('${Constants.tag} [ConnectionRepository] ✅ User unfollowed');
+    } catch (error, stackTrace) {
+      debugPrint(
+        '${Constants.tag} [ConnectionRepository] ❌ Failed to unfollow user',
+      );
+      debugPrint('${Constants.tag} [ConnectionRepository] Error: $error');
+      debugPrint('${Constants.tag} [ConnectionRepository] Stack Trace:');
+      debugPrint('$stackTrace');
+      rethrow;
+    }
+  }
+
   // Legacy methods for backward compatibility
   /// Get pending connection requests (legacy - use getFriendRequests instead)
   @Deprecated('Use getFriendRequests instead')
