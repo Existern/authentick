@@ -4,6 +4,8 @@ import '../../common/remote/api_client.dart';
 import '../model/connection_request.dart';
 import '../model/connections_response.dart';
 import '../model/friendship.dart';
+import '../model/discover_users_response.dart';
+import '../model/search_users_response.dart';
 
 part 'connection_service.g.dart';
 
@@ -180,6 +182,40 @@ class ConnectionService {
   Future<void> removeCloseFriend(String userId) async {
     try {
       await _apiClient.delete<void>('/connections/close-friends/$userId');
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Discover new users
+  /// GET /discover/users
+  /// Returns up to 10 users per page you are not already friends with, following, close friends with, or blocking/blocked by.
+  Future<DiscoverUsersResponse> discoverUsers({int page = 1}) async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/discover/users',
+        queryParameters: {'page': page},
+      );
+      return DiscoverUsersResponse.fromJson(response);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Search users
+  /// GET /users/search
+  /// Searches users by username, first name, or last name using case-insensitive partial matching.
+  Future<SearchUsersResponse> searchUsers({
+    required String query,
+    int page = 1,
+    int limit = 5,
+  }) async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/users/search',
+        queryParameters: {'q': query, 'page': page, 'limit': limit},
+      );
+      return SearchUsersResponse.fromJson(response);
     } catch (e) {
       rethrow;
     }
