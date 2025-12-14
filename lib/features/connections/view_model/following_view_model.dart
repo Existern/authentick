@@ -1,29 +1,28 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../model/connection_user.dart';
-import '../repository/connection_repository.dart';
+import 'connections_view_model.dart';
 
 part 'following_view_model.g.dart';
 
 /// Provider for managing following list (users you are following)
+/// Derives data from shared connectionsViewModelProvider to avoid duplicate API calls
 @riverpod
 class FollowingViewModel extends _$FollowingViewModel {
   @override
   Future<List<ConnectionUser>> build() async {
-    return await _fetchFollowing();
+    // Watch the shared connections provider and extract following
+    final connectionsAsync = ref.watch(connectionsViewModelProvider);
+    return connectionsAsync.when(
+      data: (response) => response.following,
+      loading: () => throw const AsyncLoading<List<ConnectionUser>>(),
+      error: (error, stack) =>
+          throw AsyncError<List<ConnectionUser>>(error, stack),
+    );
   }
 
-  Future<List<ConnectionUser>> _fetchFollowing() async {
-    final repository = ref.read(connectionRepositoryProvider);
-    final response = await repository.getConnections();
-    return response.following;
-  }
-
-  /// Refresh following list
+  /// Refresh following list by refreshing the shared connections provider
   Future<void> refresh() async {
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      return await _fetchFollowing();
-    });
+    await ref.read(connectionsViewModelProvider.notifier).refresh();
   }
 }
