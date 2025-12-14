@@ -35,6 +35,14 @@ class ConnectionsViewModel extends _$ConnectionsViewModel {
     await refresh();
   }
 
+  /// Follow a user
+  Future<void> followUser(String userId) async {
+    final repository = ref.read(connectionRepositoryProvider);
+    await repository.followUser(userId);
+    // Refresh connections data after following
+    await refresh();
+  }
+
   /// Unfollow a user
   Future<void> unfollowUser(String userId) async {
     final repository = ref.read(connectionRepositoryProvider);

@@ -451,26 +451,48 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                 }).toList();
 
           if (filteredConnections.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    _searchQuery.isEmpty
-                        ? Icons.person_add_disabled
-                        : Icons.search_off,
-                    size: 64,
-                    color: Colors.grey[400],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    _searchQuery.isEmpty
-                        ? 'No pending friend requests'
-                        : 'No results found for "$_searchQuery"',
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+            return RefreshIndicator(
+              onRefresh: () async {
+                await ref
+                    .read(pendingConnectionsViewModelProvider.notifier)
+                    .refresh();
+              },
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      SizedBox(
+                        height: constraints.maxHeight,
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                _searchQuery.isEmpty
+                                    ? Icons.person_add_disabled
+                                    : Icons.search_off,
+                                size: 64,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                _searchQuery.isEmpty
+                                    ? 'No pending friend requests'
+                                    : 'No results found for "$_searchQuery"',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey[600],
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             );
           }
@@ -535,26 +557,46 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                 }).toList();
 
           if (filteredConnections.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    _searchQuery.isEmpty
-                        ? Icons.people_outline
-                        : Icons.search_off,
-                    size: 64,
-                    color: Colors.grey[400],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    _searchQuery.isEmpty
-                        ? 'No friends yet'
-                        : 'No results found for "$_searchQuery"',
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+            return RefreshIndicator(
+              onRefresh: () async {
+                await ref.read(friendsViewModelProvider.notifier).refresh();
+              },
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      SizedBox(
+                        height: constraints.maxHeight,
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                _searchQuery.isEmpty
+                                    ? Icons.people_outline
+                                    : Icons.search_off,
+                                size: 64,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                _searchQuery.isEmpty
+                                    ? 'No friends yet'
+                                    : 'No results found for \"$_searchQuery\"',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey[600],
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             );
           }
@@ -615,26 +657,46 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                 }).toList();
 
           if (filteredConnections.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    _searchQuery.isEmpty
-                        ? Icons.visibility_outlined
-                        : Icons.search_off,
-                    size: 64,
-                    color: Colors.grey[400],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    _searchQuery.isEmpty
-                        ? 'Not following anyone yet'
-                        : 'No results found for "$_searchQuery"',
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+            return RefreshIndicator(
+              onRefresh: () async {
+                await ref.read(followingViewModelProvider.notifier).refresh();
+              },
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      SizedBox(
+                        height: constraints.maxHeight,
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                _searchQuery.isEmpty
+                                    ? Icons.visibility_outlined
+                                    : Icons.search_off,
+                                size: 64,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                _searchQuery.isEmpty
+                                    ? 'Not following anyone yet'
+                                    : 'No results found for "$_searchQuery"',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey[600],
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             );
           }
@@ -695,26 +757,46 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                 }).toList();
 
           if (filteredConnections.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    _searchQuery.isEmpty
-                        ? Icons.group_outlined
-                        : Icons.search_off,
-                    size: 64,
-                    color: Colors.grey[400],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    _searchQuery.isEmpty
-                        ? 'No followers yet'
-                        : 'No results found for "$_searchQuery"',
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+            return RefreshIndicator(
+              onRefresh: () async {
+                await ref.read(followersViewModelProvider.notifier).refresh();
+              },
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      SizedBox(
+                        height: constraints.maxHeight,
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                _searchQuery.isEmpty
+                                    ? Icons.group_outlined
+                                    : Icons.search_off,
+                                size: 64,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                _searchQuery.isEmpty
+                                    ? 'No followers yet'
+                                    : 'No results found for "$_searchQuery"',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey[600],
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             );
           }
@@ -883,29 +965,52 @@ class _FriendpageState extends ConsumerState<Friendpage> {
         return discoverUsersAsync.when(
           data: (discoverUsers) {
             if (discoverUsers.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.explore_off,
-                      size: 64,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(0.4),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'No users to discover',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withOpacity(0.6),
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
+              final discoverViewModel = ref.read(
+                discoverUsersViewModelProvider.notifier,
+              );
+              return RefreshIndicator(
+                onRefresh: () async {
+                  setState(() {
+                    _isLoadingMoreDiscover = false;
+                  });
+                  await discoverViewModel.refresh();
+                },
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
+                        SizedBox(
+                          height: constraints.maxHeight,
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.explore_off,
+                                  size: 64,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withOpacity(0.4),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'No users to discover',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface.withOpacity(0.6),
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               );
             }
@@ -1789,36 +1894,76 @@ class _FriendpageState extends ConsumerState<Friendpage> {
             ),
           ),
 
-          // Add Friend Button
-          ElevatedButton(
-            onPressed: () async {
-              try {
-                await ref
-                    .read(searchUsersViewModelProvider.notifier)
-                    .sendFriendRequest(user.id);
-                if (mounted) {
-                  showCustomNotification('Friend request sent');
-                }
-              } catch (e) {
-                if (mounted) {
-                  showCustomNotification(
-                    'Failed to send request',
-                    isError: true,
-                  );
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF3620B3),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+          // Action Buttons (side by side)
+          Row(
+            children: [
+              // Add Friend Button (secondary)
+              OutlinedButton(
+                onPressed: () async {
+                  try {
+                    await ref
+                        .read(searchUsersViewModelProvider.notifier)
+                        .sendFriendRequest(user.id);
+                    if (mounted) {
+                      showCustomNotification('Friend request sent');
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      showCustomNotification(
+                        'Failed to send request',
+                        isError: true,
+                      );
+                    }
+                  }
+                },
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFF3620B3)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                ),
+                child: const Text(
+                  'Add Friend',
+                  style: TextStyle(color: Color(0xFF3620B3)),
+                ),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            ),
-            child: const Text(
-              'Add Friend',
-              style: TextStyle(color: Colors.white, fontSize: 14),
-            ),
+              const SizedBox(width: 8),
+              // Follow Button (primary)
+              ElevatedButton(
+                onPressed: () async {
+                  try {
+                    await ref
+                        .read(connectionsViewModelProvider.notifier)
+                        .followUser(user.id);
+                    if (mounted) {
+                      showCustomNotification('Following user');
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      showCustomNotification('Failed to follow', isError: true);
+                    }
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF3620B3),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                ),
+                child: const Text(
+                  'Follow',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -1911,36 +2056,76 @@ class _FriendpageState extends ConsumerState<Friendpage> {
             ),
           ),
 
-          // Add Friend Button
-          ElevatedButton(
-            onPressed: () async {
-              try {
-                await ref
-                    .read(discoverUsersViewModelProvider.notifier)
-                    .sendFriendRequest(user.id);
-                if (mounted) {
-                  showCustomNotification('Friend request sent');
-                }
-              } catch (e) {
-                if (mounted) {
-                  showCustomNotification(
-                    'Failed to send request',
-                    isError: true,
-                  );
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF3620B3),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+          // Action Buttons (side by side)
+          Row(
+            children: [
+              // Add Friend Button (secondary)
+              OutlinedButton(
+                onPressed: () async {
+                  try {
+                    await ref
+                        .read(discoverUsersViewModelProvider.notifier)
+                        .sendFriendRequest(user.id);
+                    if (mounted) {
+                      showCustomNotification('Friend request sent');
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      showCustomNotification(
+                        'Failed to send request',
+                        isError: true,
+                      );
+                    }
+                  }
+                },
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFF3620B3)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                ),
+                child: const Text(
+                  'Add Friend',
+                  style: TextStyle(color: Color(0xFF3620B3)),
+                ),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            ),
-            child: const Text(
-              'Add Friend',
-              style: TextStyle(color: Colors.white, fontSize: 14),
-            ),
+              const SizedBox(width: 8),
+              // Follow Button (primary)
+              ElevatedButton(
+                onPressed: () async {
+                  try {
+                    await ref
+                        .read(connectionsViewModelProvider.notifier)
+                        .followUser(user.id);
+                    if (mounted) {
+                      showCustomNotification('Following user');
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      showCustomNotification('Failed to follow', isError: true);
+                    }
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF3620B3),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                ),
+                child: const Text(
+                  'Follow',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
           ),
         ],
       ),

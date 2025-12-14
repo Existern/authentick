@@ -216,6 +216,27 @@ class ConnectionRepository {
     }
   }
 
+  /// Follow a user
+  Future<void> followUser(String userId) async {
+    try {
+      debugPrint(
+        '${Constants.tag} [ConnectionRepository] 🔄 Following user: $userId',
+      );
+
+      await _connectionService.followUser(userId);
+
+      debugPrint('${Constants.tag} [ConnectionRepository] ✅ User followed');
+    } catch (error, stackTrace) {
+      debugPrint(
+        '${Constants.tag} [ConnectionRepository] ❌ Failed to follow user',
+      );
+      debugPrint('${Constants.tag} [ConnectionRepository] Error: $error');
+      debugPrint('${Constants.tag} [ConnectionRepository] Stack Trace:');
+      debugPrint('$stackTrace');
+      rethrow;
+    }
+  }
+
   /// Unfollow a user
   Future<void> unfollowUser(String userId) async {
     try {
