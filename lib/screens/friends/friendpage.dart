@@ -183,12 +183,13 @@ class _FriendpageState extends ConsumerState<Friendpage> {
   }
 
   int getTabCount(
+    String label,
     AsyncValue<List<ConnectionRequest>> pendingConnectionsAsync,
     AsyncValue<List<ConnectionUser>> friendsAsync,
     AsyncValue<List<ConnectionUser>> followersAsync,
     AsyncValue<List<ConnectionUser>> followingAsync,
   ) {
-    switch (selectedTab) {
+    switch (label) {
       case 'Friend requests':
         return pendingConnectionsAsync.maybeWhen(
           data: (connections) => connections.length,
@@ -305,6 +306,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                     label: 'Friend requests',
                     icon: Icons.person_add,
                     count: getTabCount(
+                      'Friend requests',
                       pendingConnectionsAsync,
                       friendsAsync,
                       followersAsync,
@@ -325,6 +327,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                     label: 'Friends',
                     icon: Icons.people,
                     count: getTabCount(
+                      'Friends',
                       pendingConnectionsAsync,
                       friendsAsync,
                       followersAsync,
@@ -335,6 +338,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                     label: 'Following',
                     icon: Icons.visibility,
                     count: getTabCount(
+                      'Following',
                       pendingConnectionsAsync,
                       friendsAsync,
                       followersAsync,
@@ -345,6 +349,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                     label: 'Followers',
                     icon: Icons.group,
                     count: getTabCount(
+                      'Followers',
                       pendingConnectionsAsync,
                       friendsAsync,
                       followersAsync,
@@ -759,14 +764,14 @@ class _FriendpageState extends ConsumerState<Friendpage> {
       if (_searchQuery.length >= 3) {
         final searchUsersAsync = ref.watch(searchUsersViewModelProvider);
         final searchViewModel = ref.read(searchUsersViewModelProvider.notifier);
-        
+
         // Show loading while waiting for debounce timer or if query hasn't been searched yet
         if (_lastSearchedQuery != _searchQuery) {
           return const Center(
             child: CircularProgressIndicator(color: Color(0xFF3620B3)),
           );
         }
-        
+
         return searchUsersAsync.when(
           data: (users) {
             // Only show "no results" if we have actually searched and got empty results
@@ -904,8 +909,10 @@ class _FriendpageState extends ConsumerState<Friendpage> {
               );
             }
 
-            final discoverViewModel = ref.read(discoverUsersViewModelProvider.notifier);
-            
+            final discoverViewModel = ref.read(
+              discoverUsersViewModelProvider.notifier,
+            );
+
             return RefreshIndicator(
               onRefresh: () async {
                 setState(() {
@@ -921,12 +928,16 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                   left: 0,
                   right: 0,
                 ),
-                itemCount: discoverUsers.length + (discoverViewModel.hasMore ? 1 : 0),
+                itemCount:
+                    discoverUsers.length + (discoverViewModel.hasMore ? 1 : 0),
                 itemBuilder: (context, index) {
                   if (index == discoverUsers.length) {
                     // Show Load More button or loading indicator
                     return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 16.0,
+                      ),
                       child: Center(
                         child: _isLoadingMoreDiscover
                             ? const Padding(
@@ -1104,6 +1115,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
+                    color: Colors.black87,
                   ),
                 ),
                 Text(
@@ -1234,6 +1246,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
+                    color: Colors.black87,
                   ),
                 ),
                 Text(
@@ -1300,6 +1313,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
+                    color: Colors.black87,
                   ),
                 ),
                 Text(
@@ -1366,6 +1380,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
+                    color: Colors.black87,
                   ),
                 ),
                 Text(
@@ -1443,7 +1458,11 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                 ),
                 title: const Text(
                   'View Profile',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black87,
+                  ),
                 ),
                 onTap: () {
                   Navigator.pop(context);
@@ -1474,7 +1493,11 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                 ),
                 title: const Text(
                   'Block User',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black87,
+                  ),
                 ),
                 onTap: () {
                   Navigator.pop(context);
@@ -1511,7 +1534,11 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                 ),
                 title: const Text(
                   'Report User',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black87,
+                  ),
                 ),
                 onTap: () {
                   Navigator.pop(context);
@@ -1589,20 +1616,15 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                 children: [
                   Text(
                     displayName,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onSurface,
+                      color: Colors.black87,
                     ),
                   ),
                   Text(
                     username,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(0.6),
-                    ),
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
                   ),
                 ],
               ),
@@ -1708,20 +1730,15 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                 children: [
                   Text(
                     displayName,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onSurface,
+                      color: Colors.black87,
                     ),
                   ),
                   Text(
                     username,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(0.6),
-                    ),
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
                   ),
                   if (mutualCount > 0)
                     Text(
