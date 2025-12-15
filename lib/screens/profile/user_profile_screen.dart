@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mvvm_riverpod/features/user/repository/other_user_profile_repository.dart';
-import 'package:flutter_mvvm_riverpod/features/post/repository/user_posts_repository.dart';
+import 'package:flutter_mvvm_riverpod/features/post/repository/paginated_user_posts_repository.dart';
 import 'package:flutter_mvvm_riverpod/features/post/repository/post_like_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -9,7 +9,7 @@ import 'package:flutter_mvvm_riverpod/screens/profile/profile_image_full_view.da
 import 'package:flutter_mvvm_riverpod/screens/post/post_detail_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
-class UserProfileScreen extends ConsumerWidget {
+class UserProfileScreen extends ConsumerStatefulWidget {
   final String userId;
   final String? initialUsername;
 
@@ -20,8 +20,40 @@ class UserProfileScreen extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final profileAsync = ref.watch(otherUserProfileProvider(userId: userId));
+  ConsumerState<UserProfileScreen> createState() => _UserProfileScreenState();
+}
+
+class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      // Load more when user is 200 pixels from the bottom
+      ref
+          .read(paginatedUserPostsProvider(userId: widget.userId).notifier)
+          .loadMore();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final profileAsync = ref.watch(
+      otherUserProfileProvider(userId: widget.userId),
+    );
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -60,11 +92,20 @@ class UserProfileScreen extends ConsumerWidget {
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () async {
-                  ref.invalidate(otherUserProfileProvider(userId: userId));
-                  ref.invalidate(userPostsProvider(userId: userId));
+                  ref.invalidate(
+                    otherUserProfileProvider(userId: widget.userId),
+                  );
+                  await ref
+                      .read(
+                        paginatedUserPostsProvider(
+                          userId: widget.userId,
+                        ).notifier,
+                      )
+                      .refresh();
                 },
                 color: const Color(0xFF3620B3),
                 child: SingleChildScrollView(
+                  controller: _scrollController,
                   physics: const AlwaysScrollableScrollPhysics(),
                   child: Column(
                     children: [
@@ -288,7 +329,9 @@ class UserProfileScreen extends ConsumerWidget {
                                 ElevatedButton(
                                   onPressed: () {
                                     ref.invalidate(
-                                      otherUserProfileProvider(userId: userId),
+                                      otherUserProfileProvider(
+                                        userId: widget.userId,
+                                      ),
                                     );
                                   },
                                   style: ElevatedButton.styleFrom(
@@ -308,178 +351,17 @@ class UserProfileScreen extends ConsumerWidget {
                       // Posts Section
                       profileAsync.when(
                         data: (profileResponse) {
-                          final profileId = profileResponse.data.id;
-                          final userPostsAsync = ref.watch(
-                            userPostsProvider(userId: profileId),
+                          final postsState = ref.watch(
+                            paginatedUserPostsProvider(userId: widget.userId),
                           );
 
-                          return userPostsAsync.when(
-                            data: (postsResponse) {
-                              if (postsResponse.data == null) {
-                                return SizedBox(
-                                  height:
-                                      MediaQuery.of(context).size.height * 0.3,
-                                  child: const Center(
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.error_outline,
-                                          size: 64,
-                                          color: Colors.grey,
-                                        ),
-                                        SizedBox(height: 16),
-                                        Text(
-                                          'No data available',
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            color: Colors.grey,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              }
+                          // Watch the postLikeManager to rebuild when likes change
+                          ref.watch(postLikeManagerProvider);
 
-                              final posts = postsResponse.data!.posts;
-
-                              if (posts.isEmpty) {
-                                return SizedBox(
-                                  height:
-                                      MediaQuery.of(context).size.height * 0.3,
-                                  child: const Center(
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.photo_library_outlined,
-                                          size: 64,
-                                          color: Colors.grey,
-                                        ),
-                                        SizedBox(height: 16),
-                                        Text(
-                                          'No moments yet',
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            color: Colors.grey,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              }
-
-                              // Filter posts with images
-                              final postsWithImages = posts
-                                  .where(
-                                    (post) =>
-                                        post.media != null &&
-                                        post.media!.isNotEmpty &&
-                                        post.media!.any(
-                                          (media) => media.mediaType == 'image',
-                                        ),
-                                  )
-                                  .toList();
-
-                              // Watch the postLikeManager to rebuild when likes change
-                              ref.watch(postLikeManagerProvider);
-
-                              return Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10.0,
-                                ),
-                                child: MasonryGridView.builder(
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  shrinkWrap: true,
-                                  gridDelegate:
-                                      const SliverSimpleGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: 2,
-                                      ),
-                                  mainAxisSpacing: 8,
-                                  crossAxisSpacing: 8,
-                                  itemCount: postsWithImages.length,
-                                  itemBuilder: (context, index) {
-                                    final post = postsWithImages[index];
-                                    final firstImageMedia = post.media!
-                                        .where(
-                                          (media) => media.mediaType == 'image',
-                                        )
-                                        .first;
-
-                                    // Calculate height based on aspect ratio if available
-                                    final double height =
-                                        (firstImageMedia.height != null &&
-                                            firstImageMedia.width != null)
-                                        ? (firstImageMedia.height! /
-                                                  firstImageMedia.width!) *
-                                              180
-                                        : ((index % 3 == 0)
-                                              ? 250
-                                              : (index % 3 == 1)
-                                              ? 180
-                                              : 220);
-
-                                    return GestureDetector(
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                PostDetailScreen(
-                                                  postId: post.id,
-                                                ),
-                                          ),
-                                        );
-                                      },
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(12),
-                                        child: Container(
-                                          height: height,
-                                          color: Colors.grey[200],
-                                          child: CachedNetworkImage(
-                                            imageUrl:
-                                                firstImageMedia.previewUrl ??
-                                                firstImageMedia.mediaUrl,
-                                            fit: BoxFit.cover,
-                                            placeholder: (context, url) =>
-                                                const Center(
-                                                  child:
-                                                      CircularProgressIndicator(
-                                                        strokeWidth: 2,
-                                                        color: Color(
-                                                          0xFF3620B3,
-                                                        ),
-                                                      ),
-                                                ),
-                                            errorWidget:
-                                                (context, url, error) =>
-                                                    const Center(
-                                                      child: Icon(
-                                                        Icons.error,
-                                                        color: Colors.red,
-                                                      ),
-                                                    ),
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              );
-                            },
-                            loading: () => const Center(
-                              child: Padding(
-                                padding: EdgeInsets.all(40.0),
-                                child: CircularProgressIndicator(
-                                  color: Color(0xFF3620B3),
-                                ),
-                              ),
-                            ),
-                            error: (error, stack) => SizedBox(
+                          // Show error if any
+                          if (postsState.error != null &&
+                              postsState.posts.isEmpty) {
+                            return SizedBox(
                               height: MediaQuery.of(context).size.height * 0.3,
                               child: Center(
                                 child: Column(
@@ -493,11 +375,24 @@ class UserProfileScreen extends ConsumerWidget {
                                     const SizedBox(height: 8),
                                     const Text('Failed to load posts'),
                                     const SizedBox(height: 8),
+                                    Text(
+                                      postsState.error!,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 8),
                                     ElevatedButton(
                                       onPressed: () {
-                                        ref.invalidate(
-                                          userPostsProvider(userId: profileId),
-                                        );
+                                        ref
+                                            .read(
+                                              paginatedUserPostsProvider(
+                                                userId: widget.userId,
+                                              ).notifier,
+                                            )
+                                            .refresh();
                                       },
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: const Color(
@@ -510,7 +405,181 @@ class UserProfileScreen extends ConsumerWidget {
                                   ],
                                 ),
                               ),
-                            ),
+                            );
+                          }
+
+                          // Show loading for initial load
+                          if (postsState.posts.isEmpty &&
+                              postsState.isLoading) {
+                            return const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(40.0),
+                                child: CircularProgressIndicator(
+                                  color: Color(0xFF3620B3),
+                                ),
+                              ),
+                            );
+                          }
+
+                          // Show empty state when no posts
+                          if (postsState.posts.isEmpty &&
+                              !postsState.isLoading) {
+                            return SizedBox(
+                              height: MediaQuery.of(context).size.height * 0.3,
+                              child: const Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.photo_library_outlined,
+                                      size: 64,
+                                      color: Colors.grey,
+                                    ),
+                                    SizedBox(height: 16),
+                                    Text(
+                                      'No moments yet',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }
+
+                          // Filter posts with images
+                          final postsWithImages = postsState.posts
+                              .where(
+                                (post) =>
+                                    post.media != null &&
+                                    post.media!.isNotEmpty &&
+                                    post.media!.any(
+                                      (media) => media.mediaType == 'image',
+                                    ),
+                              )
+                              .toList();
+
+                          return Column(
+                            children: [
+                              // Posts Grid
+                              if (postsWithImages.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10.0,
+                                  ),
+                                  child: MasonryGridView.builder(
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    shrinkWrap: true,
+                                    gridDelegate:
+                                        const SliverSimpleGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: 2,
+                                        ),
+                                    mainAxisSpacing: 8,
+                                    crossAxisSpacing: 8,
+                                    itemCount: postsWithImages.length,
+                                    itemBuilder: (context, index) {
+                                      final post = postsWithImages[index];
+                                      final firstImageMedia = post.media!
+                                          .where(
+                                            (media) =>
+                                                media.mediaType == 'image',
+                                          )
+                                          .first;
+
+                                      // Calculate height based on aspect ratio if available
+                                      final double height =
+                                          (firstImageMedia.height != null &&
+                                              firstImageMedia.width != null)
+                                          ? (firstImageMedia.height! /
+                                                    firstImageMedia.width!) *
+                                                180
+                                          : ((index % 3 == 0)
+                                                ? 250
+                                                : (index % 3 == 1)
+                                                ? 180
+                                                : 220);
+
+                                      return GestureDetector(
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  PostDetailScreen(
+                                                    postId: post.id,
+                                                  ),
+                                            ),
+                                          );
+                                        },
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          child: Container(
+                                            height: height,
+                                            color: Colors.grey[200],
+                                            child: CachedNetworkImage(
+                                              imageUrl:
+                                                  firstImageMedia.previewUrl ??
+                                                  firstImageMedia.mediaUrl,
+                                              fit: BoxFit.cover,
+                                              placeholder: (context, url) =>
+                                                  const Center(
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                          strokeWidth: 2,
+                                                          color: Color(
+                                                            0xFF3620B3,
+                                                          ),
+                                                        ),
+                                                  ),
+                                              errorWidget:
+                                                  (context, url, error) =>
+                                                      const Center(
+                                                        child: Icon(
+                                                          Icons.error,
+                                                          color: Colors.red,
+                                                        ),
+                                                      ),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+
+                              // Loading indicator for pagination
+                              if (postsState.isLoading &&
+                                  postsState.posts.isNotEmpty)
+                                const Padding(
+                                  padding: EdgeInsets.all(16.0),
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      color: Color(0xFF3620B3),
+                                    ),
+                                  ),
+                                ),
+
+                              // End of list indicator
+                              if (!postsState.hasMore &&
+                                  postsState.posts.isNotEmpty)
+                                const Padding(
+                                  padding: EdgeInsets.all(16.0),
+                                  child: Center(
+                                    child: Text(
+                                      'No more posts',
+                                      style: TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
                           );
                         },
                         loading: () => const SizedBox(),
