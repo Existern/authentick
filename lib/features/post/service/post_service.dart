@@ -115,6 +115,32 @@ class PostService {
     }
   }
 
+  /// Get authenticated user's posts (convenience endpoint)
+  /// GET /posts/me
+  /// Parameters:
+  /// - page: Page number - defaults to 1
+  /// - limit: Items per page - defaults to 20
+  /// - mediaMode: Media mode for media URLs ('preview' or 'full') - defaults to 'full'
+  Future<FeedResponse> getMyPosts({
+    int page = 1,
+    int limit = 20,
+    String mediaMode = 'full',
+  }) async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/posts/me',
+        queryParameters: {
+          'page': page,
+          'limit': limit,
+          'media_mode': mediaMode,
+        },
+      );
+      return FeedResponse.fromJson(response);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   /// Like a post
   /// POST /posts/{id}/like
   /// Parameters:

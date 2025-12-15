@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mvvm_riverpod/features/profile/repository/profile_repository.dart';
 import 'package:flutter_mvvm_riverpod/features/user/model/update_profile_request.dart';
 import 'package:flutter_mvvm_riverpod/features/user/repository/user_profile_repository.dart';
-import 'package:flutter_mvvm_riverpod/features/post/repository/paginated_user_posts_repository.dart';
+import 'package:flutter_mvvm_riverpod/features/post/repository/paginated_my_posts_repository.dart';
 import 'package:flutter_mvvm_riverpod/features/post/repository/post_like_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -24,7 +24,6 @@ class _MyProfileState extends ConsumerState<MyProfile> {
   bool _isUploadingImage = false;
   final ImagePicker _picker = ImagePicker();
   final ScrollController _scrollController = ScrollController();
-  String? _currentUserId;
 
   @override
   void initState() {
@@ -40,13 +39,10 @@ class _MyProfileState extends ConsumerState<MyProfile> {
   }
 
   void _onScroll() {
-    if (_currentUserId != null &&
-        _scrollController.position.pixels >=
-            _scrollController.position.maxScrollExtent - 200) {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
       // Load more when user is 200 pixels from the bottom
-      ref
-          .read(paginatedUserPostsProvider(userId: _currentUserId!).notifier)
-          .loadMore();
+      ref.read(paginatedMyPostsProvider.notifier).loadMore();
     }
   }
 
@@ -154,18 +150,8 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                 onRefresh: () async {
                   // Refresh both profile and posts
                   ref.invalidate(userProfileRepositoryProvider);
-                  final profile = await ref.read(
-                    userProfileRepositoryProvider.future,
-                  );
-                  if (profile != null) {
-                    await ref
-                        .read(
-                          paginatedUserPostsProvider(
-                            userId: profile.id,
-                          ).notifier,
-                        )
-                        .refresh();
-                  }
+                  await ref.read(userProfileRepositoryProvider.future);
+                  await ref.read(paginatedMyPostsProvider.notifier).refresh();
                 },
                 color: const Color(0xFF3620B3),
                 child: SingleChildScrollView(
@@ -426,11 +412,8 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                             return const SizedBox();
                           }
 
-                          // Store current user ID for pagination
-                          _currentUserId = profile.id;
-
                           final postsState = ref.watch(
-                            paginatedUserPostsProvider(userId: profile.id),
+                            paginatedMyPostsProvider,
                           );
 
                           // Watch the postLikeManager to rebuild when likes change
@@ -466,9 +449,7 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                                       onPressed: () {
                                         ref
                                             .read(
-                                              paginatedUserPostsProvider(
-                                                userId: profile.id,
-                                              ).notifier,
+                                              paginatedMyPostsProvider.notifier,
                                             )
                                             .refresh();
                                       },
@@ -604,9 +585,8 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                                             if (deleted == true && mounted) {
                                               ref
                                                   .read(
-                                                    paginatedUserPostsProvider(
-                                                      userId: profile.id,
-                                                    ).notifier,
+                                                    paginatedMyPostsProvider
+                                                        .notifier,
                                                   )
                                                   .refresh();
                                             }
