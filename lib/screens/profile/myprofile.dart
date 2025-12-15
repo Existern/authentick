@@ -23,7 +23,6 @@ class MyProfile extends ConsumerStatefulWidget {
 class _MyProfileState extends ConsumerState<MyProfile> {
   bool _isUploadingImage = false;
   final ImagePicker _picker = ImagePicker();
-  bool _hasTriedRefresh = false;
   final ScrollController _scrollController = ScrollController();
   String? _currentUserId;
 
@@ -31,10 +30,6 @@ class _MyProfileState extends ConsumerState<MyProfile> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    // Trigger profile fetch on first load if needed
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _ensureProfileLoaded();
-    });
   }
 
   @override
@@ -52,19 +47,6 @@ class _MyProfileState extends ConsumerState<MyProfile> {
       ref
           .read(paginatedUserPostsProvider(userId: _currentUserId!).notifier)
           .loadMore();
-    }
-  }
-
-  Future<void> _ensureProfileLoaded() async {
-    final profileState = ref.read(userProfileRepositoryProvider);
-
-    // If profile data is null and not currently loading, trigger refresh
-    if (profileState.value == null &&
-        !profileState.isLoading &&
-        !_hasTriedRefresh) {
-      _hasTriedRefresh = true;
-      // Fetch from API
-      await ref.read(userProfileRepositoryProvider.notifier).refresh();
     }
   }
 
@@ -196,25 +178,17 @@ class _MyProfileState extends ConsumerState<MyProfile> {
                       // Profile Section
                       profileAsync.when(
                         data: (profile) {
-                          // If profile is null, trigger refresh and show loading
+                          // If profile is null, show message
                           if (profile == null) {
-                            // Trigger refresh in next frame
-                            if (!_hasTriedRefresh) {
-                              _hasTriedRefresh = true;
-                              Future.microtask(() {
-                                ref
-                                    .read(
-                                      userProfileRepositoryProvider.notifier,
-                                    )
-                                    .refresh();
-                              });
-                            }
-
                             return const Center(
                               child: Padding(
                                 padding: EdgeInsets.all(20.0),
-                                child: CircularProgressIndicator(
-                                  color: Color(0xFF3620B3),
+                                child: Text(
+                                  'Unable to load profile',
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 16,
+                                  ),
                                 ),
                               ),
                             );

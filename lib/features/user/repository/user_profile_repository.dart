@@ -15,11 +15,18 @@ const String _userProfileKey = 'user_profile_cache';
 class UserProfileRepository extends _$UserProfileRepository {
   @override
   Future<UserProfileData?> build() async {
-    // Load from cache only on startup - do not fetch from API
-    // This prevents an unnecessary profile API call at app startup
-    // since the onboarding API can test the token validity
-    final cachedProfile = await _loadCachedProfile();
-    return cachedProfile;
+    // Always fetch fresh profile data from API on build
+    // This ensures profile image and other data are always up-to-date
+    try {
+      return await _fetchAndCacheProfile();
+    } catch (e) {
+      // If API fails, try to load from cache as fallback
+      final cachedProfile = await _loadCachedProfile();
+      if (cachedProfile != null) {
+        return cachedProfile;
+      }
+      rethrow;
+    }
   }
 
   /// Load profile from SharedPreferences cache
