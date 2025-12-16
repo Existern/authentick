@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mvvm_riverpod/extensions/build_context_extension.dart';
-import 'package:flutter_mvvm_riverpod/features/post/repository/feed_repository.dart';
+import 'package:flutter_mvvm_riverpod/features/post/view_model/friends_feed_view_model.dart';
+import 'package:flutter_mvvm_riverpod/features/post/view_model/following_feed_view_model.dart';
+import 'package:flutter_mvvm_riverpod/features/post/view_model/all_feed_view_model.dart';
 import 'package:flutter_mvvm_riverpod/screens/home/postcard.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -14,24 +16,16 @@ class MyHome extends ConsumerStatefulWidget {
 
 class _MyHomeState extends ConsumerState<MyHome> {
   String selectedTab = 'All';
-
-  String _getFilterForTab() {
-    switch (selectedTab) {
-      case 'Friends':
-        return 'friends';
-      case 'Following':
-        return 'following';
-      case 'All':
-        return 'all';
-      default:
-        return 'all';
-    }
-  }
+  bool _isLoadingMore = false;
 
   @override
   Widget build(BuildContext context) {
-    final filter = _getFilterForTab();
-    final feedAsync = ref.watch(feedProvider(filter: filter));
+    // Watch the appropriate feed based on selected tab
+    final feedAsync = selectedTab == 'Friends'
+        ? ref.watch(friendsFeedViewModelProvider)
+        : selectedTab == 'Following'
+        ? ref.watch(followingFeedViewModelProvider)
+        : ref.watch(allFeedViewModelProvider);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -62,52 +56,137 @@ class _MyHomeState extends ConsumerState<MyHome> {
 
             Expanded(
               child: feedAsync.when(
-                data: (feedResponse) {
-                  if (feedResponse.data == null) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.error_outline,
-                            size: 64,
-                            color: Colors.grey,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No feed data available',
-                            style: TextStyle(fontSize: 18, color: Colors.grey),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  final posts = feedResponse.data!.posts;
-
+                data: (posts) {
                   if (posts.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.post_add, size: 64, color: Colors.grey),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No posts yet',
-                            style: TextStyle(fontSize: 18, color: Colors.grey),
-                          ),
-                        ],
+                    // Get the appropriate view model based on selected tab
+                    dynamic viewModel = selectedTab == 'Friends'
+                        ? ref.read(friendsFeedViewModelProvider.notifier)
+                        : selectedTab == 'Following'
+                        ? ref.read(followingFeedViewModelProvider.notifier)
+                        : ref.read(allFeedViewModelProvider.notifier);
+
+                    return RefreshIndicator(
+                      onRefresh: () async {
+                        setState(() {
+                          _isLoadingMore = false;
+                        });
+                        await viewModel.refresh();
+                      },
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          return ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            children: [
+                              SizedBox(
+                                height: constraints.maxHeight,
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.post_add,
+                                        size: 64,
+                                        color: Colors.grey,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        'No moments yet',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
                       ),
                     );
                   }
+
+                  // Get the appropriate view model based on selected tab
+                  dynamic viewModel = selectedTab == 'Friends'
+                      ? ref.read(friendsFeedViewModelProvider.notifier)
+                      : selectedTab == 'Following'
+                      ? ref.read(followingFeedViewModelProvider.notifier)
+                      : ref.read(allFeedViewModelProvider.notifier);
 
                   return RefreshIndicator(
                     onRefresh: () async {
-                      ref.invalidate(feedProvider);
+                      setState(() {
+                        _isLoadingMore = false;
+                      });
+                      await viewModel.refresh();
                     },
                     child: ListView.builder(
-                      itemCount: posts.length,
+                      padding: EdgeInsets.only(
+                        top: 0,
+                        bottom: 100, // Add bottom padding
+                        left: 0,
+                        right: 0,
+                      ),
+                      itemCount: posts.length + (viewModel.hasMore ? 1 : 0),
                       itemBuilder: (context, index) {
+                        if (index == posts.length) {
+                          // Show Load More button or loading indicator
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                              vertical: 16.0,
+                            ),
+                            child: Center(
+                              child: _isLoadingMore
+                                  ? const Padding(
+                                      padding: EdgeInsets.all(16.0),
+                                      child: CircularProgressIndicator(
+                                        color: Color(0xFF3620B3),
+                                      ),
+                                    )
+                                  : ElevatedButton(
+                                      onPressed: () async {
+                                        setState(() {
+                                          _isLoadingMore = true;
+                                        });
+                                        try {
+                                          await viewModel.loadMore();
+                                        } finally {
+                                          if (mounted) {
+                                            setState(() {
+                                              _isLoadingMore = false;
+                                            });
+                                          }
+                                        }
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(
+                                          0xFF3620B3,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 24,
+                                          vertical: 12,
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        'Load More',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                            ),
+                          );
+                        }
+
                         final post = posts[index];
                         final firstMedia = post.media?.isNotEmpty == true
                             ? post.media!.first
@@ -119,7 +198,7 @@ class _MyHomeState extends ConsumerState<MyHome> {
                           username: post.user?.username ?? 'User',
                           profileImage: post.user?.profileImage,
                           postImage:
-                              firstMedia?.thumbnailUrl ?? firstMedia?.mediaUrl,
+                              firstMedia?.previewUrl ?? firstMedia?.mediaUrl,
                           content: post.content,
                           location: post.metadata?.location,
                           createdAt: post.createdAt,
@@ -134,44 +213,56 @@ class _MyHomeState extends ConsumerState<MyHome> {
                 loading: () => const Center(
                   child: CircularProgressIndicator(color: Color(0xFF3620B3)),
                 ),
-                error: (error, stack) => Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.error_outline,
-                        size: 64,
-                        color: Colors.red,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Failed to load feed',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                error: (error, stack) {
+                  // Get the appropriate view model based on selected tab
+                  dynamic viewModel = selectedTab == 'Friends'
+                      ? ref.read(friendsFeedViewModelProvider.notifier)
+                      : selectedTab == 'Following'
+                      ? ref.read(followingFeedViewModelProvider.notifier)
+                      : ref.read(allFeedViewModelProvider.notifier);
+
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          size: 64,
+                          color: Colors.red,
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        error.toString(),
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () {
-                          ref.invalidate(feedProvider);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF3620B3),
-                          foregroundColor: Colors.white,
+                        const SizedBox(height: 16),
+                        Text(
+                          'Failed to load feed',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
                         ),
-                        child: const Text('Retry'),
-                      ),
-                    ],
-                  ),
-                ),
+                        const SizedBox(height: 8),
+                        Text(
+                          error.toString(),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () {
+                            setState(() {
+                              _isLoadingMore = false;
+                            });
+                            viewModel.refresh();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF3620B3),
+                            foregroundColor: Colors.white,
+                          ),
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ),
           ],
@@ -187,6 +278,7 @@ class _MyHomeState extends ConsumerState<MyHome> {
       onTap: () {
         setState(() {
           selectedTab = label;
+          _isLoadingMore = false; // Reset loading state when switching tabs
         });
       },
       child: Padding(

@@ -18,10 +18,33 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   bool isEditing = false;
   bool isSaving = false;
   String? errorMessage;
+  bool _hasTriedRefresh = false;
 
   final TextEditingController firstNameController = TextEditingController();
   final TextEditingController lastNameController = TextEditingController();
   final TextEditingController handleController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Trigger profile fetch on first load if needed
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _ensureProfileLoaded();
+    });
+  }
+
+  Future<void> _ensureProfileLoaded() async {
+    final profileState = ref.read(userProfileRepositoryProvider);
+
+    // If profile data is null and not currently loading, trigger refresh
+    if (profileState.value == null &&
+        !profileState.isLoading &&
+        !_hasTriedRefresh) {
+      _hasTriedRefresh = true;
+      // Fetch from API
+      await ref.read(userProfileRepositoryProvider.notifier).refresh();
+    }
+  }
 
   @override
   void dispose() {
@@ -260,8 +283,26 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
               profileAsync.when(
                 data: (profile) {
+                  // If profile is null, trigger refresh and show loading
                   if (profile == null) {
-                    return const Center(child: Text('Unable to load profile'));
+                    // Trigger refresh in next frame
+                    if (!_hasTriedRefresh) {
+                      _hasTriedRefresh = true;
+                      Future.microtask(() {
+                        ref
+                            .read(userProfileRepositoryProvider.notifier)
+                            .refresh();
+                      });
+                    }
+
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(20.0),
+                        child: CircularProgressIndicator(
+                          color: Color(0xFF3620B3),
+                        ),
+                      ),
+                    );
                   }
 
                   // Load data only once when profile is available

@@ -11,11 +11,13 @@ Future<FeedResponse> userPosts(
   required String userId,
   int page = 1,
   int limit = 20,
+  String mediaMode = 'preview',
 }) async {
   final postService = ref.watch(postServiceProvider);
   return await postService.getUserPosts(
     userId: userId,
     page: page,
     limit: limit,
+    mediaMode: mediaMode,
   );
 }

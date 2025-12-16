@@ -11,20 +11,18 @@ part 'user_profile_repository.g.dart';
 
 const String _userProfileKey = 'user_profile_cache';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class UserProfileRepository extends _$UserProfileRepository {
   @override
   Future<UserProfileData?> build() async {
-    // Always fetch fresh profile data first to ensure we have the latest image URLs
-    // This prevents loading stale image URLs from cache
+    // Always fetch fresh profile data from API on build
+    // This ensures profile image and other data are always up-to-date
     try {
       return await _fetchAndCacheProfile();
     } catch (e) {
-      // If fetch fails, fall back to cached profile if available
+      // If API fails, try to load from cache as fallback
       final cachedProfile = await _loadCachedProfile();
       if (cachedProfile != null) {
-        // Still try to fetch fresh data in background for next time
-        _fetchAndCacheProfile();
         return cachedProfile;
       }
       rethrow;

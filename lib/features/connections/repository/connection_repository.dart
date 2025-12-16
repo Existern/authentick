@@ -5,6 +5,8 @@ import '../../../constants/constants.dart';
 
 import '../model/connection_request.dart';
 import '../model/connections_response.dart';
+import '../model/discover_users_response.dart';
+import '../model/search_users_response.dart';
 import '../service/connection_service.dart';
 
 part 'connection_repository.g.dart';
@@ -191,6 +193,71 @@ class ConnectionRepository {
     }
   }
 
+  /// Remove a friendship
+  Future<void> removeFriendship(String friendUserId) async {
+    try {
+      debugPrint(
+        '${Constants.tag} [ConnectionRepository] 🔄 Removing friendship: $friendUserId',
+      );
+
+      await _connectionService.removeFriendship(friendUserId);
+
+      debugPrint(
+        '${Constants.tag} [ConnectionRepository] ✅ Friendship removed',
+      );
+    } catch (error, stackTrace) {
+      debugPrint(
+        '${Constants.tag} [ConnectionRepository] ❌ Failed to remove friendship',
+      );
+      debugPrint('${Constants.tag} [ConnectionRepository] Error: $error');
+      debugPrint('${Constants.tag} [ConnectionRepository] Stack Trace:');
+      debugPrint('$stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Follow a user
+  Future<void> followUser(String userId) async {
+    try {
+      debugPrint(
+        '${Constants.tag} [ConnectionRepository] 🔄 Following user: $userId',
+      );
+
+      await _connectionService.followUser(userId);
+
+      debugPrint('${Constants.tag} [ConnectionRepository] ✅ User followed');
+    } catch (error, stackTrace) {
+      debugPrint(
+        '${Constants.tag} [ConnectionRepository] ❌ Failed to follow user',
+      );
+      debugPrint('${Constants.tag} [ConnectionRepository] Error: $error');
+      debugPrint('${Constants.tag} [ConnectionRepository] Stack Trace:');
+      debugPrint('$stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Unfollow a user
+  Future<void> unfollowUser(String userId) async {
+    try {
+      debugPrint(
+        '${Constants.tag} [ConnectionRepository] 🔄 Unfollowing user: $userId',
+      );
+
+      await _connectionService.unfollowUser(userId);
+
+      debugPrint('${Constants.tag} [ConnectionRepository] ✅ User unfollowed');
+    } catch (error, stackTrace) {
+      debugPrint(
+        '${Constants.tag} [ConnectionRepository] ❌ Failed to unfollow user',
+      );
+      debugPrint('${Constants.tag} [ConnectionRepository] Error: $error');
+      debugPrint('${Constants.tag} [ConnectionRepository] Stack Trace:');
+      debugPrint('$stackTrace');
+      rethrow;
+    }
+  }
+
   // Legacy methods for backward compatibility
   /// Get pending connection requests (legacy - use getFriendRequests instead)
   @Deprecated('Use getFriendRequests instead')
@@ -211,5 +278,65 @@ class ConnectionRepository {
   @Deprecated('Use rejectFriendRequest instead')
   Future<void> rejectConnection(String requestId) async {
     return rejectFriendRequest(requestId);
+  }
+
+  /// Discover new users
+  /// Returns up to 10 users per page you are not already friends with, following, close friends with, or blocking/blocked by.
+  Future<DiscoverUsersResponse> discoverUsers({int page = 1}) async {
+    try {
+      debugPrint(
+        '${Constants.tag} [ConnectionRepository] 🔄 Discovering users (page: $page)...',
+      );
+
+      final response = await _connectionService.discoverUsers(page: page);
+
+      debugPrint(
+        '${Constants.tag} [ConnectionRepository] ✅ Success: ${response.data.length} users discovered',
+      );
+
+      return response;
+    } catch (error, stackTrace) {
+      debugPrint(
+        '${Constants.tag} [ConnectionRepository] ❌ Failed to discover users',
+      );
+      debugPrint('${Constants.tag} [ConnectionRepository] Error: $error');
+      debugPrint('${Constants.tag} [ConnectionRepository] Stack Trace:');
+      debugPrint('$stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Search users
+  /// Searches users by username, first name, or last name using case-insensitive partial matching.
+  Future<SearchUsersResponse> searchUsers({
+    required String query,
+    int page = 1,
+    int limit = 5,
+  }) async {
+    try {
+      debugPrint(
+        '${Constants.tag} [ConnectionRepository] 🔄 Searching users: "$query" (page: $page, limit: $limit)...',
+      );
+
+      final response = await _connectionService.searchUsers(
+        query: query,
+        page: page,
+        limit: limit,
+      );
+
+      debugPrint(
+        '${Constants.tag} [ConnectionRepository] ✅ Success: ${response.data.users.length} users found',
+      );
+
+      return response;
+    } catch (error, stackTrace) {
+      debugPrint(
+        '${Constants.tag} [ConnectionRepository] ❌ Failed to search users',
+      );
+      debugPrint('${Constants.tag} [ConnectionRepository] Error: $error');
+      debugPrint('${Constants.tag} [ConnectionRepository] Stack Trace:');
+      debugPrint('$stackTrace');
+      rethrow;
+    }
   }
 }

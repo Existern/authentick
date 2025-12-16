@@ -1,29 +1,25 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../model/connection_user.dart';
-import '../repository/connection_repository.dart';
+import 'connections_view_model.dart';
 
 part 'friends_view_model.g.dart';
 
 /// Provider for managing friends list (accepted friend connections)
+/// Derives data from shared connectionsViewModelProvider to avoid duplicate API calls
 @riverpod
 class FriendsViewModel extends _$FriendsViewModel {
   @override
   Future<List<ConnectionUser>> build() async {
-    return await _fetchFriends();
+    // Watch the shared connections provider and extract friends
+    final connectionsResponse = await ref.watch(
+      connectionsViewModelProvider.future,
+    );
+    return connectionsResponse.friends;
   }
 
-  Future<List<ConnectionUser>> _fetchFriends() async {
-    final repository = ref.read(connectionRepositoryProvider);
-    final response = await repository.getConnections();
-    return response.friends;
-  }
-
-  /// Refresh friends list
+  /// Refresh friends list by refreshing the shared connections provider
   Future<void> refresh() async {
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      return await _fetchFriends();
-    });
+    await ref.read(connectionsViewModelProvider.notifier).refresh();
   }
 }

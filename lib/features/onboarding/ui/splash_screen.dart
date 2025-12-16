@@ -8,6 +8,8 @@ import 'package:go_router/go_router.dart';
 import '../../../constants/constants.dart';
 import '../../../routing/routes.dart';
 import '../../authentication/repository/authentication_repository.dart';
+import '../model/onboarding_step_response.dart';
+import '../service/onboarding_service.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -127,102 +129,147 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         return;
       }
 
-      // Check if onboarding is completed
-      final hasCompletedOnboarding = await authRepo.hasCompletedOnboarding();
-      if (!mounted) return;
+      // CRITICAL: Check onboarding progress from API - this is the source of truth
+      // This replaces the profile API call and directly checks onboarding status
+      try {
+        final onboardingService = ref.read(onboardingServiceProvider);
 
-      if (hasCompletedOnboarding) {
-        debugPrint(
-          '${Constants.tag} [SplashScreen] ✅ Onboarding already completed, navigating to main app',
-        );
-        if (!mounted) return;
-        context.pushReplacement(Routes.main);
-        return;
-      }
-
-      // CRITICAL: Check API response's onboarding data - this is the source of truth
-      final authResponse = await authRepo.getAuthResponse();
-
-      if (authResponse == null) {
-        debugPrint(
-          '${Constants.tag} [SplashScreen] ⚠️ No auth response found despite successful login',
-        );
-        if (!mounted) return;
-        context.pushReplacement(Routes.register);
-        return;
-      }
-
-      final onboardingData = authResponse.data.onboarding;
-      debugPrint(
-        '${Constants.tag} [SplashScreen] Onboarding data from API: ${onboardingData != null ? "exists" : "null"}',
-      );
-
-      // Check if onboarding is truly complete
-      bool isOnboardingComplete = false;
-
-      if (onboardingData != null) {
-        debugPrint(
-          '${Constants.tag} [SplashScreen] API onboarding.completed flag: ${onboardingData.completed}',
-        );
-        debugPrint(
-          '${Constants.tag} [SplashScreen] Total steps: ${onboardingData.steps.length}',
+        // Try to get onboarding progress
+        // If token is expired (401), automatically refresh and retry
+        final onboardingProgress = await _getOnboardingProgressWithRetry(
+          authRepo,
+          onboardingService,
         );
 
-        // Count terminal steps (completed or skipped)
-        final terminalSteps = onboardingData.steps
+        debugPrint(
+          '${Constants.tag} [SplashScreen] ========================================',
+        );
+        debugPrint(
+          '${Constants.tag} [SplashScreen] Onboarding progress from API:',
+        );
+        debugPrint(
+          '${Constants.tag} [SplashScreen] Completed: ${onboardingProgress.data.completed}',
+        );
+        debugPrint(
+          '${Constants.tag} [SplashScreen] Total steps: ${onboardingProgress.data.steps.length}',
+        );
+
+        // Update the stored auth response with fresh onboarding data
+        // This ensures the onboarding flow screen uses the latest data
+        await authRepo.updateOnboardingInAuthResponse(onboardingProgress.data);
+
+        debugPrint('${Constants.tag} [SplashScreen] Steps from API:');
+        for (final step in onboardingProgress.data.steps) {
+          debugPrint(
+            '${Constants.tag} [SplashScreen]   - ${step.step}: ${step.status}',
+          );
+        }
+
+        // Count pending steps
+        final pendingSteps = onboardingProgress.data.steps
+            .where((step) => step.status == 'pending')
+            .toList();
+        final completedSteps = onboardingProgress.data.steps
             .where(
               (step) => step.status == 'completed' || step.status == 'skipped',
             )
-            .length;
-        final pendingSteps = onboardingData.steps
-            .where((step) => step.status == 'pending')
-            .length;
+            .toList();
+
         debugPrint(
-          '${Constants.tag} [SplashScreen] Terminal steps (completed/skipped): $terminalSteps/${onboardingData.steps.length}',
+          '${Constants.tag} [SplashScreen] Pending steps: ${pendingSteps.length}',
         );
         debugPrint(
-          '${Constants.tag} [SplashScreen] Pending steps: $pendingSteps',
+          '${Constants.tag} [SplashScreen] Completed/Skipped steps: ${completedSteps.length}',
         );
 
-        // Onboarding is complete ONLY if:
+        // Onboarding is complete if:
         // 1. API says completed = true, OR
         // 2. ALL steps have terminal status (completed/skipped) - no pending steps left
-        isOnboardingComplete =
-            onboardingData.completed ||
-            (pendingSteps == 0 && onboardingData.steps.isNotEmpty);
+        final isOnboardingComplete =
+            onboardingProgress.data.completed ||
+            (pendingSteps.isEmpty && onboardingProgress.data.steps.isNotEmpty);
 
         debugPrint(
-          '${Constants.tag} [SplashScreen] Final isOnboardingComplete decision: $isOnboardingComplete',
+          '${Constants.tag} [SplashScreen] Final isOnboardingComplete: $isOnboardingComplete',
         );
-      } else {
-        // No onboarding data means user needs to do onboarding
         debugPrint(
-          '${Constants.tag} [SplashScreen] No onboarding data in API response - treating as incomplete',
+          '${Constants.tag} [SplashScreen] ========================================',
         );
-        isOnboardingComplete = false;
-      }
 
-      debugPrint(
-        '${Constants.tag} [SplashScreen] ========================================',
-      );
+        if (!mounted) return;
 
-      if (!mounted) return;
+        if (isOnboardingComplete) {
+          debugPrint(
+            '${Constants.tag} [SplashScreen] ✅ Onboarding COMPLETE - navigating to main app',
+          );
+          // Clear any saved step since onboarding is done
+          await authRepo.clearCurrentOnboardingStep();
+          await authRepo.setHasCompletedOnboarding(true);
+          context.pushReplacement(Routes.main);
+        } else {
+          debugPrint(
+            '${Constants.tag} [SplashScreen] ❌ Onboarding INCOMPLETE - navigating to onboarding flow',
+          );
+          // Make sure the flag reflects reality
+          await authRepo.setHasCompletedOnboarding(false);
 
-      if (isOnboardingComplete) {
+          // If all steps are pending, ensure intro step is saved
+          if (pendingSteps.length == onboardingProgress.data.steps.length) {
+            debugPrint(
+              '${Constants.tag} [SplashScreen] All steps pending - saving intro step',
+            );
+            await authRepo.saveCurrentOnboardingStep('intro');
+          } else {
+            // Some steps are completed, clear any old saved step to force using API data
+            debugPrint(
+              '${Constants.tag} [SplashScreen] Clearing saved step to use fresh API data',
+            );
+            await authRepo.clearCurrentOnboardingStep();
+          }
+
+          context.pushReplacement(Routes.onboardingFlow);
+        }
+      } catch (e) {
         debugPrint(
-          '${Constants.tag} [SplashScreen] ✅ Onboarding COMPLETE - navigating to main app',
+          '${Constants.tag} [SplashScreen] ⚠️ Error checking onboarding progress: $e',
         );
-        // Clear any saved step since onboarding is done
-        await authRepo.clearCurrentOnboardingStep();
-        await authRepo.setHasCompletedOnboarding(true);
-        context.pushReplacement(Routes.main);
-      } else {
-        debugPrint(
-          '${Constants.tag} [SplashScreen] ❌ Onboarding INCOMPLETE - navigating to onboarding flow',
-        );
-        // Make sure the flag reflects reality
-        await authRepo.setHasCompletedOnboarding(false);
-        context.pushReplacement(Routes.onboardingFlow);
+
+        // Note: 401 errors are already handled by _getOnboardingProgressWithRetry
+        // which attempts token refresh. If we reach here with a 401, it means
+        // the refresh also failed and SessionManager already triggered logout.
+
+        // Check if error is due to authentication failures
+        final errorString = e.toString().toLowerCase();
+        if (errorString.contains('401') ||
+            errorString.contains('403') ||
+            errorString.contains('unauthorized') ||
+            errorString.contains('forbidden')) {
+          debugPrint(
+            '${Constants.tag} [SplashScreen] 🔒 Authentication failed after refresh attempt',
+          );
+          // SessionManager/refreshAccessToken already handled logout
+          // Just redirect to register screen
+          if (!mounted) return;
+          context.pushReplacement(Routes.register);
+          return;
+        }
+
+        // For other errors, check local state as fallback
+        final hasCompletedOnboarding = await authRepo.hasCompletedOnboarding();
+        if (!mounted) return;
+
+        if (hasCompletedOnboarding) {
+          debugPrint(
+            '${Constants.tag} [SplashScreen] ✅ Local state says completed - navigating to main app',
+          );
+          context.pushReplacement(Routes.main);
+        } else {
+          debugPrint(
+            '${Constants.tag} [SplashScreen] ❌ Local state says incomplete - navigating to onboarding flow',
+          );
+          await authRepo.setHasCompletedOnboarding(false);
+          context.pushReplacement(Routes.onboardingFlow);
+        }
       }
     } else {
       debugPrint(
@@ -233,6 +280,67 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       );
       if (!mounted) return;
       context.pushReplacement(Routes.register);
+    }
+  }
+
+  /// Get onboarding progress with automatic token refresh on 401
+  ///
+  /// Flow:
+  /// 1. Try to call /users/onboarding API
+  /// 2. If 401 (token expired):
+  ///    a. Call /auth/refresh with refresh token from secure storage
+  ///    b. Save new tokens and auth response
+  ///    c. Retry /users/onboarding with new access token
+  /// 3. If refresh fails (invalid refresh token):
+  ///    - refreshAccessToken() clears tokens and triggers logout
+  ///    - Error is propagated to caller
+  Future<OnboardingStepResponse> _getOnboardingProgressWithRetry(
+    AuthenticationRepository authRepo,
+    OnboardingService onboardingService,
+  ) async {
+    try {
+      // First attempt
+      return await onboardingService.getOnboardingProgress();
+    } catch (e) {
+      // Check if error is 401 (token expired)
+      final errorString = e.toString().toLowerCase();
+      if (errorString.contains('401') || errorString.contains('unauthorized')) {
+        debugPrint(
+          '${Constants.tag} [SplashScreen] 🔄 Got 401, attempting token refresh...',
+        );
+
+        try {
+          // Refresh the access token using refresh token
+          final refreshResponse = await authRepo.refreshAccessToken();
+
+          debugPrint(
+            '${Constants.tag} [SplashScreen] ✅ Token refreshed successfully',
+          );
+
+          // The refresh endpoint returns full auth response with user, tokens, and onboarding
+          // Save this complete auth response
+          await authRepo.saveAuthResponse(refreshResponse);
+
+          debugPrint(
+            '${Constants.tag} [SplashScreen] 📝 Saved auth response from refresh endpoint',
+          );
+
+          // Retry onboarding API call with new token
+          debugPrint(
+            '${Constants.tag} [SplashScreen] 🔄 Retrying onboarding API call with new token...',
+          );
+          return await onboardingService.getOnboardingProgress();
+        } catch (refreshError) {
+          debugPrint(
+            '${Constants.tag} [SplashScreen] ❌ Token refresh failed: $refreshError',
+          );
+          // If refresh fails, the authentication repository will handle logout
+          rethrow;
+        }
+      }
+
+      // If not 401 or refresh failed, rethrow original error
+      rethrow;
     }
   }
 }

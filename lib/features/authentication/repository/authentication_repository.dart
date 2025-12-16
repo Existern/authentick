@@ -13,6 +13,8 @@ import '/constants/languages.dart';
 import '../../common/remote/api_client.dart';
 import '../../common/service/secure_storage_service.dart';
 import '../../common/service/session_manager.dart';
+import '../../onboarding/model/onboarding_step_response.dart'
+    as onboarding_model;
 import '../model/auth_request.dart';
 import '../model/auth_response.dart';
 import '../model/refresh_request.dart';
@@ -216,6 +218,56 @@ class AuthenticationRepository {
       );
       return null;
     }
+  }
+
+  /// Update only the onboarding data in the stored auth response
+  /// This is useful when we fetch fresh onboarding progress from API
+  Future<void> updateOnboardingInAuthResponse(
+    onboarding_model.OnboardingData onboardingData,
+  ) async {
+    final authResponse = await getAuthResponse();
+    if (authResponse == null) {
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository] No auth response to update',
+      );
+      return;
+    }
+
+    // Convert OnboardingData to Onboarding format
+    final onboarding = Onboarding(
+      completed: onboardingData.completed,
+      completedAt: onboardingData.completedAt,
+      userId: onboardingData.userId,
+      steps: onboardingData.steps
+          .map(
+            (step) => OnboardingStep(
+              step: step.step,
+              displayName: step.displayName,
+              status: step.status,
+              skippable: step.skippable,
+              completedAt: step.completedAt,
+            ),
+          )
+          .toList(),
+    );
+
+    // Create updated auth response with new onboarding data
+    final updatedAuthResponse = AuthResponse(
+      success: authResponse.success,
+      data: AuthData(
+        tokens: authResponse.data.tokens,
+        user: authResponse.data.user,
+        onboarding: onboarding,
+      ),
+      meta: authResponse.meta,
+    );
+
+    // Save the updated auth response
+    await saveAuthResponse(updatedAuthResponse);
+
+    debugPrint(
+      '${Constants.tag} [AuthenticationRepository] Updated onboarding data in stored auth response',
+    );
   }
 
   Future<void> _clearProfileCaches() async {
@@ -439,6 +491,7 @@ class AuthenticationRepository {
   }
 
   /// Try to auto-login using stored refresh token
+  /// Simply checks if tokens exist - actual token validation happens via onboarding API call
   Future<bool> tryAutoLogin() async {
     try {
       final hasTokens = await hasStoredTokens();
@@ -451,24 +504,14 @@ class AuthenticationRepository {
         return false;
       }
 
-      // Validate token by making an API call instead of checking expiry time
       debugPrint(
-        '${Constants.tag} [AuthenticationRepository] 🔍 Validating token with API call...',
+        '${Constants.tag} [AuthenticationRepository] ✅ Tokens found, proceeding with auto-login',
       );
-      final isValid = await _validateTokenWithApi();
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository] Token validation will be handled by onboarding API call',
+      );
 
-      if (!isValid) {
-        debugPrint(
-          '${Constants.tag} [AuthenticationRepository] 🔄 Token invalid, refreshing...',
-        );
-        await refreshAccessToken();
-      } else {
-        debugPrint(
-          '${Constants.tag} [AuthenticationRepository] ✅ Token is valid',
-        );
-      }
-
-      // Mark as logged in
+      // Mark as logged in - actual token validation will happen when onboarding API is called
       await setIsLogin(true);
       return true;
     } catch (error) {
@@ -480,23 +523,6 @@ class AuthenticationRepository {
         '${Constants.tag} [AuthenticationRepository] 🚪 Auto-login failed, triggering complete logout...',
       );
       SessionManager.instance.handleUnauthorized();
-      return false;
-    }
-  }
-
-  /// Validate access token by making an API call to /users/profile
-  /// Returns true if token is valid, false otherwise
-  Future<bool> _validateTokenWithApi() async {
-    try {
-      // Import ApiClient to make a simple GET request
-      // We'll use a lightweight endpoint like /users/profile to validate
-      final apiClient = ApiClient();
-      await apiClient.get<Map<String, dynamic>>('/users/profile');
-      return true;
-    } catch (error) {
-      debugPrint(
-        '${Constants.tag} [AuthenticationRepository] ⚠️ Token validation failed: $error',
-      );
       return false;
     }
   }
@@ -552,6 +578,12 @@ class AuthenticationRepository {
     }
   }
 
+  /// Set flag to show first moment popup
+  Future<void> setShouldShowFirstMomentPopup(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(Constants.shouldShowFirstMomentPopupKey, value);
+  }
+
   /// Save the current onboarding step
   Future<void> saveCurrentOnboardingStep(String step) async {
     final prefs = await SharedPreferences.getInstance();
@@ -571,6 +603,22 @@ class AuthenticationRepository {
   Future<void> clearCurrentOnboardingStep() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('current_onboarding_step');
+    await prefs.remove('intro_page_index');
+  }
+
+  /// Save the intro page index
+  Future<void> saveIntroPageIndex(int index) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('intro_page_index', index);
+    debugPrint(
+      '${Constants.tag} [AuthenticationRepository] Saved intro page index: $index',
+    );
+  }
+
+  /// Get the saved intro page index
+  Future<int?> getIntroPageIndex() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('intro_page_index');
   }
 
   /// Helper method to handle authentication-related errors

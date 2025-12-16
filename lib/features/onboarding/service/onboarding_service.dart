@@ -32,4 +32,17 @@ class OnboardingService {
       rethrow;
     }
   }
+
+  /// Get onboarding progress for the current authenticated user
+  /// GET /users/onboarding
+  Future<OnboardingStepResponse> getOnboardingProgress() async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/users/onboarding',
+      );
+      return OnboardingStepResponse.fromJson(response);
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

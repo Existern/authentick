@@ -30,6 +30,8 @@ class Constants {
   static const String isExistAccountKey = 'is_exist_account_key';
   static const String hasCompletedOnboardingKey =
       'has_completed_onboarding_key';
+  static const String shouldShowFirstMomentPopupKey =
+      'should_show_first_moment_popup_key';
   static const String lastDayShowPremiumKey = 'last_day_show_premium_key';
 
   // Authentication keys

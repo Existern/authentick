@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -5,11 +7,16 @@ import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../features/connections/model/connection_request.dart';
 import '../../features/connections/model/connection_user.dart';
+import '../../features/connections/model/discover_user.dart';
+import '../../features/connections/view_model/connections_view_model.dart';
 import '../../features/connections/view_model/pending_connections_view_model.dart';
 import '../../features/connections/view_model/friends_view_model.dart';
 import '../../features/connections/view_model/followers_view_model.dart';
 import '../../features/connections/view_model/following_view_model.dart';
+import '../../features/connections/view_model/discover_users_view_model.dart';
+import '../../features/connections/view_model/search_users_view_model.dart';
 import '../../features/user/repository/user_profile_repository.dart';
+import '../profile/user_profile_screen.dart';
 import 'widgets/invite_modal.dart';
 
 class Friendpage extends ConsumerStatefulWidget {
@@ -23,20 +30,76 @@ class _FriendpageState extends ConsumerState<Friendpage> {
   String selectedTab = 'Friend requests';
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  bool _hasTriedRefresh = false;
+  final ScrollController _scrollController = ScrollController();
+  Timer? _debounceTimer;
+  String _lastSearchedQuery = '';
+  bool _isLoadingMoreDiscover = false;
 
   @override
   void initState() {
     super.initState();
     _searchController.addListener(() {
+      final query = _searchController.text.toLowerCase();
       setState(() {
-        _searchQuery = _searchController.text.toLowerCase();
+        _searchQuery = query;
       });
+
+      // Cancel previous timer
+      _debounceTimer?.cancel();
+
+      // Handle search for Discover People tab
+      if (selectedTab == 'Discover People') {
+        if (query.isEmpty) {
+          // Clear immediately when search is empty
+          ref.read(searchUsersViewModelProvider.notifier).clear();
+          setState(() {
+            _lastSearchedQuery = '';
+          });
+        } else if (query.length >= 3) {
+          // Debounce the search with 300ms delay
+          _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+            if (mounted) {
+              ref.read(searchUsersViewModelProvider.notifier).search(query);
+              setState(() {
+                _lastSearchedQuery = query;
+              });
+            }
+          });
+        }
+      }
     });
+
+    _scrollController.addListener(_onScroll);
+
+    // Trigger profile fetch on first load if needed
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _ensureProfileLoaded();
+    });
+  }
+
+  void _onScroll() {
+    // Scroll listener removed - pagination now uses Load More button
+  }
+
+  Future<void> _ensureProfileLoaded() async {
+    final profileState = ref.read(userProfileRepositoryProvider);
+
+    // If profile data is null and not currently loading, trigger refresh
+    if (profileState.value == null &&
+        !profileState.isLoading &&
+        !_hasTriedRefresh) {
+      _hasTriedRefresh = true;
+      // Fetch from API
+      await ref.read(userProfileRepositoryProvider.notifier).refresh();
+    }
   }
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -121,12 +184,13 @@ class _FriendpageState extends ConsumerState<Friendpage> {
   }
 
   int getTabCount(
+    String label,
     AsyncValue<List<ConnectionRequest>> pendingConnectionsAsync,
     AsyncValue<List<ConnectionUser>> friendsAsync,
     AsyncValue<List<ConnectionUser>> followersAsync,
     AsyncValue<List<ConnectionUser>> followingAsync,
   ) {
-    switch (selectedTab) {
+    switch (label) {
       case 'Friend requests':
         return pendingConnectionsAsync.maybeWhen(
           data: (connections) => connections.length,
@@ -243,6 +307,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                     label: 'Friend requests',
                     icon: Icons.person_add,
                     count: getTabCount(
+                      'Friend requests',
                       pendingConnectionsAsync,
                       friendsAsync,
                       followersAsync,
@@ -255,9 +320,15 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                     count: 0,
                   ),
                   _buildTab(
+                    label: 'Discover People',
+                    icon: Icons.explore,
+                    count: 0,
+                  ),
+                  _buildTab(
                     label: 'Friends',
                     icon: Icons.people,
                     count: getTabCount(
+                      'Friends',
                       pendingConnectionsAsync,
                       friendsAsync,
                       followersAsync,
@@ -268,6 +339,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                     label: 'Following',
                     icon: Icons.visibility,
                     count: getTabCount(
+                      'Following',
                       pendingConnectionsAsync,
                       friendsAsync,
                       followersAsync,
@@ -278,6 +350,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                     label: 'Followers',
                     icon: Icons.group,
                     count: getTabCount(
+                      'Followers',
                       pendingConnectionsAsync,
                       friendsAsync,
                       followersAsync,
@@ -378,26 +451,48 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                 }).toList();
 
           if (filteredConnections.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    _searchQuery.isEmpty
-                        ? Icons.person_add_disabled
-                        : Icons.search_off,
-                    size: 64,
-                    color: Colors.grey[400],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    _searchQuery.isEmpty
-                        ? 'No pending friend requests'
-                        : 'No results found for "$_searchQuery"',
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+            return RefreshIndicator(
+              onRefresh: () async {
+                await ref
+                    .read(pendingConnectionsViewModelProvider.notifier)
+                    .refresh();
+              },
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      SizedBox(
+                        height: constraints.maxHeight,
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                _searchQuery.isEmpty
+                                    ? Icons.person_add_disabled
+                                    : Icons.search_off,
+                                size: 64,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                _searchQuery.isEmpty
+                                    ? 'No pending friend requests'
+                                    : 'No results found for "$_searchQuery"',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey[600],
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             );
           }
@@ -462,26 +557,46 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                 }).toList();
 
           if (filteredConnections.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    _searchQuery.isEmpty
-                        ? Icons.people_outline
-                        : Icons.search_off,
-                    size: 64,
-                    color: Colors.grey[400],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    _searchQuery.isEmpty
-                        ? 'No friends yet'
-                        : 'No results found for "$_searchQuery"',
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+            return RefreshIndicator(
+              onRefresh: () async {
+                await ref.read(friendsViewModelProvider.notifier).refresh();
+              },
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      SizedBox(
+                        height: constraints.maxHeight,
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                _searchQuery.isEmpty
+                                    ? Icons.people_outline
+                                    : Icons.search_off,
+                                size: 64,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                _searchQuery.isEmpty
+                                    ? 'No friends yet'
+                                    : 'No results found for \"$_searchQuery\"',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey[600],
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             );
           }
@@ -542,26 +657,46 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                 }).toList();
 
           if (filteredConnections.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    _searchQuery.isEmpty
-                        ? Icons.visibility_outlined
-                        : Icons.search_off,
-                    size: 64,
-                    color: Colors.grey[400],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    _searchQuery.isEmpty
-                        ? 'Not following anyone yet'
-                        : 'No results found for "$_searchQuery"',
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+            return RefreshIndicator(
+              onRefresh: () async {
+                await ref.read(followingViewModelProvider.notifier).refresh();
+              },
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      SizedBox(
+                        height: constraints.maxHeight,
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                _searchQuery.isEmpty
+                                    ? Icons.visibility_outlined
+                                    : Icons.search_off,
+                                size: 64,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                _searchQuery.isEmpty
+                                    ? 'Not following anyone yet'
+                                    : 'No results found for "$_searchQuery"',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey[600],
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             );
           }
@@ -622,26 +757,46 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                 }).toList();
 
           if (filteredConnections.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    _searchQuery.isEmpty
-                        ? Icons.group_outlined
-                        : Icons.search_off,
-                    size: 64,
-                    color: Colors.grey[400],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    _searchQuery.isEmpty
-                        ? 'No followers yet'
-                        : 'No results found for "$_searchQuery"',
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+            return RefreshIndicator(
+              onRefresh: () async {
+                await ref.read(followersViewModelProvider.notifier).refresh();
+              },
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      SizedBox(
+                        height: constraints.maxHeight,
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                _searchQuery.isEmpty
+                                    ? Icons.group_outlined
+                                    : Icons.search_off,
+                                size: 64,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                _searchQuery.isEmpty
+                                    ? 'No followers yet'
+                                    : 'No results found for "$_searchQuery"',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey[600],
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             );
           }
@@ -686,6 +841,292 @@ class _FriendpageState extends ConsumerState<Friendpage> {
       );
     }
 
+    // Discover People tab
+    if (selectedTab == 'Discover People') {
+      // If search query is >= 3 characters, show search results
+      if (_searchQuery.length >= 3) {
+        final searchUsersAsync = ref.watch(searchUsersViewModelProvider);
+        final searchViewModel = ref.read(searchUsersViewModelProvider.notifier);
+
+        // Show loading while waiting for debounce timer or if query hasn't been searched yet
+        if (_lastSearchedQuery != _searchQuery) {
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF3620B3)),
+          );
+        }
+
+        return searchUsersAsync.when(
+          data: (users) {
+            // Only show "no results" if we have actually searched and got empty results
+            if (searchViewModel.lastQuery.isNotEmpty && users.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.search_off,
+                      size: 64,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.4),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No results found for "$_lastSearchedQuery"',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            // Show loading indicator initially if we haven't searched yet
+            if (searchViewModel.lastQuery.isEmpty) {
+              return const Center(
+                child: CircularProgressIndicator(color: Color(0xFF3620B3)),
+              );
+            }
+
+            return ListView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              itemCount: users.length,
+              itemBuilder: (context, index) {
+                final user = users[index];
+                return _buildDiscoverUserCard(user);
+              },
+            );
+          },
+          loading: () => const Center(
+            child: CircularProgressIndicator(color: Color(0xFF3620B3)),
+          ),
+          error: (error, stack) => Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
+                const SizedBox(height: 16),
+                Text(
+                  'Failed to search users',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.6),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () {
+                    ref
+                        .read(searchUsersViewModelProvider.notifier)
+                        .search(_searchQuery);
+                  },
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+        );
+      } else if (_searchQuery.isNotEmpty && _searchQuery.length < 3) {
+        // Show message about minimum query length
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.search,
+                size: 64,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Enter at least 3 characters to search',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.6),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        );
+      } else {
+        // Show default discover users
+        final discoverUsersAsync = ref.watch(discoverUsersViewModelProvider);
+        return discoverUsersAsync.when(
+          data: (discoverUsers) {
+            if (discoverUsers.isEmpty) {
+              final discoverViewModel = ref.read(
+                discoverUsersViewModelProvider.notifier,
+              );
+              return RefreshIndicator(
+                onRefresh: () async {
+                  setState(() {
+                    _isLoadingMoreDiscover = false;
+                  });
+                  await discoverViewModel.refresh();
+                },
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
+                        SizedBox(
+                          height: constraints.maxHeight,
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.explore_off,
+                                  size: 64,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withOpacity(0.4),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'No users to discover',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface.withOpacity(0.6),
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              );
+            }
+
+            final discoverViewModel = ref.read(
+              discoverUsersViewModelProvider.notifier,
+            );
+
+            return RefreshIndicator(
+              onRefresh: () async {
+                setState(() {
+                  _isLoadingMoreDiscover = false;
+                });
+                await discoverViewModel.refresh();
+              },
+              child: ListView.builder(
+                controller: _scrollController,
+                padding: EdgeInsets.only(
+                  top: 8,
+                  bottom: 100, // Add bottom padding to avoid collision with FAB
+                  left: 0,
+                  right: 0,
+                ),
+                itemCount:
+                    discoverUsers.length + (discoverViewModel.hasMore ? 1 : 0),
+                itemBuilder: (context, index) {
+                  if (index == discoverUsers.length) {
+                    // Show Load More button or loading indicator
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 16.0,
+                      ),
+                      child: Center(
+                        child: _isLoadingMoreDiscover
+                            ? const Padding(
+                                padding: EdgeInsets.all(16.0),
+                                child: CircularProgressIndicator(
+                                  color: Color(0xFF3620B3),
+                                ),
+                              )
+                            : ElevatedButton(
+                                onPressed: () async {
+                                  setState(() {
+                                    _isLoadingMoreDiscover = true;
+                                  });
+                                  try {
+                                    await discoverViewModel.loadMore();
+                                  } finally {
+                                    if (mounted) {
+                                      setState(() {
+                                        _isLoadingMoreDiscover = false;
+                                      });
+                                    }
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF3620B3),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 12,
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Load More',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                      ),
+                    );
+                  }
+                  final discoverUser = discoverUsers[index];
+                  return _buildDiscoverUserCardWithMutual(discoverUser);
+                },
+              ),
+            );
+          },
+          loading: () => const Center(
+            child: CircularProgressIndicator(color: Color(0xFF3620B3)),
+          ),
+          error: (error, stack) => Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
+                const SizedBox(height: 16),
+                Text(
+                  'Failed to load discover users',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.6),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () {
+                    ref.read(discoverUsersViewModelProvider.notifier).refresh();
+                  },
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+    }
+
     // Other tabs - not implemented yet
     return Center(
       child: Text(
@@ -719,11 +1160,13 @@ class _FriendpageState extends ConsumerState<Friendpage> {
             ),
             const SizedBox(width: 6),
             Text(
-              '$label($count)',
+              label == 'Discover People' ? label : '$label($count)',
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected ? const Color(0xFF3620B3) : Colors.black87,
+                color: isSelected
+                    ? const Color(0xFF3620B3)
+                    : Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ],
@@ -748,43 +1191,70 @@ class _FriendpageState extends ConsumerState<Friendpage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          // Profile Image
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              color: Colors.grey[300],
-              image: profileImage != null
-                  ? DecorationImage(
-                      image: CachedNetworkImageProvider(profileImage),
-                      fit: BoxFit.cover,
-                    )
+          // Profile Image - Clickable
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => UserProfileScreen(
+                    userId: requestUser.id,
+                    initialUsername: requestUser.username,
+                  ),
+                ),
+              );
+            },
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.grey[300],
+                image: profileImage != null
+                    ? DecorationImage(
+                        image: CachedNetworkImageProvider(profileImage),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+              ),
+              child: profileImage == null
+                  ? Icon(Icons.person, size: 30, color: Colors.grey[600])
                   : null,
             ),
-            child: profileImage == null
-                ? Icon(Icons.person, size: 30, color: Colors.grey[600])
-                : null,
           ),
           const SizedBox(width: 12),
 
-          // Name and Username
+          // Name and Username - Clickable
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  displayName,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => UserProfileScreen(
+                      userId: requestUser.id,
+                      initialUsername: requestUser.username,
+                    ),
                   ),
-                ),
-                Text(
-                  username,
-                  style: const TextStyle(fontSize: 14, color: Colors.grey),
-                ),
-              ],
+                );
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    displayName,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    username,
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                ],
+              ),
             ),
           ),
 
@@ -796,7 +1266,11 @@ class _FriendpageState extends ConsumerState<Friendpage> {
               height: 20,
             ),
             onPressed: () {
-              _showOptionsMenu(context, username);
+              _showOptionsMenu(
+                context,
+                requestUser,
+                tabContext: 'Friend requests',
+              );
             },
           ),
 
@@ -843,6 +1317,8 @@ class _FriendpageState extends ConsumerState<Friendpage> {
               await ref
                   .read(pendingConnectionsViewModelProvider.notifier)
                   .acceptConnection(connectionRequest.id);
+              // Refresh connections data to update friends, followers, following lists
+              await ref.read(connectionsViewModelProvider.notifier).refresh();
               if (mounted) {
                 showCustomNotification('Friend request accepted');
               }
@@ -878,43 +1354,70 @@ class _FriendpageState extends ConsumerState<Friendpage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          // Profile Image
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              color: Colors.grey[300],
-              image: profileImage != null
-                  ? DecorationImage(
-                      image: CachedNetworkImageProvider(profileImage),
-                      fit: BoxFit.cover,
-                    )
+          // Profile Image - Clickable
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => UserProfileScreen(
+                    userId: user.id,
+                    initialUsername: user.username,
+                  ),
+                ),
+              );
+            },
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.grey[300],
+                image: profileImage != null
+                    ? DecorationImage(
+                        image: CachedNetworkImageProvider(profileImage),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+              ),
+              child: profileImage == null
+                  ? Icon(Icons.person, size: 30, color: Colors.grey[600])
                   : null,
             ),
-            child: profileImage == null
-                ? Icon(Icons.person, size: 30, color: Colors.grey[600])
-                : null,
           ),
           const SizedBox(width: 12),
 
-          // Name and Username
+          // Name and Username - Clickable
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  displayName,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => UserProfileScreen(
+                      userId: user.id,
+                      initialUsername: user.username,
+                    ),
                   ),
-                ),
-                Text(
-                  username,
-                  style: const TextStyle(fontSize: 14, color: Colors.grey),
-                ),
-              ],
+                );
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    displayName,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    username,
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                ],
+              ),
             ),
           ),
 
@@ -926,7 +1429,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
               height: 20,
             ),
             onPressed: () {
-              _showOptionsMenu(context, user.username ?? 'User');
+              _showOptionsMenu(context, user, tabContext: 'Friends');
             },
           ),
         ],
@@ -944,43 +1447,70 @@ class _FriendpageState extends ConsumerState<Friendpage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          // Profile Image
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              color: Colors.grey[300],
-              image: profileImage != null
-                  ? DecorationImage(
-                      image: CachedNetworkImageProvider(profileImage),
-                      fit: BoxFit.cover,
-                    )
+          // Profile Image - Clickable
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => UserProfileScreen(
+                    userId: user.id,
+                    initialUsername: user.username,
+                  ),
+                ),
+              );
+            },
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.grey[300],
+                image: profileImage != null
+                    ? DecorationImage(
+                        image: CachedNetworkImageProvider(profileImage),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+              ),
+              child: profileImage == null
+                  ? Icon(Icons.person, size: 30, color: Colors.grey[600])
                   : null,
             ),
-            child: profileImage == null
-                ? Icon(Icons.person, size: 30, color: Colors.grey[600])
-                : null,
           ),
           const SizedBox(width: 12),
 
-          // Name and Username
+          // Name and Username - Clickable
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  displayName,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => UserProfileScreen(
+                      userId: user.id,
+                      initialUsername: user.username,
+                    ),
                   ),
-                ),
-                Text(
-                  username,
-                  style: const TextStyle(fontSize: 14, color: Colors.grey),
-                ),
-              ],
+                );
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    displayName,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    username,
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                ],
+              ),
             ),
           ),
 
@@ -992,7 +1522,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
               height: 20,
             ),
             onPressed: () {
-              _showOptionsMenu(context, user.username ?? 'User');
+              _showOptionsMenu(context, user, tabContext: 'Followers');
             },
           ),
         ],
@@ -1010,43 +1540,70 @@ class _FriendpageState extends ConsumerState<Friendpage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          // Profile Image
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              color: Colors.grey[300],
-              image: profileImage != null
-                  ? DecorationImage(
-                      image: CachedNetworkImageProvider(profileImage),
-                      fit: BoxFit.cover,
-                    )
+          // Profile Image - Clickable
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => UserProfileScreen(
+                    userId: user.id,
+                    initialUsername: user.username,
+                  ),
+                ),
+              );
+            },
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.grey[300],
+                image: profileImage != null
+                    ? DecorationImage(
+                        image: CachedNetworkImageProvider(profileImage),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+              ),
+              child: profileImage == null
+                  ? Icon(Icons.person, size: 30, color: Colors.grey[600])
                   : null,
             ),
-            child: profileImage == null
-                ? Icon(Icons.person, size: 30, color: Colors.grey[600])
-                : null,
           ),
           const SizedBox(width: 12),
 
-          // Name and Username
+          // Name and Username - Clickable
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  displayName,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => UserProfileScreen(
+                      userId: user.id,
+                      initialUsername: user.username,
+                    ),
                   ),
-                ),
-                Text(
-                  username,
-                  style: const TextStyle(fontSize: 14, color: Colors.grey),
-                ),
-              ],
+                );
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    displayName,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    username,
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                ],
+              ),
             ),
           ),
 
@@ -1058,7 +1615,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
               height: 20,
             ),
             onPressed: () {
-              _showOptionsMenu(context, user.username ?? 'User');
+              _showOptionsMenu(context, user, tabContext: 'Following');
             },
           ),
         ],
@@ -1066,7 +1623,12 @@ class _FriendpageState extends ConsumerState<Friendpage> {
     );
   }
 
-  void _showOptionsMenu(BuildContext context, String username) {
+  void _showOptionsMenu(
+    BuildContext context,
+    ConnectionUser user, {
+    String? tabContext,
+  }) {
+    final username = user.username ?? 'User';
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -1117,87 +1679,455 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                 ),
                 title: const Text(
                   'View Profile',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  showCustomNotification('Opening $username\'s profile');
-                },
-              ),
-            ),
-
-            // Block User
-            Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 8,
-                ),
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black87,
                   ),
-                  child: const Icon(Icons.block, color: Colors.red, size: 24),
-                ),
-                title: const Text(
-                  'Block User',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                 ),
                 onTap: () {
                   Navigator.pop(context);
-                  showCustomNotification(
-                    '$username has been blocked',
-                    isError: true,
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => UserProfileScreen(
+                        userId: user.id,
+                        initialUsername: user.username,
+                      ),
+                    ),
                   );
                 },
               ),
             ),
 
-            // Report User
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 8,
+            // Remove Friend (only in Friends tab)
+            if (tabContext == 'Friends')
+              Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 8,
                   ),
-                  child: const Icon(
-                    Icons.report,
-                    color: Colors.orange,
-                    size: 24,
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.person_remove,
+                      color: Colors.orange,
+                      size: 24,
+                    ),
                   ),
+                  title: const Text(
+                    'Remove Friend',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    try {
+                      await ref
+                          .read(connectionsViewModelProvider.notifier)
+                          .removeFriendship(user.id);
+                      if (mounted) {
+                        showCustomNotification(
+                          'Removed $username from friends',
+                        );
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        showCustomNotification(
+                          'Failed to remove friend',
+                          isError: true,
+                        );
+                      }
+                    }
+                  },
                 ),
-                title: const Text(
-                  'Report User',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  showCustomNotification('Report submitted');
-                },
               ),
-            ),
+
+            // Unfollow (only in Following tab)
+            if (tabContext == 'Following')
+              Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 8,
+                  ),
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.person_remove,
+                      color: Colors.orange,
+                      size: 24,
+                    ),
+                  ),
+                  title: const Text(
+                    'Unfollow',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    try {
+                      await ref
+                          .read(connectionsViewModelProvider.notifier)
+                          .unfollowUser(user.id);
+                      if (mounted) {
+                        showCustomNotification('Unfollowed $username');
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        showCustomNotification(
+                          'Failed to unfollow',
+                          isError: true,
+                        );
+                      }
+                    }
+                  },
+                ),
+              ),
 
             // Bottom padding for safe area
             SizedBox(height: MediaQuery.of(context).padding.bottom + 20),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildDiscoverUserCard(ConnectionUser user) {
+    final displayName = user.fullName;
+    final username = '@${user.username ?? 'user'}';
+    final profileImage = user.profileImage;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          // Profile Image - Clickable
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => UserProfileScreen(
+                    userId: user.id,
+                    initialUsername: user.username,
+                  ),
+                ),
+              );
+            },
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.grey[300],
+                image: profileImage != null
+                    ? DecorationImage(
+                        image: CachedNetworkImageProvider(profileImage),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+              ),
+              child: profileImage == null
+                  ? Icon(Icons.person, size: 30, color: Colors.grey[600])
+                  : null,
+            ),
+          ),
+          const SizedBox(width: 12),
+
+          // Name and Username - Clickable
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => UserProfileScreen(
+                      userId: user.id,
+                      initialUsername: user.username,
+                    ),
+                  ),
+                );
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    displayName,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    username,
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Action Buttons (side by side)
+          Row(
+            children: [
+              // Add Friend Button (secondary)
+              OutlinedButton(
+                onPressed: () async {
+                  try {
+                    await ref
+                        .read(searchUsersViewModelProvider.notifier)
+                        .sendFriendRequest(user.id);
+                    if (mounted) {
+                      showCustomNotification('Friend request sent');
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      showCustomNotification(
+                        'Failed to send request',
+                        isError: true,
+                      );
+                    }
+                  }
+                },
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFF3620B3)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                ),
+                child: const Text(
+                  'Add Friend',
+                  style: TextStyle(color: Color(0xFF3620B3)),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Follow Button (primary)
+              ElevatedButton(
+                onPressed: () async {
+                  try {
+                    await ref
+                        .read(connectionsViewModelProvider.notifier)
+                        .followUser(user.id);
+                    if (mounted) {
+                      showCustomNotification('Following user');
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      showCustomNotification('Failed to follow', isError: true);
+                    }
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF3620B3),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                ),
+                child: const Text(
+                  'Follow',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDiscoverUserCardWithMutual(DiscoverUser discoverUser) {
+    final user = discoverUser.user;
+    final mutualCount = discoverUser.mutualCount;
+    final displayName = user.fullName;
+    final username = '@${user.username ?? 'user'}';
+    final profileImage = user.profileImage;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          // Profile Image - Clickable
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => UserProfileScreen(
+                    userId: user.id,
+                    initialUsername: user.username,
+                  ),
+                ),
+              );
+            },
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.grey[300],
+                image: profileImage != null
+                    ? DecorationImage(
+                        image: CachedNetworkImageProvider(profileImage),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+              ),
+              child: profileImage == null
+                  ? Icon(Icons.person, size: 30, color: Colors.grey[600])
+                  : null,
+            ),
+          ),
+          const SizedBox(width: 12),
+
+          // Name, Username, and Mutual Friends - Clickable
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => UserProfileScreen(
+                      userId: user.id,
+                      initialUsername: user.username,
+                    ),
+                  ),
+                );
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    displayName,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    username,
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                  if (mutualCount > 0)
+                    Text(
+                      '$mutualCount mutual ${mutualCount == 1 ? 'friend' : 'friends'}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF3620B3),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+
+          // Action Buttons (side by side)
+          Row(
+            children: [
+              // Add Friend Button (secondary)
+              OutlinedButton(
+                onPressed: () async {
+                  try {
+                    await ref
+                        .read(discoverUsersViewModelProvider.notifier)
+                        .sendFriendRequest(user.id);
+                    if (mounted) {
+                      showCustomNotification('Friend request sent');
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      showCustomNotification(
+                        'Failed to send request',
+                        isError: true,
+                      );
+                    }
+                  }
+                },
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFF3620B3)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                ),
+                child: const Text(
+                  'Add Friend',
+                  style: TextStyle(color: Color(0xFF3620B3)),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Follow Button (primary)
+              ElevatedButton(
+                onPressed: () async {
+                  try {
+                    await ref
+                        .read(connectionsViewModelProvider.notifier)
+                        .followUser(user.id);
+                    if (mounted) {
+                      showCustomNotification('Following user');
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      showCustomNotification('Failed to follow', isError: true);
+                    }
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF3620B3),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                ),
+                child: const Text(
+                  'Follow',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

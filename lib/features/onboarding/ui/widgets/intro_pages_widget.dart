@@ -20,7 +20,11 @@ class _IntroPagesWidgetState extends ConsumerState<IntroPagesWidget> {
   @override
   void initState() {
     super.initState();
-    _pageController = PageController();
+    final state = ref.read(onboardingViewModelProvider);
+    // Initialize page controller to the saved page index
+    _pageController = PageController(
+      initialPage: state.introPageIndex,
+    );
   }
 
   @override
@@ -139,8 +143,8 @@ class _IntroPagesWidgetState extends ConsumerState<IntroPagesWidget> {
                 Expanded(
                   child: PageView(
                     controller: _pageController,
-                    onPageChanged: (index) {
-                      viewModel.setIntroPage(index);
+                    onPageChanged: (index) async {
+                      await viewModel.setIntroPage(index);
                     },
                     children: const [
                       IntroPage(

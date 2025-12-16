@@ -91,22 +91,38 @@ final GoRouter router = GoRouter(
           prefs.getBool(Constants.hasCompletedOnboardingKey) ?? false;
 
       if (!hasCompletedOnboarding) {
-        // Allow access to waitlist screen
-        if (state.matchedLocation == Routes.waitlist) {
+        // Get saved onboarding step
+        final currentStep = prefs.getString('current_onboarding_step');
+        
+        // Check if user was on waitlist - redirect to waitlist
+        if (currentStep == 'waitlist') {
+          if (state.matchedLocation != Routes.waitlist) {
+            return Routes.waitlist;
+          }
+          return null; // Allow access to waitlist screen
+        }
+
+        // If user is trying to access main or other protected routes, redirect to onboarding
+        if (state.matchedLocation == Routes.main ||
+            (state.matchedLocation != Routes.onboardingFlow &&
+                state.matchedLocation != Routes.waitlist)) {
+          // Check if there's a saved step - if so, go to onboarding flow
+          // The onboarding flow will restore the saved step
+          if (currentStep != null && currentStep != 'waitlist') {
+            return Routes.onboardingFlow;
+          }
+          // No saved step, go to onboarding flow
+          return Routes.onboardingFlow;
+        }
+
+        // Allow access to onboarding flow and waitlist
+        if (state.matchedLocation == Routes.onboardingFlow ||
+            state.matchedLocation == Routes.waitlist) {
           return null;
         }
 
-        // Check if user was on waitlist
-        final currentStep = prefs.getString('current_onboarding_step');
-        if (currentStep == 'waitlist' &&
-            state.matchedLocation != Routes.waitlist) {
-          return Routes.waitlist;
-        }
-
-        if (state.matchedLocation != Routes.onboardingFlow) {
-          return Routes.onboardingFlow;
-        }
-        return null;
+        // Default: redirect to onboarding flow
+        return Routes.onboardingFlow;
       }
 
       // Redirect to main if trying to access auth screens while logged in

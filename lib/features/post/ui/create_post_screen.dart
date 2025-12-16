@@ -375,13 +375,16 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
         _isLoading = false;
       });
 
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Post created successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      // Show success message only if not onboarding
+      // During onboarding, the "You posted your first moment!" popup will be shown instead
+      if (!widget.isOnboarding) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Post created successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
 
       // Complete the flow
       if (widget.onComplete != null) {

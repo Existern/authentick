@@ -18,7 +18,7 @@ class InviteModal extends StatelessWidget {
   });
 
   String get _inviteMessage {
-    return "Join me and become a part of the movement to bring 'social' back to social media at authentick. Your invite code is \"$inviteCode\" and I can invite only $maxInvites users. Download and install the app from here: https://authentick.app/download";
+    return "Join me in bringing social back to social media on authentick. Use my invite code: $inviteCode. You can download the Android app here: https://play.google.com/store/apps";
   }
 
   String get _headerText {
