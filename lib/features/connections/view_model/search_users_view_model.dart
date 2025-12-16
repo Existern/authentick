@@ -120,7 +120,7 @@ class SearchUsersViewModel extends _$SearchUsersViewModel {
 
     // Update local state to reflect the change
     _updateUserFollowState(userId, isFollowing: true);
-    
+
     // Refresh connections data to update Following page and counts
     ref.invalidate(connectionsViewModelProvider);
   }
@@ -132,7 +132,7 @@ class SearchUsersViewModel extends _$SearchUsersViewModel {
 
     // Update local state to reflect the change
     _updateUserFollowState(userId, isFollowing: false);
-    
+
     // Refresh connections data to update Following page and counts
     ref.invalidate(connectionsViewModelProvider);
   }

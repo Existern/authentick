@@ -21,7 +21,7 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
   List<UserLookupInfo> _authentickUsers = [];
   bool _isLoading = true;
   String? _error;
-  final Set<String> _sendingRequests = {};
+  final Set<String> _processingUsers = {};
 
   @override
   void initState() {
@@ -96,10 +96,10 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
   }
 
   Future<void> _sendFriendRequest(UserLookupInfo user) async {
-    if (_sendingRequests.contains(user.id)) return;
+    if (_processingUsers.contains(user.id)) return;
 
     setState(() {
-      _sendingRequests.add(user.id);
+      _processingUsers.add(user.id);
     });
 
     try {
@@ -108,14 +108,21 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
       );
 
       final connectionService = ref.read(connectionServiceProvider);
-      await connectionService.sendFriendRequest(user.id);
+      final request = await connectionService.sendFriendRequest(user.id);
 
       developer.log(
         'FriendsListScreen: Friend request sent successfully to ${user.username}',
       );
 
-      // Refresh the list to update connection status
-      await _loadAuthentickUsers();
+      // Update local state immediately
+      setState(() {
+        final index = _authentickUsers.indexWhere((u) => u.id == user.id);
+        if (index != -1) {
+          _authentickUsers[index] = user.copyWith(
+            friendRequestId: request.id,
+          );
+        }
+      });
     } catch (error) {
       developer.log('FriendsListScreen: Error sending friend request: $error');
 
@@ -127,7 +134,135 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
       );
     } finally {
       setState(() {
-        _sendingRequests.remove(user.id);
+        _processingUsers.remove(user.id);
+      });
+    }
+  }
+
+  Future<void> _cancelFriendRequest(UserLookupInfo user) async {
+    if (_processingUsers.contains(user.id) || user.friendRequestId == null) {
+      return;
+    }
+
+    setState(() {
+      _processingUsers.add(user.id);
+    });
+
+    try {
+      developer.log(
+        'FriendsListScreen: Cancelling friend request to ${user.username}',
+      );
+
+      final connectionService = ref.read(connectionServiceProvider);
+      await connectionService.cancelFriendRequest(user.friendRequestId!);
+
+      developer.log(
+        'FriendsListScreen: Friend request cancelled for ${user.username}',
+      );
+
+      // Update local state immediately
+      setState(() {
+        final index = _authentickUsers.indexWhere((u) => u.id == user.id);
+        if (index != -1) {
+          _authentickUsers[index] = user.copyWith(
+            friendRequestId: null,
+          );
+        }
+      });
+    } catch (error) {
+      developer.log('FriendsListScreen: Error cancelling friend request: $error');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to cancel friend request'),
+          backgroundColor: Colors.red[600],
+        ),
+      );
+    } finally {
+      setState(() {
+        _processingUsers.remove(user.id);
+      });
+    }
+  }
+
+  Future<void> _followUser(UserLookupInfo user) async {
+    if (_processingUsers.contains(user.id)) return;
+
+    setState(() {
+      _processingUsers.add(user.id);
+    });
+
+    try {
+      developer.log('FriendsListScreen: Following user ${user.username}');
+
+      final connectionService = ref.read(connectionServiceProvider);
+      await connectionService.followUser(user.id);
+
+      developer.log('FriendsListScreen: Successfully followed ${user.username}');
+
+      // Update local state immediately
+      setState(() {
+        final index = _authentickUsers.indexWhere((u) => u.id == user.id);
+        if (index != -1) {
+          _authentickUsers[index] = user.copyWith(
+            isFollowing: true,
+          );
+        }
+      });
+    } catch (error) {
+      developer.log('FriendsListScreen: Error following user: $error');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to follow ${user.username}'),
+          backgroundColor: Colors.red[600],
+        ),
+      );
+    } finally {
+      setState(() {
+        _processingUsers.remove(user.id);
+      });
+    }
+  }
+
+  Future<void> _unfollowUser(UserLookupInfo user) async {
+    if (_processingUsers.contains(user.id)) return;
+
+    setState(() {
+      _processingUsers.add(user.id);
+    });
+
+    try {
+      developer.log('FriendsListScreen: Unfollowing user ${user.username}');
+
+      final connectionService = ref.read(connectionServiceProvider);
+      await connectionService.unfollowUser(user.id);
+
+      developer.log(
+        'FriendsListScreen: Successfully unfollowed ${user.username}',
+      );
+
+      // Update local state immediately
+      setState(() {
+        final index = _authentickUsers.indexWhere((u) => u.id == user.id);
+        if (index != -1) {
+          _authentickUsers[index] = user.copyWith(
+            isFollowing: false,
+          );
+        }
+      });
+    } catch (error) {
+      developer.log('FriendsListScreen: Error unfollowing user: $error');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to unfollow ${user.username}'),
+          backgroundColor: Colors.red[600],
+        ),
+      );
+    } finally {
+      setState(() {
+        _processingUsers.remove(user.id);
       });
     }
   }
@@ -243,7 +378,7 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
             Expanded(child: _buildAuthentickUsersList()),
 
             // Action buttons
-            _buildActionButtons(),
+            _buildBottomActionButtons(),
           ],
         ),
       ),
@@ -317,9 +452,7 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
       itemCount: _authentickUsers.length,
       itemBuilder: (context, index) {
         final user = _authentickUsers[index];
-        final isConnected = user.isConnected;
-        final connectionStatus = user.connectionStatus;
-        final isSendingRequest = _sendingRequests.contains(user.id);
+        final isProcessing = _processingUsers.contains(user.id);
 
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
@@ -328,7 +461,7 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
             color: const Color(0xFFF8F8F8),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isConnected
+              color: user.isConnected
                   ? Colors.green.withAlpha(128)
                   : const Color(0xFF3620B3).withAlpha(51),
               width: 1,
@@ -339,7 +472,7 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
               // Avatar
               CircleAvatar(
                 radius: 24,
-                backgroundColor: isConnected
+                backgroundColor: user.isConnected
                     ? Colors.green[600]
                     : const Color(0xFF3620B3),
                 backgroundImage: user.profileImage != null
@@ -374,97 +507,12 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
                         color: Colors.black,
                       ),
                     ),
-                    if (connectionStatus != null)
-                      Text(
-                        connectionStatus == 'pending'
-                            ? 'Friend request pending'
-                            : connectionStatus,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: connectionStatus == 'pending'
-                              ? Colors.orange[700]
-                              : Colors.grey[600],
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
                   ],
                 ),
               ),
 
-              // Action button
-              if (isConnected)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.green[100],
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(
-                    'Connected',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.green[700],
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                )
-              else if (connectionStatus == 'pending')
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.orange[100],
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(
-                    'Pending',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.orange[700],
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                )
-              else
-                ElevatedButton(
-                  onPressed: isSendingRequest
-                      ? null
-                      : () => _sendFriendRequest(user),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF3620B3),
-                    disabledBackgroundColor: Colors.grey[300],
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                  ),
-                  child: isSendingRequest
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.grey,
-                          ),
-                        )
-                      : const Text(
-                          'Add Friend',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                ),
+              // Action buttons
+              _buildActionButtons(user, isProcessing),
             ],
           ),
         );
@@ -472,7 +520,171 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
     );
   }
 
-  Widget _buildActionButtons() {
+  Widget _buildActionButtons(UserLookupInfo user, bool isProcessing) {
+    final isFriend = user.isFriend ?? false;
+    final isFollowing = user.isFollowing ?? false;
+    final hasPendingRequest = user.friendRequestId != null;
+
+    // If user is a friend, show Connected badge
+    if (isFriend) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.green[100],
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Text(
+          'Connected',
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.green[700],
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      );
+    }
+
+    // Show buttons in a column for better layout
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Add Friend or Cancel Request button
+        hasPendingRequest
+            ? OutlinedButton(
+                onPressed: isProcessing ? null : () => _cancelFriendRequest(user),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Colors.orange),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  minimumSize: const Size(0, 0),
+                ),
+                child: isProcessing
+                    ? const SizedBox(
+                        width: 12,
+                        height: 12,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.orange,
+                        ),
+                      )
+                    : const Text(
+                        'Cancel Request',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.orange,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+              )
+            : OutlinedButton(
+                onPressed: isProcessing ? null : () => _sendFriendRequest(user),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFF3620B3)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  minimumSize: const Size(0, 0),
+                ),
+                child: isProcessing
+                    ? const SizedBox(
+                        width: 12,
+                        height: 12,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Color(0xFF3620B3),
+                        ),
+                      )
+                    : const Text(
+                        'Add Friend',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF3620B3),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+              ),
+        const SizedBox(height: 4),
+        // Follow or Unfollow button
+        isFollowing
+            ? ElevatedButton(
+                onPressed: isProcessing ? null : () => _unfollowUser(user),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.grey[600],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  minimumSize: const Size(0, 0),
+                ),
+                child: isProcessing
+                    ? const SizedBox(
+                        width: 12,
+                        height: 12,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text(
+                        'Unfollow',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+              )
+            : ElevatedButton(
+                onPressed: isProcessing ? null : () => _followUser(user),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF3620B3),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  minimumSize: const Size(0, 0),
+                ),
+                child: isProcessing
+                    ? const SizedBox(
+                        width: 12,
+                        height: 12,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text(
+                        'Follow',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+              ),
+      ],
+    );
+  }
+
+  Widget _buildBottomActionButtons() {
     return Column(
       children: [
         // Continue button
