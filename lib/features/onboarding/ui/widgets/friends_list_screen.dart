@@ -118,9 +118,7 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
       setState(() {
         final index = _authentickUsers.indexWhere((u) => u.id == user.id);
         if (index != -1) {
-          _authentickUsers[index] = user.copyWith(
-            friendRequestId: request.id,
-          );
+          _authentickUsers[index] = user.copyWith(friendRequestId: request.id);
         }
       });
     } catch (error) {
@@ -164,13 +162,13 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
       setState(() {
         final index = _authentickUsers.indexWhere((u) => u.id == user.id);
         if (index != -1) {
-          _authentickUsers[index] = user.copyWith(
-            friendRequestId: null,
-          );
+          _authentickUsers[index] = user.copyWith(friendRequestId: null);
         }
       });
     } catch (error) {
-      developer.log('FriendsListScreen: Error cancelling friend request: $error');
+      developer.log(
+        'FriendsListScreen: Error cancelling friend request: $error',
+      );
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -198,15 +196,15 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
       final connectionService = ref.read(connectionServiceProvider);
       await connectionService.followUser(user.id);
 
-      developer.log('FriendsListScreen: Successfully followed ${user.username}');
+      developer.log(
+        'FriendsListScreen: Successfully followed ${user.username}',
+      );
 
       // Update local state immediately
       setState(() {
         final index = _authentickUsers.indexWhere((u) => u.id == user.id);
         if (index != -1) {
-          _authentickUsers[index] = user.copyWith(
-            isFollowing: true,
-          );
+          _authentickUsers[index] = user.copyWith(isFollowing: true);
         }
       });
     } catch (error) {
@@ -246,9 +244,7 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
       setState(() {
         final index = _authentickUsers.indexWhere((u) => u.id == user.id);
         if (index != -1) {
-          _authentickUsers[index] = user.copyWith(
-            isFollowing: false,
-          );
+          _authentickUsers[index] = user.copyWith(isFollowing: false);
         }
       });
     } catch (error) {
@@ -552,7 +548,9 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
         // Add Friend or Cancel Request button
         hasPendingRequest
             ? OutlinedButton(
-                onPressed: isProcessing ? null : () => _cancelFriendRequest(user),
+                onPressed: isProcessing
+                    ? null
+                    : () => _cancelFriendRequest(user),
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: Colors.orange),
                   shape: RoundedRectangleBorder(

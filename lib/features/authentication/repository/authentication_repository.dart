@@ -10,6 +10,7 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '/constants/constants.dart';
 import '/constants/languages.dart';
+import '../../../services/sentry_service.dart';
 import '../../common/remote/api_client.dart';
 import '../../common/service/secure_storage_service.dart';
 import '../../common/service/session_manager.dart';
@@ -129,6 +130,16 @@ class AuthenticationRepository {
       );
       debugPrint('${Constants.tag} [AuthenticationRepository] Stack Trace:');
       debugPrint('$stackTrace');
+
+      // Send error to Sentry
+      await SentryService.instance.captureException(
+        error,
+        stackTrace: stackTrace,
+        extras: {
+          'operation': 'authenticate',
+          'has_google_token': googleToken != null,
+        },
+      );
 
       // Handle authentication-related errors
       await handleAuthenticationError(error);

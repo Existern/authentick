@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../constants/constants.dart';
 import '../../../environment/env.dart';
+import '../../../services/sentry_dio_interceptor.dart';
 import '../service/secure_storage_service.dart';
 import '../service/session_manager.dart';
 import '../../authentication/model/refresh_request.dart';
@@ -42,6 +43,7 @@ class ApiClient {
 
   void _setupInterceptors() {
     _dio.interceptors.addAll([
+      SentryDioInterceptor(), // Add Sentry interceptor first for complete tracking
       _AuthInterceptor(),
       _LoggingInterceptor(),
       _ErrorInterceptor(),
