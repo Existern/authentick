@@ -59,6 +59,10 @@ void main() async {
       options.attachStacktrace = true;
       options.sendClientReports = true;
 
+      // Disable user interaction tracking to reduce noisy breadcrumb logs
+      options.enableUserInteractionTracing = false;
+      options.enableUserInteractionBreadcrumbs = false;
+
       // Filter events - allow in debug mode for testing
       options.beforeSend = (event, hint) {
         // Send all events including debug mode

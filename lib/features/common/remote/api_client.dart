@@ -83,6 +83,13 @@ class ApiClient {
         queryParameters: queryParameters,
         options: options,
       );
+      // Allow null data for 204 No Content and other successful responses
+      if (response.data == null &&
+          response.statusCode != null &&
+          response.statusCode! >= 200 &&
+          response.statusCode! < 300) {
+        return null as T;
+      }
       if (response.data == null) {
         throw Exception('Response data is null');
       }
@@ -105,6 +112,13 @@ class ApiClient {
         queryParameters: queryParameters,
         options: options,
       );
+      // Allow null data for 204 No Content and other successful responses
+      if (response.data == null &&
+          response.statusCode != null &&
+          response.statusCode! >= 200 &&
+          response.statusCode! < 300) {
+        return null as T;
+      }
       if (response.data == null) {
         throw Exception('Response data is null');
       }
@@ -127,6 +141,13 @@ class ApiClient {
         queryParameters: queryParameters,
         options: options,
       );
+      // Allow null data for 204 No Content and other successful responses
+      if (response.data == null &&
+          response.statusCode != null &&
+          response.statusCode! >= 200 &&
+          response.statusCode! < 300) {
+        return null as T;
+      }
       if (response.data == null) {
         throw Exception('Response data is null');
       }
@@ -149,6 +170,13 @@ class ApiClient {
         queryParameters: queryParameters,
         options: options,
       );
+      // Allow null data for 204 No Content and other successful responses
+      if (response.data == null &&
+          response.statusCode != null &&
+          response.statusCode! >= 200 &&
+          response.statusCode! < 300) {
+        return null as T;
+      }
       if (response.data == null) {
         throw Exception('Response data is null');
       }
