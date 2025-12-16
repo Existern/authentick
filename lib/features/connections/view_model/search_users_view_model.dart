@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../model/connection_user.dart';
 import '../repository/connection_repository.dart';
+import 'connections_view_model.dart';
 
 part 'search_users_view_model.g.dart';
 
@@ -119,6 +120,9 @@ class SearchUsersViewModel extends _$SearchUsersViewModel {
 
     // Update local state to reflect the change
     _updateUserFollowState(userId, isFollowing: true);
+    
+    // Refresh connections data to update Following page and counts
+    ref.invalidate(connectionsViewModelProvider);
   }
 
   /// Unfollow a user and update local state
@@ -128,6 +132,9 @@ class SearchUsersViewModel extends _$SearchUsersViewModel {
 
     // Update local state to reflect the change
     _updateUserFollowState(userId, isFollowing: false);
+    
+    // Refresh connections data to update Following page and counts
+    ref.invalidate(connectionsViewModelProvider);
   }
 
   /// Remove friendship and update local state
