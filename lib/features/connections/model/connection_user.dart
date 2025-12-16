@@ -37,6 +37,14 @@ class ConnectionUser {
   final String? updatedAt;
   @JsonKey(name: 'last_login_at')
   final String? lastLoginAt;
+  @JsonKey(name: 'is_friend')
+  final bool? isFriend;
+  @JsonKey(name: 'is_close_friend')
+  final bool? isCloseFriend;
+  @JsonKey(name: 'is_following')
+  final bool? isFollowing;
+  @JsonKey(name: 'friend_request_id')
+  final String? friendRequestId;
 
   ConnectionUser({
     required this.id,
@@ -59,6 +67,10 @@ class ConnectionUser {
     this.createdAt,
     this.updatedAt,
     this.lastLoginAt,
+    this.isFriend,
+    this.isCloseFriend,
+    this.isFollowing,
+    this.friendRequestId,
   });
 
   factory ConnectionUser.fromJson(Map<String, dynamic> json) =>

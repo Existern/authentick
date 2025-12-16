@@ -99,6 +99,155 @@ class SearchUsersViewModel extends _$SearchUsersViewModel {
   /// Send friend request to a user
   Future<void> sendFriendRequest(String userId) async {
     final repository = ref.read(connectionRepositoryProvider);
-    await repository.sendFriendRequest(userId);
+    final request = await repository.sendFriendRequest(userId);
+    // Update local state with the friend request ID
+    _updateUserFriendRequestState(userId, friendRequestId: request.id);
+  }
+
+  /// Cancel a friend request
+  Future<void> cancelFriendRequest(String userId, String requestId) async {
+    final repository = ref.read(connectionRepositoryProvider);
+    await repository.cancelFriendRequest(requestId);
+    // Update local state to remove the friend request ID
+    _updateUserFriendRequestState(userId, friendRequestId: null);
+  }
+
+  /// Follow a user and update local state
+  Future<void> followUser(String userId) async {
+    final repository = ref.read(connectionRepositoryProvider);
+    await repository.followUser(userId);
+
+    // Update local state to reflect the change
+    _updateUserFollowState(userId, isFollowing: true);
+  }
+
+  /// Unfollow a user and update local state
+  Future<void> unfollowUser(String userId) async {
+    final repository = ref.read(connectionRepositoryProvider);
+    await repository.unfollowUser(userId);
+
+    // Update local state to reflect the change
+    _updateUserFollowState(userId, isFollowing: false);
+  }
+
+  /// Remove friendship and update local state
+  Future<void> removeFriendship(String userId) async {
+    final repository = ref.read(connectionRepositoryProvider);
+    await repository.removeFriendship(userId);
+
+    // Update local state to reflect the change
+    _updateUserFriendState(userId, isFriend: false);
+  }
+
+  /// Update user's follow state in local cache
+  void _updateUserFollowState(String userId, {required bool isFollowing}) {
+    final updatedUsers = _allUsers.map((user) {
+      if (user.id == userId) {
+        return ConnectionUser(
+          id: user.id,
+          username: user.username,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          emailVerified: user.emailVerified,
+          profileImage: user.profileImage,
+          coverImage: user.coverImage,
+          bio: user.bio,
+          dateOfBirth: user.dateOfBirth,
+          gender: user.gender,
+          location: user.location,
+          phoneNumber: user.phoneNumber,
+          phoneVerified: user.phoneVerified,
+          isVerified: user.isVerified,
+          isActive: user.isActive,
+          role: user.role,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+          lastLoginAt: user.lastLoginAt,
+          isFriend: user.isFriend,
+          isCloseFriend: user.isCloseFriend,
+          isFollowing: isFollowing,
+        );
+      }
+      return user;
+    }).toList();
+
+    _allUsers = updatedUsers;
+    state = AsyncValue.data(updatedUsers);
+  }
+
+  /// Update user's friend state in local cache
+  void _updateUserFriendState(String userId, {required bool isFriend}) {
+    final updatedUsers = _allUsers.map((user) {
+      if (user.id == userId) {
+        return ConnectionUser(
+          id: user.id,
+          username: user.username,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          emailVerified: user.emailVerified,
+          profileImage: user.profileImage,
+          coverImage: user.coverImage,
+          bio: user.bio,
+          dateOfBirth: user.dateOfBirth,
+          gender: user.gender,
+          location: user.location,
+          phoneNumber: user.phoneNumber,
+          phoneVerified: user.phoneVerified,
+          isVerified: user.isVerified,
+          isActive: user.isActive,
+          role: user.role,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+          lastLoginAt: user.lastLoginAt,
+          isFriend: isFriend,
+          isCloseFriend: user.isCloseFriend,
+          isFollowing: user.isFollowing,
+        );
+      }
+      return user;
+    }).toList();
+
+    _allUsers = updatedUsers;
+    state = AsyncValue.data(updatedUsers);
+  }
+
+  /// Update user's friend request state in local cache
+  void _updateUserFriendRequestState(String userId, {String? friendRequestId}) {
+    final updatedUsers = _allUsers.map((user) {
+      if (user.id == userId) {
+        return ConnectionUser(
+          id: user.id,
+          username: user.username,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          emailVerified: user.emailVerified,
+          profileImage: user.profileImage,
+          coverImage: user.coverImage,
+          bio: user.bio,
+          dateOfBirth: user.dateOfBirth,
+          gender: user.gender,
+          location: user.location,
+          phoneNumber: user.phoneNumber,
+          phoneVerified: user.phoneVerified,
+          isVerified: user.isVerified,
+          isActive: user.isActive,
+          role: user.role,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+          lastLoginAt: user.lastLoginAt,
+          isFriend: user.isFriend,
+          isCloseFriend: user.isCloseFriend,
+          isFollowing: user.isFollowing,
+          friendRequestId: friendRequestId,
+        );
+      }
+      return user;
+    }).toList();
+
+    _allUsers = updatedUsers;
+    state = AsyncValue.data(updatedUsers);
   }
 }
