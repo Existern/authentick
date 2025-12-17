@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import 'constants/constants.dart';
 import 'environment/env.dart';
@@ -13,6 +14,7 @@ import 'extensions/build_context_extension.dart';
 import 'features/common/ui/providers/app_theme_mode_provider.dart';
 import 'features/common/ui/widgets/offline_container.dart';
 import 'routing/router.dart';
+import 'services/sentry_service.dart';
 import 'utils/provider_observer.dart';
 
 Future<void> initPlatformState() async {
@@ -31,22 +33,6 @@ Future<void> initPlatformState() async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  /// Firebase
-  // await Firebase.initializeApp(
-  //     // options: DefaultFirebaseOptions.currentPlatform,
-  //     );
-  // await FirebaseAnalytics.instance.logAppOpen();
-  // FlutterError.onError = (errorDetails) {
-  //   FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
-  // };
-  // PlatformDispatcher.instance.onError = (error, stack) {
-  //   FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-  //   return true;
-  // };
-
-  /// RevenueCat
-  // await initPlatformState();
-
   /// Localization
   await EasyLocalization.ensureInitialized();
 
@@ -56,17 +42,63 @@ void main() async {
     yield LicenseEntryWithLineBreaks(['google_fonts'], license);
   });
 
-  runApp(
-    ProviderScope(
-      observers: [AppObserver()],
-      child: EasyLocalization(
-        supportedLocales: const [Locale('en'), Locale('vi')],
-        path: 'assets/translations',
-        fallbackLocale: const Locale('en'),
-        useOnlyLangCode: true,
-        child: const MainApp(),
-      ),
-    ),
+  /// Initialize Sentry before running the app
+  await SentryFlutter.init(
+    (options) {
+      options.dsn = Env.sentryDsn;
+      options.environment = kReleaseMode ? 'production' : 'development';
+      options.tracesSampleRate = kReleaseMode ? 0.2 : 1.0;
+      options.enableAutoSessionTracking = true;
+      options.captureFailedRequests = true;
+      options.sendDefaultPii = false;
+      options.attachScreenshot = true;
+      options.screenshotQuality = SentryScreenshotQuality.medium;
+      options.attachViewHierarchy = true;
+      options.enableAutoPerformanceTracing = true;
+      options.debug = false; // Disable console logs, keep cloud tracking
+      options.attachStacktrace = true;
+      options.sendClientReports = true;
+
+      // Disable user interaction tracking to reduce noisy breadcrumb logs
+      options.enableUserInteractionTracing = false;
+      options.enableUserInteractionBreadcrumbs = false;
+
+      // Filter events - allow in debug mode for testing
+      options.beforeSend = (event, hint) {
+        // Send all events including debug mode
+        return event;
+      };
+    },
+    appRunner: () async {
+      /// Firebase
+      // await Firebase.initializeApp(
+      //     // options: DefaultFirebaseOptions.currentPlatform,
+      //     );
+      // await FirebaseAnalytics.instance.logAppOpen();
+      // FlutterError.onError = (errorDetails) {
+      //   FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
+      // };
+      // PlatformDispatcher.instance.onError = (error, stack) {
+      //   FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      //   return true;
+      // };
+
+      /// RevenueCat
+      // await initPlatformState();
+
+      runApp(
+        ProviderScope(
+          observers: [AppObserver()],
+          child: EasyLocalization(
+            supportedLocales: const [Locale('en'), Locale('vi')],
+            path: 'assets/translations',
+            fallbackLocale: const Locale('en'),
+            useOnlyLangCode: true,
+            child: const MainApp(),
+          ),
+        ),
+      );
+    },
   );
 }
 

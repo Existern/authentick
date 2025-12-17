@@ -15,4 +15,8 @@ class Env {
   // RevenueCat Configuration
   static const String revenueCatPlayStore = 'your-revenue-cat-play-store-key';
   static const String revenueCatAppStore = 'your-revenue-cat-app-store-key';
+
+  // Sentry Configuration
+  static const String sentryDsn =
+      'https://5b852aad094dd20b5da41e462dfe4a84@o4508827639480320.ingest.us.sentry.io/4510546998329344';
 }

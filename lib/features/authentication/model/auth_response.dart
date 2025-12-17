@@ -26,7 +26,7 @@ class AuthData {
 
   factory AuthData.fromJson(Map<String, dynamic> json) {
     return AuthData(
-      tokens: Tokens.fromJson(json['tokens'] as Map<String, dynamic>),
+      tokens: Tokens.fromJson(json['tokens']),
       user: User.fromJson(json['user'] as Map<String, dynamic>),
       onboarding: json['onboarding'] != null
           ? Onboarding.fromJson(json['onboarding'] as Map<String, dynamic>)
@@ -46,7 +46,18 @@ class Tokens {
     this.expiresIn,
   });
 
-  factory Tokens.fromJson(Map<String, dynamic> json) {
+  factory Tokens.fromJson(dynamic json) {
+    // Handle invalid or missing tokens data
+    if (json == null) {
+      throw Exception('Tokens data is null');
+    }
+
+    if (json is! Map<String, dynamic>) {
+      throw Exception(
+        'Tokens data is not a valid object. Got: ${json.runtimeType} - Value: $json',
+      );
+    }
+
     return Tokens(
       accessToken: json['access_token'] as String,
       refreshToken: json['refresh_token'] as String,

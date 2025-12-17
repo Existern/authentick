@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../constants/constants.dart';
 import '../model/connection_request.dart';
 import '../repository/connection_repository.dart';
+import 'connections_view_model.dart';
 
 part 'pending_connections_view_model.g.dart';
 
@@ -45,11 +46,14 @@ class PendingConnectionsViewModel extends _$PendingConnectionsViewModel {
       final repository = ref.read(connectionRepositoryProvider);
       await repository.acceptFriendRequest(requestId);
 
-      // Refresh the list after accepting
+      // Refresh the pending requests list
       state = const AsyncValue.loading();
       state = await AsyncValue.guard(() async {
         return await _fetchPendingConnections();
       });
+
+      // Refresh friends list to show the new friend
+      ref.invalidate(connectionsViewModelProvider);
 
       debugPrint(
         '${Constants.tag} [PendingConnectionsViewModel] Friend request accepted and list refreshed',
@@ -71,11 +75,13 @@ class PendingConnectionsViewModel extends _$PendingConnectionsViewModel {
       final repository = ref.read(connectionRepositoryProvider);
       await repository.rejectFriendRequest(requestId);
 
-      // Refresh the list after rejecting
+      // Refresh the pending requests list
       state = const AsyncValue.loading();
       state = await AsyncValue.guard(() async {
         return await _fetchPendingConnections();
       });
+
+      // Note: Rejecting doesn't affect friends list, so no need to refresh it
 
       debugPrint(
         '${Constants.tag} [PendingConnectionsViewModel] Friend request rejected and list refreshed',

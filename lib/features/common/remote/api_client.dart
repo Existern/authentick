@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../constants/constants.dart';
 import '../../../environment/env.dart';
+import '../../../services/sentry_dio_interceptor.dart';
 import '../service/secure_storage_service.dart';
 import '../service/session_manager.dart';
 import '../../authentication/model/refresh_request.dart';
@@ -42,6 +43,7 @@ class ApiClient {
 
   void _setupInterceptors() {
     _dio.interceptors.addAll([
+      SentryDioInterceptor(), // Add Sentry interceptor first for complete tracking
       _AuthInterceptor(),
       _LoggingInterceptor(),
       _ErrorInterceptor(),
@@ -81,6 +83,13 @@ class ApiClient {
         queryParameters: queryParameters,
         options: options,
       );
+      // Allow null data for 204 No Content and other successful responses
+      if (response.data == null &&
+          response.statusCode != null &&
+          response.statusCode! >= 200 &&
+          response.statusCode! < 300) {
+        return null as T;
+      }
       if (response.data == null) {
         throw Exception('Response data is null');
       }
@@ -103,6 +112,13 @@ class ApiClient {
         queryParameters: queryParameters,
         options: options,
       );
+      // Allow null data for 204 No Content and other successful responses
+      if (response.data == null &&
+          response.statusCode != null &&
+          response.statusCode! >= 200 &&
+          response.statusCode! < 300) {
+        return null as T;
+      }
       if (response.data == null) {
         throw Exception('Response data is null');
       }
@@ -125,6 +141,13 @@ class ApiClient {
         queryParameters: queryParameters,
         options: options,
       );
+      // Allow null data for 204 No Content and other successful responses
+      if (response.data == null &&
+          response.statusCode != null &&
+          response.statusCode! >= 200 &&
+          response.statusCode! < 300) {
+        return null as T;
+      }
       if (response.data == null) {
         throw Exception('Response data is null');
       }
@@ -147,6 +170,13 @@ class ApiClient {
         queryParameters: queryParameters,
         options: options,
       );
+      // Allow null data for 204 No Content and other successful responses
+      if (response.data == null &&
+          response.statusCode != null &&
+          response.statusCode! >= 200 &&
+          response.statusCode! < 300) {
+        return null as T;
+      }
       if (response.data == null) {
         throw Exception('Response data is null');
       }

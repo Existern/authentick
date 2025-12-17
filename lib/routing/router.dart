@@ -7,6 +7,7 @@ import '../features/authentication/ui/otp_screen.dart';
 import '../features/authentication/ui/sign_in_screen.dart';
 import '../features/authentication/ui/register_screen.dart';
 import '../features/common/service/session_manager.dart';
+import '../services/sentry_service.dart';
 
 // import '../features/main/ui/main_screen.dart';
 import '../screens/bottomnav/bottomnav.dart';
@@ -21,6 +22,39 @@ import '../features/profile/ui/appearances_screen.dart';
 import '../features/profile/ui/languages_screen.dart';
 import '../screens/post/post_detail_screen.dart';
 import 'routes.dart';
+
+/// Navigation observer for Sentry breadcrumb tracking
+class SentryNavigationObserver extends NavigatorObserver {
+  @override
+  void didPush(Route route, Route? previousRoute) {
+    _trackNavigation(route.settings.name, previousRoute?.settings.name, 'push');
+  }
+
+  @override
+  void didPop(Route route, Route? previousRoute) {
+    _trackNavigation(previousRoute?.settings.name, route.settings.name, 'pop');
+  }
+
+  @override
+  void didReplace({Route? newRoute, Route? oldRoute}) {
+    _trackNavigation(
+      newRoute?.settings.name,
+      oldRoute?.settings.name,
+      'replace',
+    );
+  }
+
+  void _trackNavigation(String? current, String? previous, String action) {
+    final currentName = current ?? 'unknown';
+    final previousName = previous ?? 'unknown';
+
+    SentryService.instance.addBreadcrumb(
+      message: 'Navigation $action: $currentName',
+      category: 'navigation',
+      data: {'action': action, 'from': previousName, 'to': currentName},
+    );
+  }
+}
 
 enum SlideDirection { right, left, up, down }
 
@@ -74,6 +108,7 @@ class SlideRouteTransition extends CustomTransitionPage<void> {
 
 final GoRouter router = GoRouter(
   navigatorKey: SessionManager.navigatorKey,
+  observers: [SentryNavigationObserver()],
   initialLocation: Routes.splash,
   redirect: (context, state) async {
     // Skip redirect for splash screen (initial loading)
@@ -93,7 +128,7 @@ final GoRouter router = GoRouter(
       if (!hasCompletedOnboarding) {
         // Get saved onboarding step
         final currentStep = prefs.getString('current_onboarding_step');
-        
+
         // Check if user was on waitlist - redirect to waitlist
         if (currentStep == 'waitlist') {
           if (state.matchedLocation != Routes.waitlist) {

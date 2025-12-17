@@ -46,6 +46,10 @@ class UserLookupInfo {
   final String? profileImage;
   final bool isConnected;
   final String? connectionStatus;
+  final bool? isFriend;
+  final bool? isCloseFriend;
+  final bool? isFollowing;
+  final String? friendRequestId;
 
   const UserLookupInfo({
     required this.id,
@@ -53,6 +57,10 @@ class UserLookupInfo {
     this.profileImage,
     required this.isConnected,
     this.connectionStatus,
+    this.isFriend,
+    this.isCloseFriend,
+    this.isFollowing,
+    this.friendRequestId,
   });
 
   factory UserLookupInfo.fromJson(Map<String, dynamic> json) => UserLookupInfo(
@@ -61,7 +69,36 @@ class UserLookupInfo {
     profileImage: json['profile_image'] as String?,
     isConnected: json['is_connected'] as bool,
     connectionStatus: json['connection_status'] as String?,
+    isFriend: json['is_friend'] as bool?,
+    isCloseFriend: json['is_close_friend'] as bool?,
+    isFollowing: json['is_following'] as bool?,
+    friendRequestId: json['friend_request_id'] as String?,
   );
+
+  // Copy with method for state updates
+  UserLookupInfo copyWith({
+    String? id,
+    String? username,
+    String? profileImage,
+    bool? isConnected,
+    String? connectionStatus,
+    bool? isFriend,
+    bool? isCloseFriend,
+    bool? isFollowing,
+    String? friendRequestId,
+  }) {
+    return UserLookupInfo(
+      id: id ?? this.id,
+      username: username ?? this.username,
+      profileImage: profileImage ?? this.profileImage,
+      isConnected: isConnected ?? this.isConnected,
+      connectionStatus: connectionStatus ?? this.connectionStatus,
+      isFriend: isFriend ?? this.isFriend,
+      isCloseFriend: isCloseFriend ?? this.isCloseFriend,
+      isFollowing: isFollowing ?? this.isFollowing,
+      friendRequestId: friendRequestId ?? this.friendRequestId,
+    );
+  }
 }
 
 class BulkLookupMeta {
