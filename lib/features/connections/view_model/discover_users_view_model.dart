@@ -152,6 +152,9 @@ class DiscoverUsersViewModel extends _$DiscoverUsersViewModel {
         final user = discoverUser.user;
         return DiscoverUser(
           mutualCount: discoverUser.mutualCount,
+          hasPendingRequest: discoverUser.hasPendingRequest,
+          hasIncomingRequest: discoverUser.hasIncomingRequest,
+          connectionRequestId: discoverUser.connectionRequestId,
           user: ConnectionUser(
             id: user.id,
             username: user.username,
@@ -197,6 +200,9 @@ class DiscoverUsersViewModel extends _$DiscoverUsersViewModel {
         final user = discoverUser.user;
         return DiscoverUser(
           mutualCount: discoverUser.mutualCount,
+          hasPendingRequest: discoverUser.hasPendingRequest,
+          hasIncomingRequest: discoverUser.hasIncomingRequest,
+          connectionRequestId: discoverUser.connectionRequestId,
           user: ConnectionUser(
             id: user.id,
             username: user.username,
@@ -244,8 +250,13 @@ class DiscoverUsersViewModel extends _$DiscoverUsersViewModel {
     final updatedUsers = _allUsers.map((discoverUser) {
       if (discoverUser.user.id == userId) {
         final user = discoverUser.user;
+        final isCancelling = friendRequestId == null && connectionRequestId == null;
+        
         return DiscoverUser(
           mutualCount: discoverUser.mutualCount,
+          hasPendingRequest: friendRequestId != null ? true : (isCancelling ? false : discoverUser.hasPendingRequest),
+          hasIncomingRequest: isCancelling ? false : discoverUser.hasIncomingRequest,
+          connectionRequestId: connectionRequestId ?? (isCancelling ? null : discoverUser.connectionRequestId),
           user: ConnectionUser(
             id: user.id,
             username: user.username,
@@ -271,15 +282,9 @@ class DiscoverUsersViewModel extends _$DiscoverUsersViewModel {
             isCloseFriend: user.isCloseFriend,
             isFollowing: user.isFollowing,
             friendRequestId: friendRequestId,
-            // When explicitly setting connectionRequestId to null, clear it
-            // Otherwise keep the new value or existing value
             connectionRequestId: connectionRequestId,
             hasPendingRequest: friendRequestId != null ? true : null,
-            // Clear hasIncomingRequest when canceling or when sending new request
-            hasIncomingRequest:
-                (friendRequestId == null && connectionRequestId == null)
-                ? null
-                : user.hasIncomingRequest,
+            hasIncomingRequest: isCancelling ? null : user.hasIncomingRequest,
           ),
         );
       }
@@ -297,6 +302,9 @@ class DiscoverUsersViewModel extends _$DiscoverUsersViewModel {
         final user = discoverUser.user;
         return DiscoverUser(
           mutualCount: discoverUser.mutualCount,
+          hasPendingRequest: false,
+          hasIncomingRequest: false,
+          connectionRequestId: null,
           user: ConnectionUser(
             id: user.id,
             username: user.username,
