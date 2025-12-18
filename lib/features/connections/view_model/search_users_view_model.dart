@@ -18,6 +18,8 @@ class SearchUsersViewModel extends _$SearchUsersViewModel {
 
   @override
   Future<List<ConnectionUser>> build() async {
+    // Keep the provider alive even when not watched
+    ref.keepAlive();
     // Return empty list initially
     return [];
   }

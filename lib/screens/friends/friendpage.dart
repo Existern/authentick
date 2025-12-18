@@ -1145,8 +1145,27 @@ class _FriendpageState extends ConsumerState<Friendpage> {
 
     return GestureDetector(
       onTap: () {
+        final previousTab = selectedTab;
         setState(() {
           selectedTab = label;
+          
+          // When switching to Discover People tab, synchronize search state
+          if (label == 'Discover People' && previousTab != 'Discover People') {
+            if (_searchQuery.length >= 3 && _lastSearchedQuery != _searchQuery) {
+              // Immediately update to prevent infinite loading, then trigger search
+              _lastSearchedQuery = _searchQuery;
+              _debounceTimer?.cancel();
+              // Trigger search in next frame
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  ref.read(searchUsersViewModelProvider.notifier).search(_searchQuery);
+                }
+              });
+            } else if (_searchQuery.isEmpty && _lastSearchedQuery.isNotEmpty) {
+              // Clear search state if search was cleared while on another tab
+              _lastSearchedQuery = '';
+            }
+          }
         });
       },
       child: Container(
