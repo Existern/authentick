@@ -168,6 +168,9 @@ class SearchUsersViewModel extends _$SearchUsersViewModel {
 
     // Update local state to reflect the change
     _updateUserFriendState(userId, isFriend: false);
+
+    // Refresh connections data to update Friends page and counts
+    ref.invalidate(connectionsViewModelProvider);
   }
 
   /// Update user's follow state in local cache
