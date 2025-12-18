@@ -19,6 +19,9 @@ class SessionManager {
   /// Flag to prevent multiple simultaneous logout operations
   bool _isLoggingOut = false;
 
+  /// Callback to invalidate Riverpod providers on logout
+  VoidCallback? onLogout;
+
   /// Handle 401 unauthorized error - clears all storage and redirects to login
   Future<void> handleUnauthorized() async {
     // Prevent multiple simultaneous logout operations
@@ -35,6 +38,14 @@ class SessionManager {
       debugPrint(
         '${Constants.tag} [SessionManager] 🚪 Handling 401 - Logging out user...',
       );
+
+      // Trigger Riverpod invalidation if callback is set
+      if (onLogout != null) {
+        debugPrint(
+          '${Constants.tag} [SessionManager] 🔄 Triggering Riverpod invalidation...',
+        );
+        onLogout!();
+      }
 
       // Clear all storage
       await _clearAllStorage();
