@@ -57,7 +57,13 @@ class SearchUsersViewModel extends _$SearchUsersViewModel {
       limit: limit,
     );
 
-    _allUsers.addAll(response.data.users);
+    // If we're on page 1, replace the list instead of appending
+    // This prevents duplicates if multiple requests are made
+    if (_currentPage == 1) {
+      _allUsers = response.data.users;
+    } else {
+      _allUsers.addAll(response.data.users);
+    }
     _totalCount = response.data.totalCount;
 
     // Check if there are more pages
