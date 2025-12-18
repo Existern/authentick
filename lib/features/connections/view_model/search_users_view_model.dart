@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../model/connection_user.dart';
 import '../repository/connection_repository.dart';
 import 'connections_view_model.dart';
+import 'pending_connections_view_model.dart';
 
 part 'search_users_view_model.g.dart';
 
@@ -113,6 +114,17 @@ class SearchUsersViewModel extends _$SearchUsersViewModel {
     _updateUserFriendRequestState(userId, friendRequestId: null);
   }
 
+  /// Accept a friend request
+  Future<void> acceptFriendRequest(String userId, String requestId) async {
+    final repository = ref.read(connectionRepositoryProvider);
+    await repository.acceptConnection(requestId);
+    // Update local state to set as friend and remove pending status
+    _updateUserAfterAccept(userId);
+    // Refresh connections data and pending requests
+    ref.invalidate(connectionsViewModelProvider);
+    ref.invalidate(pendingConnectionsViewModelProvider);
+  }
+
   /// Follow a user and update local state
   Future<void> followUser(String userId) async {
     final repository = ref.read(connectionRepositoryProvider);
@@ -174,6 +186,10 @@ class SearchUsersViewModel extends _$SearchUsersViewModel {
           isFriend: user.isFriend,
           isCloseFriend: user.isCloseFriend,
           isFollowing: isFollowing,
+          friendRequestId: user.friendRequestId,
+          connectionRequestId: user.connectionRequestId,
+          hasPendingRequest: user.hasPendingRequest,
+          hasIncomingRequest: user.hasIncomingRequest,
         );
       }
       return user;
@@ -211,6 +227,10 @@ class SearchUsersViewModel extends _$SearchUsersViewModel {
           isFriend: isFriend,
           isCloseFriend: user.isCloseFriend,
           isFollowing: user.isFollowing,
+          friendRequestId: user.friendRequestId,
+          connectionRequestId: user.connectionRequestId,
+          hasPendingRequest: user.hasPendingRequest,
+          hasIncomingRequest: user.hasIncomingRequest,
         );
       }
       return user;
@@ -249,6 +269,50 @@ class SearchUsersViewModel extends _$SearchUsersViewModel {
           isCloseFriend: user.isCloseFriend,
           isFollowing: user.isFollowing,
           friendRequestId: friendRequestId,
+          connectionRequestId: user.connectionRequestId,
+          hasPendingRequest: friendRequestId != null ? true : null,
+          hasIncomingRequest: user.hasIncomingRequest,
+        );
+      }
+      return user;
+    }).toList();
+
+    _allUsers = updatedUsers;
+    state = AsyncValue.data(updatedUsers);
+  }
+
+  /// Update user state after accepting friend request
+  void _updateUserAfterAccept(String userId) {
+    final updatedUsers = _allUsers.map((user) {
+      if (user.id == userId) {
+        return ConnectionUser(
+          id: user.id,
+          username: user.username,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          emailVerified: user.emailVerified,
+          profileImage: user.profileImage,
+          coverImage: user.coverImage,
+          bio: user.bio,
+          dateOfBirth: user.dateOfBirth,
+          gender: user.gender,
+          location: user.location,
+          phoneNumber: user.phoneNumber,
+          phoneVerified: user.phoneVerified,
+          isVerified: user.isVerified,
+          isActive: user.isActive,
+          role: user.role,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+          lastLoginAt: user.lastLoginAt,
+          isFriend: true,
+          isCloseFriend: user.isCloseFriend,
+          isFollowing: user.isFollowing,
+          friendRequestId: null,
+          connectionRequestId: null,
+          hasPendingRequest: null,
+          hasIncomingRequest: null,
         );
       }
       return user;

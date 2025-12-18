@@ -1827,10 +1827,166 @@ class _FriendpageState extends ConsumerState<Friendpage> {
     final isFriend = user.isFriend ?? false;
     final isCloseFriend = user.isCloseFriend ?? false;
     final isFollowing = user.isFollowing ?? false;
-    final hasPendingRequest = user.friendRequestId != null;
+    final hasPendingRequest = user.hasPendingRequest ?? false;
+    final hasIncomingRequest = user.hasIncomingRequest ?? false;
+    final connectionRequestId = user.connectionRequestId;
 
     // Determine which view model to use based on context
     final isSearchContext = context == 'search';
+
+    // If there's an incoming friend request, show Accept Request button
+    if (hasIncomingRequest) {
+      return Row(
+        children: [
+          OutlinedButton(
+            onPressed: connectionRequestId != null
+                ? () async {
+                    try {
+                      if (isSearchContext) {
+                        await ref
+                            .read(searchUsersViewModelProvider.notifier)
+                            .acceptFriendRequest(user.id, connectionRequestId);
+                      } else {
+                        await ref
+                            .read(discoverUsersViewModelProvider.notifier)
+                            .acceptFriendRequest(user.id, connectionRequestId);
+                      }
+                      if (mounted) {
+                        showCustomNotification('Friend request accepted');
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        showCustomNotification(
+                          'Failed to accept request',
+                          isError: true,
+                        );
+                      }
+                    }
+                  }
+                : null,
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: Color(0xFF3620B3)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            ),
+            child: const Text(
+              'Accept Request',
+              style: TextStyle(color: Color(0xFF3620B3)),
+            ),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                if (isSearchContext) {
+                  await ref
+                      .read(searchUsersViewModelProvider.notifier)
+                      .followUser(user.id);
+                } else {
+                  await ref
+                      .read(discoverUsersViewModelProvider.notifier)
+                      .followUser(user.id);
+                }
+                if (mounted) {
+                  showCustomNotification('Following user');
+                }
+              } catch (e) {
+                if (mounted) {
+                  showCustomNotification('Failed to follow', isError: true);
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF3620B3),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            ),
+            child: const Text('Follow', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      );
+    }
+
+    // If user has sent a pending request (outgoing), show Cancel Request button
+    if (hasPendingRequest) {
+      return Row(
+        children: [
+          OutlinedButton(
+            onPressed: connectionRequestId != null
+                ? () async {
+                    try {
+                      if (isSearchContext) {
+                        await ref
+                            .read(searchUsersViewModelProvider.notifier)
+                            .cancelFriendRequest(user.id, connectionRequestId);
+                      } else {
+                        await ref
+                            .read(discoverUsersViewModelProvider.notifier)
+                            .cancelFriendRequest(user.id, connectionRequestId);
+                      }
+                      if (mounted) {
+                        showCustomNotification('Friend request cancelled');
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        showCustomNotification(
+                          'Failed to cancel request',
+                          isError: true,
+                        );
+                      }
+                    }
+                  }
+                : null,
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: Colors.orange),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            ),
+            child: const Text(
+              'Cancel Request',
+              style: TextStyle(color: Colors.orange),
+            ),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                if (isSearchContext) {
+                  await ref
+                      .read(searchUsersViewModelProvider.notifier)
+                      .followUser(user.id);
+                } else {
+                  await ref
+                      .read(discoverUsersViewModelProvider.notifier)
+                      .followUser(user.id);
+                }
+                if (mounted) {
+                  showCustomNotification('Following user');
+                }
+              } catch (e) {
+                if (mounted) {
+                  showCustomNotification('Failed to follow', isError: true);
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF3620B3),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            ),
+            child: const Text('Follow', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      );
+    }
 
     // If user is a friend, show Remove Friend button
     if (isFriend) {
@@ -1956,24 +2112,18 @@ class _FriendpageState extends ConsumerState<Friendpage> {
       return Row(
         children: [
           // Show "Cancel Request" if a request has been sent, otherwise "Add Friend"
-          hasPendingRequest
+          (hasPendingRequest && connectionRequestId != null)
               ? OutlinedButton(
                   onPressed: () async {
                     try {
                       if (isSearchContext) {
                         await ref
                             .read(searchUsersViewModelProvider.notifier)
-                            .cancelFriendRequest(
-                              user.id,
-                              user.friendRequestId!,
-                            );
+                            .cancelFriendRequest(user.id, connectionRequestId);
                       } else {
                         await ref
                             .read(discoverUsersViewModelProvider.notifier)
-                            .cancelFriendRequest(
-                              user.id,
-                              user.friendRequestId!,
-                            );
+                            .cancelFriendRequest(user.id, connectionRequestId);
                       }
                       if (mounted) {
                         showCustomNotification('Friend request cancelled');
@@ -2083,18 +2233,18 @@ class _FriendpageState extends ConsumerState<Friendpage> {
     return Row(
       children: [
         // Show "Cancel Request" if a request has been sent, otherwise "Add Friend"
-        hasPendingRequest
+        (hasPendingRequest && connectionRequestId != null)
             ? OutlinedButton(
                 onPressed: () async {
                   try {
                     if (isSearchContext) {
                       await ref
                           .read(searchUsersViewModelProvider.notifier)
-                          .cancelFriendRequest(user.id, user.friendRequestId!);
+                          .cancelFriendRequest(user.id, connectionRequestId);
                     } else {
                       await ref
                           .read(discoverUsersViewModelProvider.notifier)
-                          .cancelFriendRequest(user.id, user.friendRequestId!);
+                          .cancelFriendRequest(user.id, connectionRequestId);
                     }
                     if (mounted) {
                       showCustomNotification('Friend request cancelled');
