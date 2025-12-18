@@ -4,6 +4,7 @@ import '../model/connection_user.dart';
 import '../model/discover_user.dart';
 import '../repository/connection_repository.dart';
 import 'connections_view_model.dart';
+import 'pending_connections_view_model.dart';
 
 part 'discover_users_view_model.g.dart';
 
@@ -76,7 +77,12 @@ class DiscoverUsersViewModel extends _$DiscoverUsersViewModel {
     final repository = ref.read(connectionRepositoryProvider);
     final request = await repository.sendFriendRequest(userId);
     // Update local state with the friend request ID
-    _updateUserFriendRequestState(userId, friendRequestId: request.id);
+    // Set both friendRequestId and connectionRequestId to ensure consistency
+    _updateUserFriendRequestState(
+      userId,
+      friendRequestId: request.id,
+      connectionRequestId: request.id,
+    );
   }
 
   /// Cancel a friend request
@@ -84,7 +90,23 @@ class DiscoverUsersViewModel extends _$DiscoverUsersViewModel {
     final repository = ref.read(connectionRepositoryProvider);
     await repository.cancelFriendRequest(requestId);
     // Update local state to remove the friend request ID
-    _updateUserFriendRequestState(userId, friendRequestId: null);
+    // Clear both friendRequestId and connectionRequestId
+    _updateUserFriendRequestState(
+      userId,
+      friendRequestId: null,
+      connectionRequestId: null,
+    );
+  }
+
+  /// Accept a friend request
+  Future<void> acceptFriendRequest(String userId, String requestId) async {
+    final repository = ref.read(connectionRepositoryProvider);
+    await repository.acceptConnection(requestId);
+    // Update local state to set as friend and remove pending status
+    _updateUserAfterAccept(userId);
+    // Refresh connections data and pending requests
+    ref.invalidate(connectionsViewModelProvider);
+    ref.invalidate(pendingConnectionsViewModelProvider);
   }
 
   /// Follow a user and update local state
@@ -118,6 +140,9 @@ class DiscoverUsersViewModel extends _$DiscoverUsersViewModel {
 
     // Update local state to reflect the change
     _updateUserFriendState(userId, isFriend: false);
+
+    // Refresh connections data to update Friends page and counts
+    ref.invalidate(connectionsViewModelProvider);
   }
 
   /// Update user's follow state in local cache
@@ -127,6 +152,9 @@ class DiscoverUsersViewModel extends _$DiscoverUsersViewModel {
         final user = discoverUser.user;
         return DiscoverUser(
           mutualCount: discoverUser.mutualCount,
+          hasPendingRequest: discoverUser.hasPendingRequest,
+          hasIncomingRequest: discoverUser.hasIncomingRequest,
+          connectionRequestId: discoverUser.connectionRequestId,
           user: ConnectionUser(
             id: user.id,
             username: user.username,
@@ -151,6 +179,10 @@ class DiscoverUsersViewModel extends _$DiscoverUsersViewModel {
             isFriend: user.isFriend,
             isCloseFriend: user.isCloseFriend,
             isFollowing: isFollowing,
+            friendRequestId: user.friendRequestId,
+            connectionRequestId: user.connectionRequestId,
+            hasPendingRequest: user.hasPendingRequest,
+            hasIncomingRequest: user.hasIncomingRequest,
           ),
         );
       }
@@ -168,6 +200,9 @@ class DiscoverUsersViewModel extends _$DiscoverUsersViewModel {
         final user = discoverUser.user;
         return DiscoverUser(
           mutualCount: discoverUser.mutualCount,
+          hasPendingRequest: discoverUser.hasPendingRequest,
+          hasIncomingRequest: discoverUser.hasIncomingRequest,
+          connectionRequestId: discoverUser.connectionRequestId,
           user: ConnectionUser(
             id: user.id,
             username: user.username,
@@ -192,6 +227,10 @@ class DiscoverUsersViewModel extends _$DiscoverUsersViewModel {
             isFriend: isFriend,
             isCloseFriend: user.isCloseFriend,
             isFollowing: user.isFollowing,
+            friendRequestId: user.friendRequestId,
+            connectionRequestId: user.connectionRequestId,
+            hasPendingRequest: user.hasPendingRequest,
+            hasIncomingRequest: user.hasIncomingRequest,
           ),
         );
       }
@@ -203,12 +242,21 @@ class DiscoverUsersViewModel extends _$DiscoverUsersViewModel {
   }
 
   /// Update user's friend request state in local cache
-  void _updateUserFriendRequestState(String userId, {String? friendRequestId}) {
+  void _updateUserFriendRequestState(
+    String userId, {
+    String? friendRequestId,
+    String? connectionRequestId,
+  }) {
     final updatedUsers = _allUsers.map((discoverUser) {
       if (discoverUser.user.id == userId) {
         final user = discoverUser.user;
+        final isCancelling = friendRequestId == null && connectionRequestId == null;
+        
         return DiscoverUser(
           mutualCount: discoverUser.mutualCount,
+          hasPendingRequest: friendRequestId != null ? true : (isCancelling ? false : discoverUser.hasPendingRequest),
+          hasIncomingRequest: isCancelling ? false : discoverUser.hasIncomingRequest,
+          connectionRequestId: connectionRequestId ?? (isCancelling ? null : discoverUser.connectionRequestId),
           user: ConnectionUser(
             id: user.id,
             username: user.username,
@@ -234,6 +282,57 @@ class DiscoverUsersViewModel extends _$DiscoverUsersViewModel {
             isCloseFriend: user.isCloseFriend,
             isFollowing: user.isFollowing,
             friendRequestId: friendRequestId,
+            connectionRequestId: connectionRequestId,
+            hasPendingRequest: friendRequestId != null ? true : null,
+            hasIncomingRequest: isCancelling ? null : user.hasIncomingRequest,
+          ),
+        );
+      }
+      return discoverUser;
+    }).toList();
+
+    _allUsers = updatedUsers;
+    state = AsyncValue.data(updatedUsers);
+  }
+
+  /// Update user state after accepting friend request
+  void _updateUserAfterAccept(String userId) {
+    final updatedUsers = _allUsers.map((discoverUser) {
+      if (discoverUser.user.id == userId) {
+        final user = discoverUser.user;
+        return DiscoverUser(
+          mutualCount: discoverUser.mutualCount,
+          hasPendingRequest: false,
+          hasIncomingRequest: false,
+          connectionRequestId: null,
+          user: ConnectionUser(
+            id: user.id,
+            username: user.username,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            emailVerified: user.emailVerified,
+            profileImage: user.profileImage,
+            coverImage: user.coverImage,
+            bio: user.bio,
+            dateOfBirth: user.dateOfBirth,
+            gender: user.gender,
+            location: user.location,
+            phoneNumber: user.phoneNumber,
+            phoneVerified: user.phoneVerified,
+            isVerified: user.isVerified,
+            isActive: user.isActive,
+            role: user.role,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt,
+            lastLoginAt: user.lastLoginAt,
+            isFriend: true,
+            isCloseFriend: user.isCloseFriend,
+            isFollowing: user.isFollowing,
+            friendRequestId: null,
+            connectionRequestId: null,
+            hasPendingRequest: null,
+            hasIncomingRequest: null,
           ),
         );
       }

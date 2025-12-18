@@ -12,7 +12,9 @@ import 'constants/constants.dart';
 import 'environment/env.dart';
 import 'extensions/build_context_extension.dart';
 import 'features/common/ui/providers/app_theme_mode_provider.dart';
+import 'features/common/ui/providers/provider_invalidator.dart';
 import 'features/common/ui/widgets/offline_container.dart';
+import 'features/common/service/session_manager.dart';
 import 'routing/router.dart';
 import 'services/sentry_service.dart';
 import 'utils/provider_observer.dart';
@@ -108,6 +110,12 @@ class MainApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(appThemeModeProvider);
+
+    // Initialize the provider invalidator and link it to SessionManager
+    // This ensures that whenever SessionManager triggers a logout (e.g. on 401),
+    // all user-specific Riverpod providers are invalidated.
+    final invalidator = ref.read(providerInvalidatorProvider);
+    SessionManager.instance.onLogout = invalidator.invalidateUserProviders;
 
     return MaterialApp.router(
       theme: context.lightTheme,

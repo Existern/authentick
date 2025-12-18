@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mvvm_riverpod/features/authentication/repository/authentication_repository.dart';
+import 'package:flutter_mvvm_riverpod/features/authentication/ui/view_model/authentication_view_model.dart';
 import 'package:flutter_mvvm_riverpod/features/user/model/update_profile_request.dart';
 import 'package:flutter_mvvm_riverpod/features/user/repository/user_profile_repository.dart';
 import 'package:flutter_mvvm_riverpod/routing/routes.dart';
@@ -115,8 +116,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   Future<void> _handleLogout() async {
     try {
-      final authRepo = ref.read(authenticationRepositoryProvider);
-      await authRepo.signOut();
+      // Use the view model for logout to ensure all providers are properly invalidated
+      await ref.read(authenticationViewModelProvider.notifier).signOut();
 
       if (!mounted) return;
 

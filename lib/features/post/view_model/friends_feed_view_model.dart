@@ -28,7 +28,6 @@ class FriendsFeedViewModel extends _$FriendsFeedViewModel {
       filter: 'friends',
       page: _currentPage,
       limit: 20,
-      duration: '1w',
       mediaMode: 'preview',
     );
 

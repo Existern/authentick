@@ -63,19 +63,25 @@ class PostService {
     String filter = 'all',
     int page = 1,
     int limit = 20,
-    String duration = '1w',
+    String? duration,
     String mediaMode = 'preview',
   }) async {
     try {
+      final queryParameters = {
+        'filter': filter,
+        'page': page,
+        'limit': limit,
+        'media_mode': mediaMode,
+      };
+      
+      // Only add duration parameter if it's not null
+      if (duration != null) {
+        queryParameters['duration'] = duration;
+      }
+      
       final response = await _apiClient.get<Map<String, dynamic>>(
         '/feed',
-        queryParameters: {
-          'filter': filter,
-          'page': page,
-          'limit': limit,
-          'duration': duration,
-          'media_mode': mediaMode,
-        },
+        queryParameters: queryParameters,
       );
       print('📥 Feed API Response Type: ${response.runtimeType}');
       print('📥 Feed API Response: $response');

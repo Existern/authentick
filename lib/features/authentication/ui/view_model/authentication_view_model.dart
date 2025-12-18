@@ -7,14 +7,22 @@ import '/extensions/string_extension.dart';
 import '/features/profile/ui/view_model/profile_view_model.dart';
 import '../../repository/authentication_repository.dart';
 import '../../ui/state/authentication_state.dart';
+import '/features/user/repository/user_profile_repository.dart';
+import '/features/common/ui/providers/provider_invalidator.dart';
 
 part 'authentication_view_model.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class AuthenticationViewModel extends _$AuthenticationViewModel {
   @override
   FutureOr<AuthenticationState> build() async {
     return const AuthenticationState();
+  }
+
+  /// Invalidate all user-specific providers on logout to prevent data leaking between accounts
+  void _invalidateUserProviders() {
+    if (!ref.mounted) return;
+    ref.read(providerInvalidatorProvider).invalidateUserProviders();
   }
 
   Future<void> signInWithMagicLink(String email) async {
@@ -23,6 +31,8 @@ class AuthenticationViewModel extends _$AuthenticationViewModel {
     final result = await AsyncValue.guard(
       () => authRepo.signInWithMagicLink(email),
     );
+
+    if (!ref.mounted) return;
 
     if (result is AsyncError) {
       state = AsyncError(result.error.toString(), StackTrace.current);
@@ -46,7 +56,9 @@ class AuthenticationViewModel extends _$AuthenticationViewModel {
         isRegister: isRegister,
       ),
     );
-    handleResult(result);
+    if (ref.mounted) {
+      handleResult(result);
+    }
   }
 
   Future<void> signInWithGoogle() async {
@@ -54,12 +66,16 @@ class AuthenticationViewModel extends _$AuthenticationViewModel {
     final authRepo = ref.read(authenticationRepositoryProvider);
     final result = await AsyncValue.guard(authRepo.signInWithGoogle);
 
+    if (!ref.mounted) return;
+
     // Handle authentication errors specifically
     if (result is AsyncError && _isAuthenticationError(result.error)) {
       await _handleAuthenticationError(result.error);
     }
 
-    handleResult(result);
+    if (ref.mounted) {
+      handleResult(result);
+    }
   }
 
   Future<void> signInWithApple() async {
@@ -67,12 +83,16 @@ class AuthenticationViewModel extends _$AuthenticationViewModel {
     final authRepo = ref.read(authenticationRepositoryProvider);
     final result = await AsyncValue.guard(authRepo.signInWithApple);
 
+    if (!ref.mounted) return;
+
     // Handle authentication errors specifically
     if (result is AsyncError && _isAuthenticationError(result.error)) {
       await _handleAuthenticationError(result.error);
     }
 
-    handleResult(result);
+    if (ref.mounted) {
+      handleResult(result);
+    }
   }
 
   Future<void> signOut() async {
@@ -80,12 +100,19 @@ class AuthenticationViewModel extends _$AuthenticationViewModel {
     final authRepo = ref.read(authenticationRepositoryProvider);
     final result = await AsyncValue.guard(authRepo.signOut);
 
+    if (!ref.mounted) return;
+
     if (result is AsyncError) {
       state = AsyncError(result.error.toString(), StackTrace.current);
       return;
     }
 
-    state = const AsyncData(AuthenticationState());
+    // Invalidate user providers on successful logout
+    _invalidateUserProviders();
+
+    if (ref.mounted) {
+      state = const AsyncData(AuthenticationState());
+    }
   }
 
   /// Helper method to check if an error is authentication-related
@@ -111,6 +138,10 @@ class AuthenticationViewModel extends _$AuthenticationViewModel {
     try {
       final authRepo = ref.read(authenticationRepositoryProvider);
       await authRepo.signOut();
+
+      // Invalidate user providers
+      _invalidateUserProviders();
+
       debugPrint(
         '${Constants.tag} [AuthenticationViewModel] ✅ User logged out due to auth error',
       );
@@ -172,6 +203,9 @@ class AuthenticationViewModel extends _$AuthenticationViewModel {
           name: name,
           avatar: avatar,
         );
+
+    // After login, we should also ensure we fetch a fresh profile
+    ref.read(userProfileRepositoryProvider.notifier).refresh();
 
     state = AsyncData(
       AuthenticationState(

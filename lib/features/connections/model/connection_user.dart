@@ -45,6 +45,12 @@ class ConnectionUser {
   final bool? isFollowing;
   @JsonKey(name: 'friend_request_id')
   final String? friendRequestId;
+  @JsonKey(name: 'connection_request_id')
+  final String? connectionRequestId;
+  @JsonKey(name: 'has_pending_request')
+  final bool? hasPendingRequest;
+  @JsonKey(name: 'has_incoming_request')
+  final bool? hasIncomingRequest;
 
   ConnectionUser({
     required this.id,
@@ -71,6 +77,9 @@ class ConnectionUser {
     this.isCloseFriend,
     this.isFollowing,
     this.friendRequestId,
+    this.connectionRequestId,
+    this.hasPendingRequest,
+    this.hasIncomingRequest,
   });
 
   factory ConnectionUser.fromJson(Map<String, dynamic> json) =>

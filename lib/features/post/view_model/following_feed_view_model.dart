@@ -28,7 +28,6 @@ class FollowingFeedViewModel extends _$FollowingFeedViewModel {
       filter: 'following',
       page: _currentPage,
       limit: 20,
-      duration: '1w',
       mediaMode: 'preview',
     );
 

@@ -28,7 +28,6 @@ class AllFeedViewModel extends _$AllFeedViewModel {
       filter: 'all',
       page: _currentPage,
       limit: 20,
-      duration: '1w',
       mediaMode: 'preview',
     );
 

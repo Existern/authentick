@@ -287,9 +287,8 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
         // Extract location from image
         await _extractLocationFromImage(photo.path);
       } else {
-        // User cancelled camera
-        if (widget.isOnboarding && mounted) {
-          // Go back to previous screen if in onboarding
+        // User cancelled camera - go back to previous screen
+        if (mounted) {
           Navigator.of(context).pop();
         }
       }

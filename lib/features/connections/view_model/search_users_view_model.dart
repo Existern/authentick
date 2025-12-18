@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../model/connection_user.dart';
 import '../repository/connection_repository.dart';
 import 'connections_view_model.dart';
+import 'pending_connections_view_model.dart';
 
 part 'search_users_view_model.g.dart';
 
@@ -17,6 +18,8 @@ class SearchUsersViewModel extends _$SearchUsersViewModel {
 
   @override
   Future<List<ConnectionUser>> build() async {
+    // Keep the provider alive even when not watched
+    ref.keepAlive();
     // Return empty list initially
     return [];
   }
@@ -54,7 +57,13 @@ class SearchUsersViewModel extends _$SearchUsersViewModel {
       limit: limit,
     );
 
-    _allUsers.addAll(response.data.users);
+    // If we're on page 1, replace the list instead of appending
+    // This prevents duplicates if multiple requests are made
+    if (_currentPage == 1) {
+      _allUsers = response.data.users;
+    } else {
+      _allUsers.addAll(response.data.users);
+    }
     _totalCount = response.data.totalCount;
 
     // Check if there are more pages
@@ -102,7 +111,12 @@ class SearchUsersViewModel extends _$SearchUsersViewModel {
     final repository = ref.read(connectionRepositoryProvider);
     final request = await repository.sendFriendRequest(userId);
     // Update local state with the friend request ID
-    _updateUserFriendRequestState(userId, friendRequestId: request.id);
+    // Set both friendRequestId and connectionRequestId to ensure consistency
+    _updateUserFriendRequestState(
+      userId,
+      friendRequestId: request.id,
+      connectionRequestId: request.id,
+    );
   }
 
   /// Cancel a friend request
@@ -110,7 +124,23 @@ class SearchUsersViewModel extends _$SearchUsersViewModel {
     final repository = ref.read(connectionRepositoryProvider);
     await repository.cancelFriendRequest(requestId);
     // Update local state to remove the friend request ID
-    _updateUserFriendRequestState(userId, friendRequestId: null);
+    // Clear both friendRequestId and connectionRequestId
+    _updateUserFriendRequestState(
+      userId,
+      friendRequestId: null,
+      connectionRequestId: null,
+    );
+  }
+
+  /// Accept a friend request
+  Future<void> acceptFriendRequest(String userId, String requestId) async {
+    final repository = ref.read(connectionRepositoryProvider);
+    await repository.acceptConnection(requestId);
+    // Update local state to set as friend and remove pending status
+    _updateUserAfterAccept(userId);
+    // Refresh connections data and pending requests
+    ref.invalidate(connectionsViewModelProvider);
+    ref.invalidate(pendingConnectionsViewModelProvider);
   }
 
   /// Follow a user and update local state
@@ -144,6 +174,9 @@ class SearchUsersViewModel extends _$SearchUsersViewModel {
 
     // Update local state to reflect the change
     _updateUserFriendState(userId, isFriend: false);
+
+    // Refresh connections data to update Friends page and counts
+    ref.invalidate(connectionsViewModelProvider);
   }
 
   /// Update user's follow state in local cache
@@ -174,6 +207,10 @@ class SearchUsersViewModel extends _$SearchUsersViewModel {
           isFriend: user.isFriend,
           isCloseFriend: user.isCloseFriend,
           isFollowing: isFollowing,
+          friendRequestId: user.friendRequestId,
+          connectionRequestId: user.connectionRequestId,
+          hasPendingRequest: user.hasPendingRequest,
+          hasIncomingRequest: user.hasIncomingRequest,
         );
       }
       return user;
@@ -211,6 +248,10 @@ class SearchUsersViewModel extends _$SearchUsersViewModel {
           isFriend: isFriend,
           isCloseFriend: user.isCloseFriend,
           isFollowing: user.isFollowing,
+          friendRequestId: user.friendRequestId,
+          connectionRequestId: user.connectionRequestId,
+          hasPendingRequest: user.hasPendingRequest,
+          hasIncomingRequest: user.hasIncomingRequest,
         );
       }
       return user;
@@ -221,7 +262,11 @@ class SearchUsersViewModel extends _$SearchUsersViewModel {
   }
 
   /// Update user's friend request state in local cache
-  void _updateUserFriendRequestState(String userId, {String? friendRequestId}) {
+  void _updateUserFriendRequestState(
+    String userId, {
+    String? friendRequestId,
+    String? connectionRequestId,
+  }) {
     final updatedUsers = _allUsers.map((user) {
       if (user.id == userId) {
         return ConnectionUser(
@@ -249,6 +294,56 @@ class SearchUsersViewModel extends _$SearchUsersViewModel {
           isCloseFriend: user.isCloseFriend,
           isFollowing: user.isFollowing,
           friendRequestId: friendRequestId,
+          // When explicitly setting connectionRequestId to null, clear it
+          // Otherwise keep the new value or existing value
+          connectionRequestId: connectionRequestId,
+          hasPendingRequest: friendRequestId != null ? true : null,
+          // Clear hasIncomingRequest when canceling or when sending new request
+          hasIncomingRequest:
+              (friendRequestId == null && connectionRequestId == null)
+              ? null
+              : user.hasIncomingRequest,
+        );
+      }
+      return user;
+    }).toList();
+
+    _allUsers = updatedUsers;
+    state = AsyncValue.data(updatedUsers);
+  }
+
+  /// Update user state after accepting friend request
+  void _updateUserAfterAccept(String userId) {
+    final updatedUsers = _allUsers.map((user) {
+      if (user.id == userId) {
+        return ConnectionUser(
+          id: user.id,
+          username: user.username,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          emailVerified: user.emailVerified,
+          profileImage: user.profileImage,
+          coverImage: user.coverImage,
+          bio: user.bio,
+          dateOfBirth: user.dateOfBirth,
+          gender: user.gender,
+          location: user.location,
+          phoneNumber: user.phoneNumber,
+          phoneVerified: user.phoneVerified,
+          isVerified: user.isVerified,
+          isActive: user.isActive,
+          role: user.role,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+          lastLoginAt: user.lastLoginAt,
+          isFriend: true,
+          isCloseFriend: user.isCloseFriend,
+          isFollowing: user.isFollowing,
+          friendRequestId: null,
+          connectionRequestId: null,
+          hasPendingRequest: null,
+          hasIncomingRequest: null,
         );
       }
       return user;
