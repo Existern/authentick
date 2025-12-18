@@ -77,7 +77,12 @@ class DiscoverUsersViewModel extends _$DiscoverUsersViewModel {
     final repository = ref.read(connectionRepositoryProvider);
     final request = await repository.sendFriendRequest(userId);
     // Update local state with the friend request ID
-    _updateUserFriendRequestState(userId, friendRequestId: request.id);
+    // Set both friendRequestId and connectionRequestId to ensure consistency
+    _updateUserFriendRequestState(
+      userId,
+      friendRequestId: request.id,
+      connectionRequestId: request.id,
+    );
   }
 
   /// Cancel a friend request
@@ -85,7 +90,12 @@ class DiscoverUsersViewModel extends _$DiscoverUsersViewModel {
     final repository = ref.read(connectionRepositoryProvider);
     await repository.cancelFriendRequest(requestId);
     // Update local state to remove the friend request ID
-    _updateUserFriendRequestState(userId, friendRequestId: null);
+    // Clear both friendRequestId and connectionRequestId
+    _updateUserFriendRequestState(
+      userId,
+      friendRequestId: null,
+      connectionRequestId: null,
+    );
   }
 
   /// Accept a friend request
@@ -223,7 +233,11 @@ class DiscoverUsersViewModel extends _$DiscoverUsersViewModel {
   }
 
   /// Update user's friend request state in local cache
-  void _updateUserFriendRequestState(String userId, {String? friendRequestId}) {
+  void _updateUserFriendRequestState(
+    String userId, {
+    String? friendRequestId,
+    String? connectionRequestId,
+  }) {
     final updatedUsers = _allUsers.map((discoverUser) {
       if (discoverUser.user.id == userId) {
         final user = discoverUser.user;
@@ -254,9 +268,15 @@ class DiscoverUsersViewModel extends _$DiscoverUsersViewModel {
             isCloseFriend: user.isCloseFriend,
             isFollowing: user.isFollowing,
             friendRequestId: friendRequestId,
-            connectionRequestId: user.connectionRequestId,
+            // When explicitly setting connectionRequestId to null, clear it
+            // Otherwise keep the new value or existing value
+            connectionRequestId: connectionRequestId,
             hasPendingRequest: friendRequestId != null ? true : null,
-            hasIncomingRequest: user.hasIncomingRequest,
+            // Clear hasIncomingRequest when canceling or when sending new request
+            hasIncomingRequest:
+                (friendRequestId == null && connectionRequestId == null)
+                ? null
+                : user.hasIncomingRequest,
           ),
         );
       }
