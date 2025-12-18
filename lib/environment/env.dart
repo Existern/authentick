@@ -18,5 +18,5 @@ class Env {
 
   // Sentry Configuration
   static const String sentryDsn =
-      'https://5b852aad094dd20b5da41e462dfe4a84@o4508827639480320.ingest.us.sentry.io/4510546998329344';
+      'https://6d54542a200f342206cadfb1efd403c6@o4510551334715392.ingest.de.sentry.io/4510551338123344';
 }
