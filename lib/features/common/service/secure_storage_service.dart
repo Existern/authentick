@@ -9,7 +9,10 @@ class SecureStorageService {
 
   // resetOnError helps recover from corrupted storage on problematic devices
   static const _storage = FlutterSecureStorage(
-    aOptions: AndroidOptions(resetOnError: true),
+    aOptions: AndroidOptions(
+      encryptedSharedPreferences: true,
+      resetOnError: true,
+    ),
     iOptions: IOSOptions(
       accessibility: KeychainAccessibility.first_unlock_this_device,
     ),

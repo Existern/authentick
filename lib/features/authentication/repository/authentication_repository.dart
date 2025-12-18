@@ -497,18 +497,61 @@ class AuthenticationRepository {
   }
 
   /// Check if user has stored tokens (for auto-login)
+  /// Checks both secure storage and SharedPreferences fallback
   Future<bool> hasStoredTokens() async {
-    return await _secureStorage.hasValidTokens();
+    final hasSecureTokens = await _secureStorage.hasValidTokens();
+    if (hasSecureTokens) return true;
+
+    // Fallback check in SharedPreferences
+    final authResponse = await getAuthResponse();
+    final hasFallbackTokens = authResponse != null &&
+        authResponse.data.tokens.accessToken.isNotEmpty &&
+        authResponse.data.tokens.refreshToken.isNotEmpty;
+
+    if (hasFallbackTokens) {
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository] ⚠️ Tokens missing in secure storage but found in SharedPreferences fallback',
+      );
+    }
+
+    return hasFallbackTokens;
   }
 
   /// Try to auto-login using stored refresh token
   /// Simply checks if tokens exist - actual token validation happens via onboarding API call
   Future<bool> tryAutoLogin() async {
     try {
-      final hasTokens = await hasStoredTokens();
+      // First try secure storage
+      bool hasTokens = await _secureStorage.hasValidTokens();
+
       if (!hasTokens) {
         debugPrint(
-          '${Constants.tag} [AuthenticationRepository] ⚠️ No stored tokens for auto-login',
+          '${Constants.tag} [AuthenticationRepository] ⚠️ No tokens in secure storage, checking fallback...',
+        );
+
+        // Try fallback from SharedPreferences (auth_response)
+        final authResponse = await getAuthResponse();
+        if (authResponse != null &&
+            authResponse.data.tokens.accessToken.isNotEmpty &&
+            authResponse.data.tokens.refreshToken.isNotEmpty) {
+          debugPrint(
+            '${Constants.tag} [AuthenticationRepository] 🔄 Recovering tokens from SharedPreferences to secure storage...',
+          );
+
+          // Restore to secure storage
+          await _secureStorage.saveTokens(
+            accessToken: authResponse.data.tokens.accessToken,
+            refreshToken: authResponse.data.tokens.refreshToken,
+            expiresIn: authResponse.data.tokens.expiresIn,
+          );
+
+          hasTokens = true;
+        }
+      }
+
+      if (!hasTokens) {
+        debugPrint(
+          '${Constants.tag} [AuthenticationRepository] ⚠️ No stored tokens found anywhere for auto-login',
         );
         // Clear login state since we have no tokens
         await setIsLogin(false);
