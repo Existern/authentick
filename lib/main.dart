@@ -124,7 +124,9 @@ class _MainAppState extends ConsumerState<MainApp> {
     // Set log level based on build mode (verbose in debug, none in release)
     final config = clarity.ClarityConfig(
       projectId: Env.clarityProjectId,
-      logLevel: kDebugMode ? clarity.LogLevel.Verbose : clarity.LogLevel.None,
+      logLevel: clarity
+          .LogLevel
+          .None, // Suppress console logs, Clarity still captures data
     );
 
     // Use WidgetsBinding to ensure context is available
