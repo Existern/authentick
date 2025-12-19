@@ -6,7 +6,7 @@ import 'package:flutter_mvvm_riverpod/extensions/build_context_extension.dart';
 import 'package:flutter_mvvm_riverpod/features/post/service/post_service.dart';
 import 'package:flutter_mvvm_riverpod/features/post/repository/post_like_repository.dart';
 import 'package:flutter_mvvm_riverpod/theme/app_theme.dart';
-import 'package:flutter_mvvm_riverpod/screens/home/full_image_viewer.dart';
+import 'package:flutter_mvvm_riverpod/screens/post/post_detail_screen.dart';
 import 'package:flutter_mvvm_riverpod/screens/profile/user_profile_screen.dart';
 
 class PostCard extends ConsumerStatefulWidget {
@@ -313,7 +313,10 @@ class _PostCardState extends ConsumerState<PostCard> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => FullImageViewer(postId: widget.postId),
+                  builder: (context) => PostDetailScreen(
+                    postId: widget.postId,
+                    showDeleteButton: false,
+                  ),
                 ),
               );
             },
