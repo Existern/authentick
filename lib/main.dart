@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:clarity_flutter/clarity_flutter.dart' as clarity;
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -104,11 +105,38 @@ void main() async {
   );
 }
 
-class MainApp extends ConsumerWidget {
+class MainApp extends ConsumerStatefulWidget {
   const MainApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MainApp> createState() => _MainAppState();
+}
+
+class _MainAppState extends ConsumerState<MainApp> {
+  @override
+  void initState() {
+    super.initState();
+    _initializeClarity();
+  }
+
+  void _initializeClarity() {
+    // Initialize Clarity with project ID from environment
+    // Set log level based on build mode (verbose in debug, none in release)
+    final config = clarity.ClarityConfig(
+      projectId: Env.clarityProjectId,
+      logLevel: kDebugMode ? clarity.LogLevel.Verbose : clarity.LogLevel.None,
+    );
+
+    // Use WidgetsBinding to ensure context is available
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        clarity.Clarity.initialize(context, config);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final themeMode = ref.watch(appThemeModeProvider);
 
     // Initialize the provider invalidator and link it to SessionManager

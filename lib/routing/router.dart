@@ -1,3 +1,4 @@
+import 'package:clarity_flutter/clarity_flutter.dart' as clarity;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -48,11 +49,17 @@ class SentryNavigationObserver extends NavigatorObserver {
     final currentName = current ?? 'unknown';
     final previousName = previous ?? 'unknown';
 
+    // Track navigation in Sentry
     SentryService.instance.addBreadcrumb(
       message: 'Navigation $action: $currentName',
       category: 'navigation',
       data: {'action': action, 'from': previousName, 'to': currentName},
     );
+
+    // Track screen name in Clarity
+    if (currentName != 'unknown') {
+      clarity.Clarity.setCurrentScreenName(currentName);
+    }
   }
 }
 
