@@ -29,6 +29,7 @@ class PostDetailScreen extends ConsumerStatefulWidget {
 class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
   bool _isDeleting = false;
   bool _isLiking = false;
+  bool _showOverlays = true;
 
   String _formatTimeAgo(String dateTimeStr) {
     try {
@@ -252,37 +253,51 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
 
             return Stack(
               children: [
-                // Full screen image
+                // Full screen image - tap to toggle overlays
                 if (firstMedia != null)
                   Positioned.fill(
-                    child: InteractiveViewer(
-                      minScale: 0.5,
-                      maxScale: 4.0,
-                      child: CachedNetworkImage(
-                        imageUrl: firstMedia.mediaUrl,
-                        fit: BoxFit.contain,
-                        placeholder: (context, url) => const Center(
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _showOverlays = !_showOverlays;
+                        });
+                      },
+                      child: InteractiveViewer(
+                        minScale: 0.5,
+                        maxScale: 4.0,
+                        child: CachedNetworkImage(
+                          imageUrl: firstMedia.mediaUrl,
+                          fit: BoxFit.contain,
+                          placeholder: (context, url) => const Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
                           ),
-                        ),
-                        errorWidget: (context, url, error) => const Center(
-                          child: Icon(
-                            Icons.error_outline,
-                            color: Colors.white,
-                            size: 48,
+                          errorWidget: (context, url, error) => const Center(
+                            child: Icon(
+                              Icons.error_outline,
+                              color: Colors.white,
+                              size: 48,
+                            ),
                           ),
                         ),
                       ),
                     ),
                   )
                 else
-                  const Center(
-                    child: Icon(
-                      Icons.image_not_supported,
-                      color: Colors.white,
-                      size: 48,
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _showOverlays = !_showOverlays;
+                      });
+                    },
+                    child: const Center(
+                      child: Icon(
+                        Icons.image_not_supported,
+                        color: Colors.white,
+                        size: 48,
+                      ),
                     ),
                   ),
 
@@ -292,15 +307,22 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                   left: 0,
                   right: 0,
                   height: 120,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.black.withOpacity(0.6),
-                          Colors.transparent,
-                        ],
+                  child: IgnorePointer(
+                    ignoring: !_showOverlays,
+                    child: AnimatedOpacity(
+                      opacity: _showOverlays ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 200),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.black.withOpacity(0.7),
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -311,37 +333,53 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                   bottom: 0,
                   left: 0,
                   right: 0,
-                  height: 200,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
-                        colors: [
-                          Colors.black.withOpacity(0.6),
-                          Colors.transparent,
-                        ],
+                  height: 280,
+                  child: IgnorePointer(
+                    ignoring: !_showOverlays,
+                    child: AnimatedOpacity(
+                      opacity: _showOverlays ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 200),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                            colors: [
+                              Colors.black.withOpacity(0.85),
+                              Colors.black.withOpacity(0.5),
+                              Colors.transparent,
+                            ],
+                            stops: const [0.0, 0.5, 1.0],
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
 
-                // Top buttons
+                // Top buttons - Back button
                 Positioned(
                   top: 16,
                   left: 16,
-                  child: GestureDetector(
-                    onTap: () => context.pop(),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.3),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.arrow_back,
-                        color: Colors.white,
-                        size: 24,
+                  child: IgnorePointer(
+                    ignoring: !_showOverlays,
+                    child: AnimatedOpacity(
+                      opacity: _showOverlays ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 200),
+                      child: GestureDetector(
+                        onTap: () => context.pop(),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.5),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.arrow_back,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -354,28 +392,35 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                   Positioned(
                     top: 16,
                     right: 16,
-                    child: GestureDetector(
-                      onTap: _isDeleting ? null : _handleDelete,
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.3),
-                          shape: BoxShape.circle,
+                    child: IgnorePointer(
+                      ignoring: !_showOverlays,
+                      child: AnimatedOpacity(
+                        opacity: _showOverlays ? 1.0 : 0.0,
+                        duration: const Duration(milliseconds: 200),
+                        child: GestureDetector(
+                          onTap: _isDeleting ? null : _handleDelete,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.5),
+                              shape: BoxShape.circle,
+                            ),
+                            child: _isDeleting
+                                ? const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.delete_outline,
+                                    color: Colors.white,
+                                    size: 24,
+                                  ),
+                          ),
                         ),
-                        child: _isDeleting
-                            ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(
-                                Icons.delete_outline,
-                                color: Colors.white,
-                                size: 24,
-                              ),
                       ),
                     ),
                   ),
@@ -385,209 +430,227 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                   bottom: 0,
                   left: 0,
                   right: 0,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // User info row
-                        Row(
+                  child: IgnorePointer(
+                    ignoring: !_showOverlays,
+                    child: AnimatedOpacity(
+                      opacity: _showOverlays ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 200),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Profile picture
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(20),
-                              child: Container(
-                                width: 40,
-                                height: 40,
-                                color: Colors.grey[800],
-                                child:
-                                    post.user?.profileImage != null &&
-                                        post.user!.profileImage!.isNotEmpty
-                                    ? CachedNetworkImage(
-                                        imageUrl: post.user!.profileImage!,
-                                        fit: BoxFit.cover,
-                                        placeholder: (context, url) =>
-                                            const Center(
-                                              child: CircularProgressIndicator(
-                                                color: Colors.white,
-                                                strokeWidth: 2,
+                            // User info row
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Profile picture
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: Container(
+                                    width: 40,
+                                    height: 40,
+                                    color: Colors.grey[800],
+                                    child:
+                                        post.user?.profileImage != null &&
+                                            post.user!.profileImage!.isNotEmpty
+                                        ? CachedNetworkImage(
+                                            imageUrl: post.user!.profileImage!,
+                                            fit: BoxFit.cover,
+                                            placeholder: (context, url) =>
+                                                const Center(
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                        color: Colors.white,
+                                                        strokeWidth: 2,
+                                                      ),
+                                                ),
+                                            errorWidget:
+                                                (context, url, error) =>
+                                                    const Icon(
+                                                      Icons.person,
+                                                      color: Colors.white,
+                                                      size: 24,
+                                                    ),
+                                          )
+                                        : const Icon(
+                                            Icons.person,
+                                            color: Colors.white,
+                                            size: 24,
+                                          ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                // Name and location/time
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        userName,
+                                        style: AppTheme.title14.copyWith(
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        children: [
+                                          if (location != null &&
+                                              location.isNotEmpty)
+                                            Flexible(
+                                              child: GestureDetector(
+                                                onTap: () {
+                                                  _showLocationTooltip(
+                                                    context,
+                                                    location,
+                                                  );
+                                                },
+                                                child: Text(
+                                                  location,
+                                                  style: AppTheme.body12
+                                                      .copyWith(
+                                                        color: Colors.white70,
+                                                      ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
                                               ),
                                             ),
-                                        errorWidget: (context, url, error) =>
-                                            const Icon(
-                                              Icons.person,
-                                              color: Colors.white,
-                                              size: 24,
-                                            ),
-                                      )
-                                    : const Icon(
-                                        Icons.person,
-                                        color: Colors.white,
-                                        size: 24,
-                                      ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            // Name and location/time
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    userName,
-                                    style: AppTheme.title14.copyWith(
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      if (location != null &&
-                                          location.isNotEmpty)
-                                        Flexible(
-                                          child: GestureDetector(
-                                            onTap: () {
-                                              _showLocationTooltip(
-                                                context,
-                                                location,
-                                              );
-                                            },
-                                            child: Text(
-                                              location,
+                                          if (location != null &&
+                                              location.isNotEmpty)
+                                            Text(
+                                              ' · ',
                                               style: AppTheme.body12.copyWith(
                                                 color: Colors.white70,
                                               ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          Text(
+                                            timeText,
+                                            style: AppTheme.body12.copyWith(
+                                              color: Colors.white70,
                                             ),
                                           ),
-                                        ),
-                                      if (location != null &&
-                                          location.isNotEmpty)
-                                        Text(
-                                          ' · ',
-                                          style: AppTheme.body12.copyWith(
-                                            color: Colors.white70,
-                                          ),
-                                        ),
-                                      Text(
-                                        timeText,
-                                        style: AppTheme.body12.copyWith(
-                                          color: Colors.white70,
-                                        ),
-                                      ),
-                                      const Spacer(),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 10,
-                                          vertical: 4,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: Colors.black.withOpacity(0.4),
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(
-                                              post.visibility == 'public'
-                                                  ? Icons.public
-                                                  : Icons.group,
-                                              color: Colors.white,
-                                              size: 14,
+                                          const Spacer(),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                              vertical: 4,
                                             ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              post.visibility == 'public'
-                                                  ? 'Everyone'
-                                                  : 'Friends',
-                                              style: AppTheme.body12.copyWith(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.w500,
+                                            decoration: BoxDecoration(
+                                              color: Colors.black.withOpacity(
+                                                0.4,
                                               ),
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
                                             ),
-                                          ],
-                                        ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  post.visibility == 'public'
+                                                      ? Icons.public
+                                                      : Icons.group,
+                                                  color: Colors.white,
+                                                  size: 14,
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  post.visibility == 'public'
+                                                      ? 'Everyone'
+                                                      : 'Friends',
+                                                  style: AppTheme.body12
+                                                      .copyWith(
+                                                        color: Colors.white,
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                      ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ),
-                                ],
+                                ),
+                              ],
+                            ),
+
+                            // Caption below user info
+                            if (post.content != null &&
+                                post.content!.isNotEmpty) ...[
+                              const SizedBox(height: 12),
+                              Text(
+                                post.content!,
+                                style: AppTheme.body14.copyWith(
+                                  color: Colors.white,
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
+                            ],
 
-                        // Caption below user info
-                        if (post.content != null &&
-                            post.content!.isNotEmpty) ...[
-                          const SizedBox(height: 12),
-                          Text(
-                            post.content!,
-                            style: AppTheme.body14.copyWith(
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
+                            const SizedBox(height: 16),
 
-                        const SizedBox(height: 16),
-
-                        // Like button and count (left side)
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            GestureDetector(
-                              onTap: _isLiking
-                                  ? null
-                                  : () => _handleLikeToggle(
-                                      likeState.isLiked,
-                                      likeState.likesCount,
+                            // Like button and count (left side)
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                GestureDetector(
+                                  onTap: _isLiking
+                                      ? null
+                                      : () => _handleLikeToggle(
+                                          likeState.isLiked,
+                                          likeState.likesCount,
+                                        ),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
                                     ),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.3),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    _isLiking
-                                        ? const SizedBox(
-                                            width: 20,
-                                            height: 20,
-                                            child: CircularProgressIndicator(
-                                              color: Colors.white,
-                                              strokeWidth: 2,
-                                            ),
-                                          )
-                                        : SvgPicture.asset(
-                                            likeState.isLiked
-                                                ? 'assets/images/liked_star.svg'
-                                                : 'assets/images/star.svg',
-                                            width: 20,
-                                            height: 20,
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withOpacity(0.3),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        _isLiking
+                                            ? const SizedBox(
+                                                width: 20,
+                                                height: 20,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      color: Colors.white,
+                                                      strokeWidth: 2,
+                                                    ),
+                                              )
+                                            : SvgPicture.asset(
+                                                likeState.isLiked
+                                                    ? 'assets/images/liked_star.svg'
+                                                    : 'assets/images/star.svg',
+                                                width: 20,
+                                                height: 20,
+                                              ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          _formatLikeCount(
+                                            likeState.likesCount,
                                           ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      _formatLikeCount(likeState.likesCount),
-                                      style: AppTheme.body14.copyWith(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w500,
-                                      ),
+                                          style: AppTheme.body14.copyWith(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ],
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
                           ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ),

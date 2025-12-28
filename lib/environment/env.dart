@@ -19,4 +19,7 @@ class Env {
   // Sentry Configuration
   static const String sentryDsn =
       'https://6d54542a200f342206cadfb1efd403c6@o4510551334715392.ingest.de.sentry.io/4510551338123344';
+
+  // Clarity Configuration
+  static const String clarityProjectId = 'usghw4nu8v';
 }
