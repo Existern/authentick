@@ -230,9 +230,9 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
             final location = post.metadata?.location;
             final timeText = _formatTimeAgo(post.createdAt ?? '');
             final userName =
-                post.user?.firstName != null && post.user?.lastName != null
-                ? '${post.user?.firstName} ${post.user?.lastName}'
-                : post.user?.username ?? 'User';
+                post.user.firstName != null && post.user.lastName != null
+                ? '${post.user.firstName} ${post.user.lastName}'
+                : post.user.username ?? 'User';
 
             // Initialize and watch like state from postLikeManager
             final likeManager = ref.read(postLikeManagerProvider.notifier);
@@ -452,10 +452,10 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                                     height: 40,
                                     color: Colors.grey[800],
                                     child:
-                                        post.user?.profileImage != null &&
-                                            post.user!.profileImage!.isNotEmpty
+                                        post.user.profileImage != null &&
+                                            post.user.profileImage!.isNotEmpty
                                         ? CachedNetworkImage(
-                                            imageUrl: post.user!.profileImage!,
+                                            imageUrl: post.user.profileImage!,
                                             fit: BoxFit.cover,
                                             placeholder: (context, url) =>
                                                 const Center(

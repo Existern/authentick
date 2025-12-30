@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_mvvm_riverpod/features/authentication/repository/authentication_repository.dart';
 import 'package:flutter_mvvm_riverpod/features/authentication/ui/view_model/authentication_view_model.dart';
 import 'package:flutter_mvvm_riverpod/features/user/model/update_profile_request.dart';
 import 'package:flutter_mvvm_riverpod/features/user/repository/user_profile_repository.dart';
