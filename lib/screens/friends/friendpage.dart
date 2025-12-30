@@ -315,11 +315,6 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                     ),
                   ),
                   _buildTab(
-                    label: 'Friends of friends',
-                    icon: Icons.people_outline,
-                    count: 0,
-                  ),
-                  _buildTab(
                     label: 'Discover People',
                     icon: Icons.explore,
                     count: 0,
@@ -583,7 +578,7 @@ class _FriendpageState extends ConsumerState<Friendpage> {
                               Text(
                                 _searchQuery.isEmpty
                                     ? 'No friends yet'
-                                    : 'No results found for \"$_searchQuery\"',
+                                    : 'No results found for "${_searchQuery}"',
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: Colors.grey[600],

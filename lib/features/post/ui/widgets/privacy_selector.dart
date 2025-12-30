@@ -105,7 +105,7 @@ class PrivacySelector extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Shared with all your friends',
+                      'Shared with everyone',
                       style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     ),
                   ],
