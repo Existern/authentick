@@ -47,7 +47,7 @@ class DiscoverUsersViewModel extends _$DiscoverUsersViewModel {
     try {
       final newData = await _fetchDiscoverUsers();
       state = AsyncValue.data(newData);
-    } catch (error, stack) {
+    } catch (error) {
       // Revert page number on error
       _currentPage--;
       rethrow;

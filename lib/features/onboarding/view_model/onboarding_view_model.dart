@@ -11,8 +11,6 @@ import '../service/contacts_permission_service.dart';
 import '../service/contacts_service.dart';
 import '../service/onboarding_service.dart';
 
-import 'package:intl/intl.dart';
-import '../../post/service/post_service.dart';
 
 part 'onboarding_view_model.g.dart';
 

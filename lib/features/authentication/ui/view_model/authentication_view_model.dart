@@ -168,7 +168,7 @@ class AuthenticationViewModel extends _$AuthenticationViewModel {
       }
 
       state = AsyncError(
-        result.error?.toString() ?? 'Unknown error',
+        result.error.toString() ?? 'Unknown error',
         StackTrace.current,
       );
       return;

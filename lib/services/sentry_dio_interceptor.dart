@@ -276,8 +276,9 @@ class SentryDioInterceptor extends Interceptor {
     if (statusCode == 409) return SpanStatus.alreadyExists();
     if (statusCode == 429) return SpanStatus.resourceExhausted();
     if (statusCode == 499) return SpanStatus.cancelled();
-    if (statusCode >= 500 && statusCode < 600)
+    if (statusCode >= 500 && statusCode < 600) {
       return SpanStatus.internalError();
+    }
 
     return SpanStatus.unknownError();
   }

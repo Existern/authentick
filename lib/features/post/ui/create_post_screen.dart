@@ -459,7 +459,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                       ),
 
                       // Image - Natural aspect ratio container
-                      Container(
+                      SizedBox(
                         width: double.infinity,
                         child: Stack(
                           children: [

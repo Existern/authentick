@@ -57,7 +57,7 @@ class FriendsFeedViewModel extends _$FriendsFeedViewModel {
     try {
       final newData = await _fetchFeed();
       state = AsyncValue.data(newData);
-    } catch (error, stack) {
+    } catch (error) {
       // Revert page number on error
       _currentPage--;
       rethrow;

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import '../lib/features/onboarding/service/contacts_service.dart';
+import 'package:flutter_mvvm_riverpod/features/onboarding/service/contacts_service.dart';
 
 void main() {
   group('ContactsService Tests', () {

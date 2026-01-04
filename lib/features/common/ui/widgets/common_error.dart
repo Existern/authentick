@@ -3,7 +3,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '/constants/assets.dart';
 import '/constants/languages.dart';
-import '/extensions/build_context_extension.dart';
 import '/theme/app_theme.dart';
 
 class CommonError extends StatelessWidget {

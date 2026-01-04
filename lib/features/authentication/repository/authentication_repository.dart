@@ -330,7 +330,7 @@ class AuthenticationRepository {
       await googleSignIn.initialize();
 
       // Authenticate the user
-      final GoogleSignInAccount? googleUser = await googleSignIn.authenticate();
+      final GoogleSignInAccount googleUser = await googleSignIn.authenticate();
       if (googleUser == null) {
         throw Exception('Google sign in was cancelled');
       }

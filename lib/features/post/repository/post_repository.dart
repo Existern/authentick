@@ -56,7 +56,7 @@ class PostRepository {
       final filename = imagePath.split(Platform.pathSeparator).last;
 
       debugPrint(
-        '${Constants.tag} [PostRepository] 📷 Image: $filename ($width x $height, ${fileSize} bytes)',
+        '${Constants.tag} [PostRepository] 📷 Image: $filename ($width x $height, $fileSize bytes)',
       );
 
       // Step 1: Get presigned URL using new endpoint

@@ -57,7 +57,7 @@ class AllFeedViewModel extends _$AllFeedViewModel {
     try {
       final newData = await _fetchFeed();
       state = AsyncValue.data(newData);
-    } catch (error, stack) {
+    } catch (error) {
       // Revert page number on error
       _currentPage--;
       rethrow;

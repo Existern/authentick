@@ -17,7 +17,6 @@ import 'features/common/ui/providers/provider_invalidator.dart';
 import 'features/common/ui/widgets/offline_container.dart';
 import 'features/common/service/session_manager.dart';
 import 'routing/router.dart';
-import 'services/sentry_service.dart';
 import 'utils/provider_observer.dart';
 
 Future<void> initPlatformState() async {
