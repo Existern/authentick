@@ -255,7 +255,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
 
                   const SizedBox(height: 48),
 
-                  // Login/Signup Button
+                  // Login/Signup with Google Button
                   SizedBox(
                     width: double.infinity,
                     height: 56,
@@ -302,9 +302,71 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                                 ),
                                 const SizedBox(width: 12),
                                 Text(
-                                  'Login/Signup',
+                                  'Login/Signup with Google',
                                   style: AppTheme.title16.copyWith(
                                     color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.black,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        side: const BorderSide(
+                          color: Color(0xFF1A1A1A),
+                          width: 1.5,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: isLoading
+                          ? null
+                          : () {
+                              ref
+                                  .read(
+                                    authenticationViewModelProvider.notifier,
+                                  )
+                                  .signInWithApple();
+                            },
+                      child: isLoading
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.black,
+                                ),
+                              ),
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SvgPicture.asset(
+                                  Assets.appleLogo,
+                                  width: 24,
+                                  height: 24,
+                                  fit: BoxFit.contain,
+                                  colorFilter: const ColorFilter.mode(
+                                    Colors.black,
+                                    BlendMode.srcIn,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  'Sign in with Apple',
+                                  style: AppTheme.title16.copyWith(
+                                    color: Colors.black,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),

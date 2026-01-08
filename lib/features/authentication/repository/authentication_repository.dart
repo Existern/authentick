@@ -35,13 +35,16 @@ class AuthenticationRepository {
 
   const AuthenticationRepository(this._authService);
 
-  /// Authenticate user with Google token
+  /// Authenticate user with Google or Apple token
   /// Calls the /auth/authenticate endpoint
-  Future<AuthResponse> authenticate({String? googleToken}) async {
+  Future<AuthResponse> authenticate({
+    String? googleToken,
+    String? appleToken,
+  }) async {
     try {
       // If googleToken is not provided, try to read it from SharedPreferences
       String? finalGoogleToken = googleToken;
-      if (finalGoogleToken == null) {
+      if (finalGoogleToken == null && appleToken == null) {
         finalGoogleToken = await getGoogleIdToken();
         if (finalGoogleToken != null) {
           debugPrint(
@@ -54,7 +57,10 @@ class AuthenticationRepository {
         }
       }
 
-      final request = AuthRequest(googleToken: finalGoogleToken);
+      final request = AuthRequest(
+        googleToken: finalGoogleToken,
+        appleToken: appleToken,
+      );
 
       debugPrint(
         '${Constants.tag} [AuthenticationRepository] 🔄 Calling API service...',
@@ -407,6 +413,10 @@ class AuthenticationRepository {
 
   Future<Map<String, dynamic>> signInWithApple() async {
     try {
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository.signInWithApple] 🍎 Starting Apple Sign In...',
+      );
+
       final credential = await SignInWithApple.getAppleIDCredential(
         scopes: [
           AppleIDAuthorizationScopes.email,
@@ -419,19 +429,68 @@ class AuthenticationRepository {
         throw Exception('id_token_not_found'.tr());
       }
 
-      // TODO: Send the ID token to your own backend for verification
-      // For now, return a mock response
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository.signInWithApple] 🔑 Apple ID token received: ${idToken.substring(0, 20)}...',
+      );
+
+      // Save the Apple ID token for later use
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('apple_id_token', idToken);
+
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository.signInWithApple] 🚀 Calling authenticate API...',
+      );
+
+      // Call the authenticate API with apple_token
+      final authResponse = await authenticate(appleToken: idToken);
+
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository.signInWithApple] ✅ API Response received!',
+      );
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository.signInWithApple] Success: ${authResponse.success}',
+      );
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository.signInWithApple] User ID: ${authResponse.data.user.id}',
+      );
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository.signInWithApple] Email: ${authResponse.data.user.email}',
+      );
+
+      // Build user name from Apple credential (only available on first sign in)
+      String? userName;
+      if (credential.givenName != null || credential.familyName != null) {
+        userName =
+            '${credential.givenName ?? ''} ${credential.familyName ?? ''}'
+                .trim();
+        if (userName.isEmpty) userName = null;
+      }
+
+      // Return the response in the expected format
       return {
         'user': {
-          'id': credential.userIdentifier ?? 'apple_user_id',
-          'email': credential.email ?? 'user@apple.com',
-          'name': '${credential.givenName ?? ''} ${credential.familyName ?? ''}'
-              .trim(),
-          'created_at': DateTime.now().toIso8601String(),
+          'id': authResponse.data.user.id,
+          'email': authResponse.data.user.email ?? credential.email,
+          'name': userName ?? authResponse.data.user.firstName,
+          'avatar_url': authResponse.data.user.profileImage,
+          'created_at': authResponse.data.user.createdAt,
         },
       };
-    } catch (error) {
-      throw Exception(Languages.unexpectedErrorOccurred);
+    } catch (error, stackTrace) {
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository.signInWithApple] ❌ Error: $error',
+      );
+      debugPrint(
+        '${Constants.tag} [AuthenticationRepository.signInWithApple] StackTrace: $stackTrace',
+      );
+
+      // Check if user cancelled the sign-in
+      if (error.toString().contains('AuthorizationErrorCode.canceled') ||
+          error.toString().contains('canceled')) {
+        throw Exception('Apple sign in was cancelled');
+      }
+
+      throw Exception('$error');
     }
   }
 
@@ -504,7 +563,8 @@ class AuthenticationRepository {
 
     // Fallback check in SharedPreferences
     final authResponse = await getAuthResponse();
-    final hasFallbackTokens = authResponse != null &&
+    final hasFallbackTokens =
+        authResponse != null &&
         authResponse.data.tokens.accessToken.isNotEmpty &&
         authResponse.data.tokens.refreshToken.isNotEmpty;
 

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../constants/constants.dart';
+import '../../../../routing/routes.dart';
 import '../../../authentication/repository/authentication_repository.dart';
+import '../../view_model/onboarding_view_model.dart';
 import '../../../waitlist/model/waitlist_request.dart';
 import '../../../waitlist/service/waitlist_service.dart';
 
@@ -249,10 +252,52 @@ class _WaitlistScreenState extends ConsumerState<WaitlistScreen> {
               height: 1.4,
             ),
           ),
+
+          const SizedBox(height: 32),
+
+          // Button to navigate back to invite code screen
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF3620B3),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: () => _navigateToInviteCodeScreen(),
+              child: const Text(
+                'I have an invite code',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
         ],
       );
     }
 
     return const SizedBox.shrink();
+  }
+
+  Future<void> _navigateToInviteCodeScreen() async {
+    // Save the onboarding step to invite_code_verified
+    final authRepo = ref.read(authenticationRepositoryProvider);
+    await authRepo.saveCurrentOnboardingStep('invite_code_verified');
+
+    // Set the onboarding view model step directly to inviteCode
+    await ref.read(onboardingViewModelProvider.notifier).goToInviteCode();
+
+    // Navigate to onboarding flow - it will show invite code screen directly
+    if (mounted) {
+      context.go(Routes.onboardingFlow);
+    }
   }
 }

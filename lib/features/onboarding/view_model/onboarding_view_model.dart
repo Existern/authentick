@@ -11,7 +11,6 @@ import '../service/contacts_permission_service.dart';
 import '../service/contacts_service.dart';
 import '../service/onboarding_service.dart';
 
-
 part 'onboarding_view_model.g.dart';
 
 @riverpod
@@ -84,15 +83,18 @@ class OnboardingViewModel extends _$OnboardingViewModel {
     OnboardingStep? targetStep;
 
     if (!hasStartedOnboarding) {
-      // User hasn't started any steps yet, show intro screens first
+      // User hasn't started any steps yet, check saved step
       debugPrint(
-        '${Constants.tag} [OnboardingViewModel] No steps completed yet, starting from intro',
+        '${Constants.tag} [OnboardingViewModel] No steps completed yet, checking saved step',
       );
-      // Check if there's a saved intro page index
+      // Check if there's a saved step
       final savedStepName = await authRepo.getCurrentOnboardingStep();
       if (savedStepName == 'intro') {
         // User was in intro, continue from there
         targetStep = OnboardingStep.intro;
+      } else if (savedStepName == 'invite_code_verified') {
+        // User wants to go to invite code screen (e.g., from waitlist)
+        targetStep = OnboardingStep.inviteCode;
       } else {
         // Start fresh from intro
         targetStep = OnboardingStep.intro;
@@ -320,6 +322,12 @@ class OnboardingViewModel extends _$OnboardingViewModel {
   }
 
   Future<void> skipIntro() async {
+    state = state.copyWith(currentStep: OnboardingStep.inviteCode);
+    await _saveCurrentStep(OnboardingStep.inviteCode);
+  }
+
+  /// Navigate directly to invite code screen (used when returning from waitlist)
+  Future<void> goToInviteCode() async {
     state = state.copyWith(currentStep: OnboardingStep.inviteCode);
     await _saveCurrentStep(OnboardingStep.inviteCode);
   }
