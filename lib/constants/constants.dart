@@ -18,10 +18,6 @@ class Constants {
   static const String playStore =
       'https://play.google.com/store/apps/developer?id=Areser+JSC';
   static const String facebookPage = 'https://facebook.com/namanh11611';
-  static const String premium = 'premium';
-  static const String premiumMonthly = '\$rc_monthly';
-  static const String premiumYearly = '\$rc_annual';
-  static const String premiumLifeTime = '\$rc_lifetime';
 
   // SharedPreferences key
   static const String themeModeKey = 'theme_mode_key';
@@ -32,7 +28,6 @@ class Constants {
       'has_completed_onboarding_key';
   static const String shouldShowFirstMomentPopupKey =
       'should_show_first_moment_popup_key';
-  static const String lastDayShowPremiumKey = 'last_day_show_premium_key';
 
   // Authentication keys
   static const String authTokenKey = 'auth_token_key';

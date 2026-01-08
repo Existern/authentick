@@ -11,7 +11,6 @@ class Routes {
   static const accountInformation = '/accountInformation';
   static const appearances = '/appearances';
   static const languages = '/languages';
-  static const premium = '/premium';
   static const waitlist = '/waitlist';
   static const postDetail = '/post/:postId';
 }

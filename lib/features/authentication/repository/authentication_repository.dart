@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
@@ -652,7 +651,6 @@ class AuthenticationRepository {
       await prefs.remove('auth_response');
       // Clear login state
       setIsLogin(false);
-      Purchases.logOut();
     } catch (error) {
       throw Exception(Languages.unexpectedErrorOccurred);
     }

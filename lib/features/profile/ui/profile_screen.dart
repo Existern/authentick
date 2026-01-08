@@ -9,7 +9,6 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '/constants/constants.dart';
 import '/constants/languages.dart';
 import '/extensions/build_context_extension.dart';
-import '/extensions/profile_extension.dart';
 import '/routing/routes.dart';
 import '/theme/app_colors.dart';
 import '/theme/app_theme.dart';
@@ -18,9 +17,7 @@ import '../../../../features/common/ui/widgets/common_dialog.dart';
 import '../model/profile.dart';
 import 'view_model/profile_view_model.dart';
 import 'widgets/avatar.dart';
-import 'widgets/premium_info.dart';
 import 'widgets/profile_item.dart';
-import 'widgets/upgrade_premium_button.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -86,12 +83,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ),
                     ],
                   ),
-                ),
-                Transform.translate(
-                  offset: Offset(0, -32),
-                  child: profile.isPremium
-                      ? PremiumInfo(expiryDate: profile?.expiryDatePremium)
-                      : UpgradePremiumButton(),
                 ),
               ],
             ),

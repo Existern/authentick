@@ -64,7 +64,6 @@ dependencies:
   permission_handler: ^12.0.1
   persistent_bottom_nav_bar: ^6.2.1
   pinput: ^6.0.0
-  purchases_flutter: ^9.7.0
   riverpod_annotation: ^3.0.1
   shared_preferences: ^2.2.3
   shimmer: ^3.0.0

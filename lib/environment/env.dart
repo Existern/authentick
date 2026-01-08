@@ -12,10 +12,6 @@ class Env {
   static const String googleServerClientId =
       '234604531809-8jgq1eiv5fouiik1dn1sd5hoio5297ct.apps.googleusercontent.com';
 
-  // RevenueCat Configuration
-  static const String revenueCatPlayStore = 'your-revenue-cat-play-store-key';
-  static const String revenueCatAppStore = 'your-revenue-cat-app-store-key';
-
   // Sentry Configuration
   static const String sentryDsn =
       'https://6d54542a200f342206cadfb1efd403c6@o4510551334715392.ingest.de.sentry.io/4510551338123344';

@@ -7,13 +7,25 @@ class AuthResponse {
   AuthResponse({required this.success, required this.data, this.meta});
 
   factory AuthResponse.fromJson(Map<String, dynamic> json) {
-    return AuthResponse(
-      success: json['success'] as bool? ?? false,
-      data: AuthData.fromJson(json['data'] as Map<String, dynamic>),
-      meta: json['meta'] != null
-          ? ResponseMeta.fromJson(json['meta'] as Map<String, dynamic>)
-          : null,
-    );
+    try {
+      if (json['data'] == null) {
+        throw Exception('AuthResponse: missing "data" field. Response: $json');
+      }
+      if (json['data'] is! Map<String, dynamic>) {
+        throw Exception(
+          'AuthResponse: "data" field is not an object. Got: ${json['data'].runtimeType}, Value: ${json['data']}',
+        );
+      }
+      return AuthResponse(
+        success: json['success'] as bool? ?? false,
+        data: AuthData.fromJson(json['data'] as Map<String, dynamic>),
+        meta: json['meta'] != null
+            ? ResponseMeta.fromJson(json['meta'] as Map<String, dynamic>)
+            : null,
+      );
+    } catch (e) {
+      throw Exception('AuthResponse.fromJson failed: $e. Raw JSON: $json');
+    }
   }
 }
 
@@ -25,13 +37,28 @@ class AuthData {
   AuthData({required this.tokens, required this.user, this.onboarding});
 
   factory AuthData.fromJson(Map<String, dynamic> json) {
-    return AuthData(
-      tokens: Tokens.fromJson(json['tokens']),
-      user: User.fromJson(json['user'] as Map<String, dynamic>),
-      onboarding: json['onboarding'] != null
-          ? Onboarding.fromJson(json['onboarding'] as Map<String, dynamic>)
-          : null,
-    );
+    try {
+      if (json['tokens'] == null) {
+        throw Exception('AuthData: missing "tokens" field. Data: $json');
+      }
+      if (json['user'] == null) {
+        throw Exception('AuthData: missing "user" field. Data: $json');
+      }
+      if (json['user'] is! Map<String, dynamic>) {
+        throw Exception(
+          'AuthData: "user" field is not an object. Got: ${json['user'].runtimeType}, Value: ${json['user']}',
+        );
+      }
+      return AuthData(
+        tokens: Tokens.fromJson(json['tokens']),
+        user: User.fromJson(json['user'] as Map<String, dynamic>),
+        onboarding: json['onboarding'] != null
+            ? Onboarding.fromJson(json['onboarding'] as Map<String, dynamic>)
+            : null,
+      );
+    } catch (e) {
+      throw Exception('AuthData.fromJson failed: $e. Raw JSON: $json');
+    }
   }
 }
 
@@ -49,20 +76,30 @@ class Tokens {
   factory Tokens.fromJson(dynamic json) {
     // Handle invalid or missing tokens data
     if (json == null) {
-      throw Exception('Tokens data is null');
+      throw Exception('Tokens: data is null');
     }
 
     if (json is! Map<String, dynamic>) {
       throw Exception(
-        'Tokens data is not a valid object. Got: ${json.runtimeType} - Value: $json',
+        'Tokens: data is not a valid object. Got: ${json.runtimeType}, Value: $json',
       );
     }
 
-    return Tokens(
-      accessToken: json['access_token'] as String,
-      refreshToken: json['refresh_token'] as String,
-      expiresIn: json['expires_in'] as int?,
-    );
+    try {
+      if (json['access_token'] == null) {
+        throw Exception('Tokens: missing "access_token" field. Data: $json');
+      }
+      if (json['refresh_token'] == null) {
+        throw Exception('Tokens: missing "refresh_token" field. Data: $json');
+      }
+      return Tokens(
+        accessToken: json['access_token'] as String,
+        refreshToken: json['refresh_token'] as String,
+        expiresIn: json['expires_in'] as int?,
+      );
+    } catch (e) {
+      throw Exception('Tokens.fromJson failed: $e. Raw JSON: $json');
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -196,29 +233,39 @@ class User {
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
-    return User(
-      id: json['id'] as String,
-      username: json['username'] as String?,
-      firstName: json['first_name'] as String?,
-      lastName: json['last_name'] as String?,
-      email: json['email'] as String?,
-      emailVerified: json['email_verified'] as bool?,
-      phoneNumber: json['phone_number'] as String?,
-      phoneVerified: json['phone_verified'] as bool?,
-      dateOfBirth: json['date_of_birth'] as String?,
-      gender: json['gender'] as String?,
-      bio: json['bio'] as String?,
-      location: json['location'] as String?,
-      profileImage: json['profile_image'] as String?,
-      profileImageThumbnail: json['profile_image_thumbnail'] as String?,
-      coverImage: json['cover_image'] as String?,
-      isActive: json['is_active'] as bool?,
-      isVerified: json['is_verified'] as bool?,
-      role: json['role'] as String?,
-      createdAt: json['created_at'] as String,
-      updatedAt: json['updated_at'] as String?,
-      lastLoginAt: json['last_login_at'] as String?,
-    );
+    try {
+      if (json['id'] == null) {
+        throw Exception('User: missing "id" field. Data: $json');
+      }
+      if (json['created_at'] == null) {
+        throw Exception('User: missing "created_at" field. Data: $json');
+      }
+      return User(
+        id: json['id'] as String,
+        username: json['username'] as String?,
+        firstName: json['first_name'] as String?,
+        lastName: json['last_name'] as String?,
+        email: json['email'] as String?,
+        emailVerified: json['email_verified'] as bool?,
+        phoneNumber: json['phone_number'] as String?,
+        phoneVerified: json['phone_verified'] as bool?,
+        dateOfBirth: json['date_of_birth'] as String?,
+        gender: json['gender'] as String?,
+        bio: json['bio'] as String?,
+        location: json['location'] as String?,
+        profileImage: json['profile_image'] as String?,
+        profileImageThumbnail: json['profile_image_thumbnail'] as String?,
+        coverImage: json['cover_image'] as String?,
+        isActive: json['is_active'] as bool?,
+        isVerified: json['is_verified'] as bool?,
+        role: json['role'] as String?,
+        createdAt: json['created_at'] as String,
+        updatedAt: json['updated_at'] as String?,
+        lastLoginAt: json['last_login_at'] as String?,
+      );
+    } catch (e) {
+      throw Exception('User.fromJson failed: $e. Raw JSON: $json');
+    }
   }
 
   Map<String, dynamic> toJson() {

@@ -24,7 +24,6 @@ ProfileRepository profileRepository(Ref ref) {
 class ProfileRepository {
   final ProfileService _profileService;
   static const String _profileKey = 'profile';
-  static const String _showPremiumKey = 'show_premium';
 
   const ProfileRepository(this._profileService);
 
@@ -140,33 +139,6 @@ class ProfileRepository {
       );
       debugPrint('$stackTrace');
       rethrow;
-    }
-  }
-
-  /// Check if premium dialog should be shown
-  Future<bool> isShowPremium() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getBool(_showPremiumKey) ?? true;
-    } catch (error) {
-      debugPrint(
-        '${Constants.tag} [ProfileRepository] Error checking premium flag: $error',
-      );
-      return true;
-    }
-  }
-
-  /// Set that premium dialog has been shown
-  Future<void> setIsShowPremium() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_showPremiumKey, false);
-
-      debugPrint('${Constants.tag} [ProfileRepository] Premium flag set');
-    } catch (error) {
-      debugPrint(
-        '${Constants.tag} [ProfileRepository] Error setting premium flag: $error',
-      );
     }
   }
 
