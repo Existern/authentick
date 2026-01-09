@@ -9,9 +9,9 @@ class Constants {
   static const String defaultName = 'Henry Nguyen';
   static const String defaultEmail = 'namanh11611@gmail.com';
   static const String termOfService =
-      'https://github.com/namanh11611/flutter_mvvm_riverpod';
+      'https://www.authentick.club/terms-and-conditions';
   static const String privacyPolicy =
-      'https://github.com/namanh11611/flutter_mvvm_riverpod';
+      'https://www.authentick.club/privacy-policy';
   static const String aboutUs = 'https://github.com/namanh11611';
   static const String appStore =
       'https://apps.apple.com/us/developer/anh-nguyen/id1760383102';

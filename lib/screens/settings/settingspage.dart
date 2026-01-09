@@ -6,6 +6,8 @@ import 'package:flutter_mvvm_riverpod/routing/routes.dart';
 import 'package:flutter_mvvm_riverpod/screens/settings/listtile.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_mvvm_riverpod/constants/constants.dart';
+import 'package:flutter_mvvm_riverpod/extensions/build_context_extension.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -371,9 +373,15 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 ),
               ),
               const SizedBox(height: 12),
-              BorderedListTile(title: 'Privacy policy', onTap: () {}),
+              BorderedListTile(
+                title: 'Privacy policy',
+                onTap: () => context.tryLaunchUrl(Constants.privacyPolicy),
+              ),
               const SizedBox(height: 12),
-              BorderedListTile(title: 'Terms of use', onTap: () {}),
+              BorderedListTile(
+                title: 'Terms of use',
+                onTap: () => context.tryLaunchUrl(Constants.termOfService),
+              ),
               const SizedBox(height: 24),
 
               Center(
