@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../model/delete_account_response.dart';
 import '../model/update_profile_request.dart';
 import '../model/user_profile_response.dart';
 import '../service/user_service.dart';
@@ -112,5 +113,49 @@ class UserProfileRepository extends _$UserProfileRepository {
 
     // Refresh profile to get updated data without the image
     await refresh();
+  }
+
+  /// Request account deletion
+  /// DELETE /users/account
+  /// 
+  /// Initiates the account deletion process. The account will be hidden
+  /// and scheduled for permanent deletion in 30 days.
+  /// 
+  /// After requesting deletion:
+  /// - User's profile will be hidden from other users
+  /// - User can still restore their account within 30 days
+  /// - After 30 days, the account and all associated data will be permanently deleted
+  /// 
+  /// Returns [DeleteAccountResponse] with confirmation message.
+  Future<DeleteAccountResponse> deleteAccount() async {
+    final userService = ref.read(userServiceProvider);
+    final response = await userService.deleteAccount();
+
+    // Clear local cache since user is being deleted
+    await clearCache();
+
+    return response;
+  }
+
+  /// Restore account that was scheduled for deletion
+  /// POST /users/account/restore
+  /// 
+  /// Cancels a pending account deletion request and reactivates the account.
+  /// Can only be called during the 30-day grace period after deletion request.
+  /// 
+  /// After restoration:
+  /// - User's profile will be visible again
+  /// - All data will be retained
+  /// - User can use the app normally
+  /// 
+  /// Returns [DeleteAccountResponse] with confirmation message.
+  Future<DeleteAccountResponse> restoreAccount() async {
+    final userService = ref.read(userServiceProvider);
+    final response = await userService.restoreAccount();
+
+    // Refresh profile to get restored account data
+    await refresh();
+
+    return response;
   }
 }

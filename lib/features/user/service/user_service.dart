@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../common/remote/api_client.dart';
 import '../model/bulk_lookup_request.dart';
 import '../model/bulk_lookup_response.dart';
+import '../model/delete_account_response.dart';
 import '../model/update_profile_request.dart';
 import '../model/user_profile_response.dart';
 
@@ -84,6 +85,42 @@ class UserService {
         '/users/image',
         queryParameters: {'type': imageType},
       );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Request account deletion
+  /// DELETE /users/account
+  /// 
+  /// Initiates the account deletion process. The account will be hidden
+  /// and scheduled for permanent deletion in 30 days.
+  /// 
+  /// Returns a [DeleteAccountResponse] with a confirmation message.
+  Future<DeleteAccountResponse> deleteAccount() async {
+    try {
+      final response = await _apiClient.delete<Map<String, dynamic>>(
+        '/users/account',
+      );
+      return DeleteAccountResponse.fromJson(response);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Restore account that was scheduled for deletion
+  /// POST /users/account/restore
+  /// 
+  /// Cancels a pending account deletion request and reactivates the account.
+  /// Can only be called during the 30-day grace period after deletion request.
+  /// 
+  /// Returns a [DeleteAccountResponse] with a confirmation message.
+  Future<DeleteAccountResponse> restoreAccount() async {
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        '/users/account/restore',
+      );
+      return DeleteAccountResponse.fromJson(response);
     } catch (e) {
       rethrow;
     }
